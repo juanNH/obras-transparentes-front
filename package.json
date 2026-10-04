@@ -1,0 +1,31 @@
+{
+  "name": "obras-transparentes-front",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Base de integración del sitio público de Obras Transparentes",
+  "engines": {
+    "node": ">=24.21.0 <25",
+    "npm": ">=11.19.0 <12"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:proxy": "node --test test/dev-proxy.test.mjs",
+    "contract:sync": "node tools/sync-contract.mjs",
+    "contract:check": "node tools/sync-contract.mjs --check",
+    "dev:api": "node --env-file-if-exists=.env tools/dev-proxy.mjs",
+    "api:check": "node --env-file-if-exists=.env tools/check-api.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "vitest": "5.0.3"
+  }
+}
