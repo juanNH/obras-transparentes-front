@@ -1,0 +1,89 @@
+import type { WorkDetail, WorkSummary } from "../api/client.js";
+
+export function stateLabel(state: WorkSummary["estado"]): string {
+  return state === null ? "Estado no informado" : {
+    COMPLETED: "Finalizada según la fuente",
+    IN_PROGRESS: "En ejecución según la fuente",
+    OTHER_REPORTED: "Otro estado informado",
+  }[state];
+}
+
+export function sourceLabel(source: WorkSummary["fuentes"][number]["codigo"]): string {
+  return {
+    "pba-edificios": "Edificios escolares de Buenos Aires",
+    "caba-actualizado": "Obras de la Ciudad de Buenos Aires",
+    "nacion-obras": "Obras de Nación",
+    "vl-obras": "Obras de Vicente López",
+  }[source];
+}
+
+/** Format digits directly: Number would round large or high-precision amounts. */
+export function formatExactDecimal(value: string | null | undefined): string {
+  if (value === null || value === undefined) return "No informado";
+  const match = /^(-?)(\d+)(?:\.(\d+))?$/.exec(value);
+  if (!match) return value;
+  const integer = match[2]!.replace(/^0+(?=\d)/, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${match[1]}${integer}${match[3] === undefined ? "" : `,${match[3]}`}`;
+}
+
+export function safeSourceUrl(value: string): string | null {
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) && !url.username && !url.password
+      ? url.href : null;
+  } catch { return null; }
+}
+
+/** A civil date is not an instant and must never move a day with the timezone. */
+export function civilDate(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+}
+
+export function publicationDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Fecha no disponible";
+  return `${new Intl.DateTimeFormat("es-AR", { dateStyle: "long", timeStyle: "short", timeZone: "UTC" }).format(date)} UTC`;
+}
+
+export function reportedDate(value: WorkDetail["fechasInformadas"][number]): string {
+  return "anio" in value ? `${value.anio} (solo se conoce el año)` : civilDate(value.diaCivil);
+}
+
+export function locationPrecision(value: WorkDetail["ubicaciones"][number]["precision"]): string {
+  return {
+    ubicacion_establecimiento_reportada: "Ubicación reportada del establecimiento; no indica el alcance de la obra.",
+    coordenada_reportada_sin_precision: "Coordenada reportada sin precisión documentada.",
+    geometria_reportada_sin_precision: "Geometría reportada sin precisión documentada.",
+  }[value];
+}
+
+const fields: Record<string, string> = {
+  nombre: "Nombre", estado: "Estado", avanceFisico: "Avance físico", avanceFinanciero: "Avance financiero",
+  clasificaciones: "Clasificaciones", programas: "Programas", territorios: "Territorios",
+  ubicaciones: "Ubicaciones", importes: "Importes", fechasInformadas: "Fechas informadas",
+  educacion: "Información educativa", participantes: "Participantes", contratacion: "Contratación",
+  atributosFuente: "Otros datos de la fuente", nacional: "Datos de Nación", municipal: "Datos municipales",
+  jurisdiccionReportada: "Jurisdicción reportada", razonSocial: "Razón social reportada", cuit: "CUIT reportado",
+  ejercicio: "Ejercicio", numero: "Número", procedimiento: "Procedimiento", expediente: "Expediente",
+  gestion: "Gestión reportada", subfuente: "Subfuente", descripcion: "Descripción", objetivo: "Objetivo",
+  duracionDias: "Duración informada en días", estadoFuente: "Estado en la fuente", sectorFuente: "Sector en la fuente",
+  tipoProyectoFuente: "Tipo de proyecto en la fuente", monedaFuente: "Moneda en la fuente", programaFuente: "Programa en la fuente",
+  referencias: "Referencias", idproyecto: "Identificador del proyecto", numeroObra: "Número de obra", bapin: "BAPIN",
+  operacionFinanciera: "Operación financiera", perfilObra: "Perfil de obra", ejecutor: "Ejecutor reportado",
+  financiadores: "Financiadores reportados", territorio: "Territorio reportado", provincia: "Provincia",
+  departamento: "Departamento", codigoBahra: "Código BAHRA", contraparteRol: "Rol de contraparte",
+  contraparteNombre: "Nombre de contraparte", contraparteCuit: "CUIT de contraparte", contraparteModalidad: "Modalidad de contraparte",
+  accionClimatica: "Acción climática", odsIncidencia: "Incidencia en ODS", lugarReportado: "Lugar reportado",
+  areaResponsableReportada: "Área responsable reportada", tipoFuente: "Tipo en la fuente", establecimientos: "Establecimientos",
+  clave: "Clave", idFuente: "Identificador en la fuente", cui: "CUI", matricula: "Matrícula informada",
+  periodo: "Período", regionEducativa: "Región educativa", tipoIntervencion: "Intervención", inicio: "Inicio", fin: "Fin",
+};
+
+export function fieldLabel(value: string): string {
+  return value.split(".").map((part) => fields[part] ?? part).join(" · ");
+}
+
+export function qualityLabel(value: WorkDetail["calidadCampos"][string]["estado"]): string {
+  return { KNOWN: "Informado", NOT_REPORTED: "No informado", NOT_APPLICABLE: "No corresponde", INVALID: "Dato inválido", PENDING_REVIEW: "Pendiente de revisión" }[value];
+}

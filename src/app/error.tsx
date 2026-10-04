@@ -1,0 +1,2 @@
+"use client";
+export default function ErrorPage({ reset }: { error: Error & { digest?: string }; reset: () => void }) { return <section className="container page-heading"><h1>No pudimos cargar esta página</h1><p>La información puede estar temporalmente fuera de servicio. Intentá nuevamente.</p><button className="button" onClick={reset}>Reintentar</button> <a href="/mapa">Volver al catálogo</a></section>; }

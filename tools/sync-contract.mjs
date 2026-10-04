@@ -83,7 +83,10 @@ try {
     const path = join(root, relative);
     if (args.includes("--check")) {
       const current = await readFile(path, "utf8").catch(() => null);
-      if (current !== content) differences.push(relative);
+      // Git may check out CRLF on Windows; line endings do not change this contract.
+      // Compare normalized text while retaining all semantic and formatting checks.
+      if (current?.replaceAll("\r\n", "\n") !== content.replaceAll("\r\n", "\n"))
+        differences.push(relative);
     } else {
       await mkdir(dirname(path), { recursive: true });
       await writeFile(path, content);
