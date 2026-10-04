@@ -13,6 +13,8 @@ const config: NextConfig = {
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Permissions-Policy", value: "geolocation=(self), camera=(), microphone=()" },
       { key: "X-Frame-Options", value: "DENY" },
+    ] }, { source: "/map-fonts/5.3.0/:path*", headers: [
+      { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
     ] }];
   },
 };

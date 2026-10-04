@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { isolateMapNetwork, useSyntheticBasemap } from "./map-fixture";
 
 const firstId = "10000000-0000-4000-8000-000000000001";
 const firstRevision = "20000000-0000-4000-8000-000000000001";
@@ -8,7 +9,7 @@ const detailHref = `/obras/${firstId}?revisionId=${firstRevision}`;
 
 test.beforeEach(async ({ page }) => {
   // The UI tests never depend on a remote tile service or transmit browsing locations.
-  await page.route("https://tiles.openfreemap.org/**", route => route.abort());
+  await isolateMapNetwork(page);
 });
 
 test("landing, lista y ficha son accesibles y tienen HTML indexable", async ({ page, request }) => {
@@ -93,6 +94,7 @@ test("la ubicación se pide solo por acción y su rechazo conserva alternativa m
 });
 
 test("la ubicación concedida no se comparte ni consulta hasta Buscar en esta zona", async ({ page }) => {
+  await useSyntheticBasemap(page);
   await page.addInitScript(() => {
     Object.defineProperty(navigator, "geolocation", { configurable: true, value: {
       getCurrentPosition(success: PositionCallback) {
@@ -150,64 +152,13 @@ test("no mezcla ubicaciones con otra versión del listado", async ({ page }) => 
 
 test("el mapa se carga al elegirlo y un fallo del proveedor permite seguir con la lista", async ({ page }) => {
   const mapRequests: string[] = [];
-  page.on("request", request => { if (/openfreemap|maplibre-gl-worker/.test(request.url())) mapRequests.push(request.url()); });
+  page.on("request", request => { if (/openfreemap/.test(request.url())) mapRequests.push(request.url()); });
   await page.goto("/mapa");
   expect(mapRequests).toHaveLength(0);
   await page.getByRole("button", { name: "Mapa", exact: true }).click();
   await expect(page.getByText(/no se pudo cargar una parte del mapa|no pudimos mostrar el mapa/i)).toBeVisible();
   await page.getByRole("button", { name: "Lista", exact: true }).click();
   await expect(page.getByRole("link", { name: /^Ver ficha/ }).first()).toBeVisible();
-});
-
-test("el mapa vuelve a estar disponible cuando el navegador restaura WebGL", async ({ page }) => {
-  await page.route("https://tiles.openfreemap.org/**", route => route.fulfill({
-    contentType: "application/json",
-    body: JSON.stringify({ version: 8, sources: {}, layers: [{ id: "test-background", type: "background", paint: { "background-color": "#edf0e6" } }] }),
-  }));
-  await page.goto("/mapa");
-  await page.getByRole("button", { name: "Mapa", exact: true }).click();
-  const canvas = page.locator(".maplibregl-canvas");
-  await expect(canvas).toBeVisible();
-  const zoom = page.getByRole("button", { name: "Acercar mapa", exact: true });
-  await expect(zoom).toBeEnabled();
-
-  await canvas.evaluate(element => element.dispatchEvent(new Event("webglcontextlost", { bubbles: true, cancelable: true })));
-  await expect(page.getByText(/Intentando recuperarlo/)).toBeVisible();
-  await canvas.evaluate(element => element.dispatchEvent(new Event("webglcontextrestored", { bubbles: true })));
-  await expect(zoom).toBeEnabled();
-  await expect(page.getByText(/Intentando recuperarlo/)).toHaveCount(0);
-  await expect(page.getByText(/No pudimos mostrar el mapa/)).toHaveCount(0);
-});
-
-test("el mapa usa un worker local, consulta el área y sus controles funcionan", async ({ page }) => {
-  await page.route("https://tiles.openfreemap.org/**", route => route.fulfill({
-    contentType: "application/json",
-    body: JSON.stringify({ version: 8, glyphs: "https://synthetic-map.example/fonts/{fontstack}/{range}.pbf", sources: {}, layers: [{ id: "test-background", type: "background", paint: { "background-color": "#edf0e6" } }] }),
-  }));
-  // Empty but valid protobuf: no external glyph/font request is needed by the test.
-  await page.route("https://synthetic-map.example/**", route => route.fulfill({ contentType: "application/x-protobuf", body: Buffer.alloc(0) }));
-  const workerResponse = page.waitForResponse(response => response.url().endsWith("/maplibre/maplibre-gl-worker.mjs") && response.status() === 200);
-  // The only point in this small area is exactly at its center, so clicking the
-  // rendered canvas proves the worker indexed the feature (not just a blank map).
-  await page.goto("/mapa?bbox=-58.451,-34.551,-58.449,-34.549");
-  await page.getByRole("button", { name: "Mapa", exact: true }).click();
-  await workerResponse;
-  await expect(page.locator(".maplibregl-canvas")).toBeVisible();
-  const zoom = page.getByRole("button", { name: "Acercar mapa", exact: true });
-  await expect(zoom).toBeEnabled();
-  await expect(async () => {
-    await page.locator(".maplibregl-canvas").click();
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 1000 });
-  }).toPass({ timeout: 10000 });
-  await expect(page.getByRole("dialog").getByRole("heading", { name: firstName })).toBeVisible();
-  await page.getByRole("button", { name: "Cerrar resumen", exact: true }).click();
-  await zoom.click();
-  const areaResponse = page.waitForResponse(response => response.url().includes("/api/public/geojson?") && response.status() === 200);
-  await page.getByRole("button", { name: "Buscar en esta zona", exact: true }).click();
-  await areaResponse;
-  await expect(page).toHaveURL(/bbox=/);
-  const mapA11y = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
-  expect(mapA11y.violations).toEqual([]);
 });
 
 test("el proxy público rechaza rutas privadas, filtros extra y escrituras", async ({ request }) => {

@@ -174,16 +174,24 @@ input[type="checkbox"], input[type="radio"] { min-width: 22px; min-height: 22px;
 .status-badge { display: inline-flex; align-items: center; min-height: 27px; padding: 0.22rem 0.6rem; background: var(--soft); color: #344b32; border: 1px solid #d1ddc4; border-radius: 3px; font-size: 0.67rem; font-weight: 700; line-height: 1.5; letter-spacing: 0.02em; white-space: normal; }
 .pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-block: 2rem; }
 .pagination p { margin: 0; font-size: 0.85rem; }
-.map-region { min-height: 360px; position: relative; background: #e5ebdd; border: 1px solid #b9c8ae; border-radius: 4px; overflow: hidden; }
-.map-region > .map-canvas, .map-canvas { width: 100%; height: min(65vh, 600px); min-height: 360px; }
-.map-region:focus-within { overflow: visible; }
+.map-region { min-width: 0; position: relative; padding: 1rem; background: #e5ebdd; border: 1px solid #b9c8ae; border-radius: 4px; }
+.work-map { min-width: 0; }
+.map-canvas { position: relative; width: 100%; height: clamp(300px, 56vh, 560px); height: clamp(300px, 56dvh, 560px); overflow: hidden; background: #edf0e6; border: 1px solid #b9c8ae; }
+.map-canvas:focus-visible { outline-offset: 3px; }
+.map-canvas .ol-viewport { width: 100%; height: 100%; overflow: hidden; position: relative; }
+.map-canvas .ol-layer { position: absolute; inset: 0; }
+.map-canvas .ol-layer canvas { max-width: none; }
 .map-status { padding: 0.75rem 1rem; background: white; border-bottom: 1px solid var(--line); font-size: 0.84rem; }
 .map-help { color: var(--muted); font-size: 0.82rem; line-height: 1.6; max-width: 90ch; }
 .map-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-block: 1rem; align-items: center; }
-.map-region .maplibregl-ctrl-group button { width: 44px; height: 44px; }
-.maplibregl-ctrl-attrib a { text-decoration: underline; }
-.maplibregl-popup-content { font: 0.9rem/1.5 Arial, Helvetica, sans-serif; border-radius: 4px; padding: 1rem 2rem 1rem 1rem; color: var(--ink); }
-.maplibregl-popup-close-button { width: 44px; height: 44px; font-size: 1.5rem; }
+.map-controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-block: 0.75rem; }
+.map-controls button { min-width: 44px; min-height: 44px; padding: 0.5rem 0.75rem; }
+.map-attribution { margin: 0; padding: 0.6rem 0; color: var(--ink); font-size: 0.75rem; line-height: 1.6; overflow-wrap: anywhere; }
+.work-map .map-attribution .ol-attribution { position: static; max-width: none; padding: 0; background: transparent; border-radius: 0; text-align: left; }
+.map-attribution .ol-attribution ul { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; margin: 0; padding: 0; color: inherit; font: inherit; list-style: none; text-shadow: none; }
+.map-attribution .ol-attribution li { display: inline; }
+.map-attribution .ol-attribution.ol-uncollapsible button { display: none; }
+.map-attribution a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }
 .map-error { padding: 1.5rem; }
 .detail-panel { border: 1px solid var(--line); border-radius: 4px; padding: 1.5rem; background: white; margin-block: 1.5rem; }
 .detail-panel h2 { font-size: 1.5rem; }
@@ -306,9 +314,10 @@ input[type="checkbox"], input[type="radio"] { min-width: 22px; min-height: 22px;
   .work-card-header, .card-heading { flex-direction: column; gap: 0.5rem; }
   .detail-grid { grid-template-columns: 1fr; gap: 1rem; margin-top: 1rem; }
   .detail-panel { padding: 1.2rem; }
-  .map-region > .map-canvas, .map-canvas { height: 55vh; min-height: 320px; }
-  .map-region { min-height: 320px; }
   .map-actions .button { flex: 1 1 auto; font-size: 0.85rem; }
+}
+@media (max-height: 550px) and (orientation: landscape) {
+  .map-canvas { height: clamp(220px, 70vh, 440px); height: clamp(220px, 70dvh, 440px); }
 }
 @media (max-width: 480px) {
   .filters > label, .filters .field { flex-basis: 100%; }

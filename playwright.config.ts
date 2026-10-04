@@ -12,12 +12,13 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     serviceWorkers: "block",
-    // Deterministic WebGL in headless CI; these checks are not hardware benchmarks.
-    launchOptions: { args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] },
   },
   projects: [
-    { name: "desktop-chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } } },
-    { name: "mobile-chromium", use: { ...devices["Pixel 5"], viewport: { width: 390, height: 844 } } },
+    { name: "desktop-chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 }, launchOptions: { args: ["--disable-webgl"] } } },
+    { name: "mobile-chromium", use: { ...devices["Pixel 5"], viewport: { width: 390, height: 844 }, launchOptions: { args: ["--disable-webgl"] } } },
+    { name: "tablet-chromium", testMatch: "map-compatibility.spec.ts", use: { ...devices["Pixel 5"], viewport: { width: 820, height: 1180 }, launchOptions: { args: ["--disable-webgl"] } } },
+    { name: "desktop-firefox", testMatch: "map-compatibility.spec.ts", use: { ...devices["Desktop Firefox"], viewport: { width: 1280, height: 900 } } },
+    { name: "mobile-webkit", testMatch: "map-compatibility.spec.ts", use: { ...devices["iPhone 13"], viewport: { width: 390, height: 844 } } },
   ],
   webServer: [
     { command: "node tools/mock-public-api.mjs", url: "http://127.0.0.1:4100/__health", reuseExistingServer: false, timeout: 20000 },

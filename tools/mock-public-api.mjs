@@ -5,6 +5,9 @@ import { fullFormats } from "ajv-formats/dist/formats.js";
 import examples from "../contracts/examples.json" with { type: "json" };
 import schemas from "../contracts/schemas.json" with { type: "json" };
 
+const port = Number(process.env.MOCK_API_PORT ?? 4100);
+if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error("Invalid mock API port");
+
 const ajv = new Ajv({ allErrors: true, strict: false, formats: fullFormats });
 ajv.addSchema({ $id: "fixture-contract", components: { schemas } });
 function validate(schema, value) {
@@ -29,7 +32,13 @@ const items = Array.from({ length: 24 }, (_, index) => {
   if (located) {
     const feature = structuredClone(examples.geojsonPopulated.features[0]);
     feature.id = id("4", number);
-    feature.geometry = { type: "Point", coordinates: [-58.45 + index * 0.004, -34.55 + index * 0.002] };
+    const longitude = -58.45 + index * 0.004;
+    const latitude = -34.55 + index * 0.002;
+    feature.geometry = number === 2
+      ? { type: "LineString", coordinates: [[longitude - 0.0005, latitude], [longitude + 0.0005, latitude]] }
+      : number === 3
+        ? { type: "Polygon", coordinates: [[[longitude - 0.0004, latitude - 0.0004], [longitude + 0.0004, latitude - 0.0004], [longitude + 0.0004, latitude + 0.0004], [longitude - 0.0004, latitude + 0.0004], [longitude - 0.0004, latitude - 0.0004]]] }
+        : { type: "Point", coordinates: [longitude, latitude] };
     feature.properties = { ...feature.properties, obraId, revisionId, nombre, estado, fuentes, ubicacionId: feature.id };
     features.push(feature);
     detail.ubicaciones = [{ ...detail.ubicaciones[0], geometria: feature.geometry, ubicacionId: feature.id }];
@@ -45,8 +54,16 @@ function inArea(item, area) {
   const [west, south, east, north] = area;
   return features.some(feature => {
     if (feature.properties.obraId !== item.obraId) return false;
-    const [longitude, latitude] = feature.geometry.coordinates;
-    return longitude >= west && longitude <= east && latitude >= south && latitude <= north;
+    const positions = [];
+    const collect = coordinates => {
+      if (typeof coordinates[0] === "number") positions.push(coordinates);
+      else coordinates.forEach(collect);
+    };
+    collect(feature.geometry.coordinates);
+    return Math.max(...positions.map(position => position[0])) >= west &&
+      Math.min(...positions.map(position => position[0])) <= east &&
+      Math.max(...positions.map(position => position[1])) >= south &&
+      Math.min(...positions.map(position => position[1])) <= north;
   });
 }
 function filtered(params) {
@@ -68,7 +85,7 @@ function pageOf(values, params, defaultLimit) {
   return { page, limit, nextCursor: offset + limit < values.length ? `fixture-offset-${offset + limit}` : null };
 }
 const server = createServer((request, response) => {
-  const url = new URL(request.url, "http://127.0.0.1:4100");
+  const url = new URL(request.url, `http://127.0.0.1:${port}`);
   const send = (status, value) => { response.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" }); response.end(JSON.stringify(value)); };
   if (request.method !== "GET") return send(405, { error: { code: "METHOD_NOT_ALLOWED", message: "Read-only fixture server", requestId: null } });
   if (url.pathname === "/__health") return send(200, { fixture: "synthetic-e2e-only" });
@@ -88,5 +105,5 @@ const server = createServer((request, response) => {
   }
   return send(404, { error: { code: "NOT_FOUND", message: "Synthetic publication not found", requestId: null } });
 });
-server.listen(4100, "127.0.0.1", () => console.log("Isolated synthetic public API: http://127.0.0.1:4100"));
+server.listen(port, "127.0.0.1", () => console.log(`Isolated synthetic public API: http://127.0.0.1:${port}`));
 for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => server.close(() => process.exit(0)));
