@@ -55,7 +55,7 @@ export default function WorkMap(props: WorkMapProps) {
   const current = useRef(props);
   const initialized = useRef(false);
   const instructionId = useId();
-  const [status, setStatus] = useState<"loading" | "ready" | "unavailable">("loading");
+  const [status, setStatus] = useState<"loading" | "recovering" | "ready" | "unavailable">("loading");
   const [warning, setWarning] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   current.current = props;
@@ -65,6 +65,7 @@ export default function WorkMap(props: WorkMapProps) {
     let active = true;
     let hadProviderError = false;
     let map: LibreMap;
+    let contextRecoveryTimeout = 0;
     initialized.current = false;
     setStatus("loading");
     setWarning(null);
@@ -100,8 +101,13 @@ export default function WorkMap(props: WorkMapProps) {
       map.addControl(new AttributionControl({ compact: false }), "bottom-left");
       map.getCanvas().setAttribute("aria-describedby", instructionId);
       fit(map, current.current.focusBBox ?? current.current.initialBBox);
-    } catch {
+    } catch (error) {
       window.clearTimeout(timeout);
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[public-map] No se pudo inicializar MapLibre.", {
+        name: error instanceof Error ? error.name : "UnknownError",
+        message: message.replace(/https?:\/\/[^\s)]+/gi, "[url]").slice(0, 240),
+      });
       setStatus("unavailable");
       mapRef.current?.remove();
       mapRef.current = null;
@@ -163,7 +169,19 @@ export default function WorkMap(props: WorkMapProps) {
       if (active) setWarning("No se pudo cargar una parte del mapa. La lista sigue disponible para consultar las obras.");
     });
     map.on("webglcontextlost", () => {
-      if (active) setStatus("unavailable");
+      if (!active) return;
+      setStatus("recovering");
+      window.clearTimeout(contextRecoveryTimeout);
+      contextRecoveryTimeout = window.setTimeout(() => {
+        if (active) setStatus("unavailable");
+      }, 8000);
+    });
+    map.on("webglcontextrestored", () => {
+      if (!active) return;
+      window.clearTimeout(contextRecoveryTimeout);
+      map.resize();
+      setStatus("ready");
+      if (!hadProviderError) setWarning(null);
     });
     const observer = new ResizeObserver(() => map.resize());
     observer.observe(container.current);
@@ -171,6 +189,7 @@ export default function WorkMap(props: WorkMapProps) {
       active = false;
       initialized.current = false;
       window.clearTimeout(timeout);
+      window.clearTimeout(contextRecoveryTimeout);
       observer.disconnect();
       map.remove();
       mapRef.current = null;
@@ -209,6 +228,7 @@ export default function WorkMap(props: WorkMapProps) {
         <button className="button button-secondary" style={controlStyle} type="button" disabled={status !== "ready"} aria-label="Mover mapa al este" onClick={() => pan(150, 0)}>→</button>
       </div>
       {status === "loading" && <p role="status">Cargando mapa…</p>}
+      {status === "recovering" && <p role="status">El mapa se pausó momentáneamente. Intentando recuperarlo…</p>}
       {status === "unavailable" && <p role="status">No pudimos mostrar el mapa en este dispositivo. Podés explorar las mismas obras desde la lista.</p>}
       {warning && <p role="status">{warning}</p>}
       {(warning || status === "unavailable") && <button type="button" className="button button-secondary" onClick={() => setAttempt((value) => value + 1)}>Reintentar mapa</button>}

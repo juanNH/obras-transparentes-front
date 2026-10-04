@@ -159,6 +159,26 @@ test("el mapa se carga al elegirlo y un fallo del proveedor permite seguir con l
   await expect(page.getByRole("link", { name: /^Ver ficha/ }).first()).toBeVisible();
 });
 
+test("el mapa vuelve a estar disponible cuando el navegador restaura WebGL", async ({ page }) => {
+  await page.route("https://tiles.openfreemap.org/**", route => route.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({ version: 8, sources: {}, layers: [{ id: "test-background", type: "background", paint: { "background-color": "#edf0e6" } }] }),
+  }));
+  await page.goto("/mapa");
+  await page.getByRole("button", { name: "Mapa", exact: true }).click();
+  const canvas = page.locator(".maplibregl-canvas");
+  await expect(canvas).toBeVisible();
+  const zoom = page.getByRole("button", { name: "Acercar mapa", exact: true });
+  await expect(zoom).toBeEnabled();
+
+  await canvas.evaluate(element => element.dispatchEvent(new Event("webglcontextlost", { bubbles: true, cancelable: true })));
+  await expect(page.getByText(/Intentando recuperarlo/)).toBeVisible();
+  await canvas.evaluate(element => element.dispatchEvent(new Event("webglcontextrestored", { bubbles: true })));
+  await expect(zoom).toBeEnabled();
+  await expect(page.getByText(/Intentando recuperarlo/)).toHaveCount(0);
+  await expect(page.getByText(/No pudimos mostrar el mapa/)).toHaveCount(0);
+});
+
 test("el mapa usa un worker local, consulta el área y sus controles funcionan", async ({ page }) => {
   await page.route("https://tiles.openfreemap.org/**", route => route.fulfill({
     contentType: "application/json",
