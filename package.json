@@ -3,27 +3,45 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Base de integración del sitio público de Obras Transparentes",
+  "description": "Sitio público de Obras Transparentes",
   "engines": {
     "node": ">=24.21.0 <25",
     "npm": ">=11.19.0 <12"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc --noEmit",
+    "predev": "node tools/prepare-map-assets.mjs",
+    "prebuild": "node tools/prepare-map-assets.mjs",
+    "dev": "next dev --webpack --port 3002",
+    "build": "next build --webpack",
+    "start": "next start --port 3002",
+    "build:api": "tsc -p tsconfig.build.json",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:proxy": "node --test test/dev-proxy.test.mjs",
+    "test:e2e": "playwright test",
     "contract:sync": "node tools/sync-contract.mjs",
     "contract:check": "node tools/sync-contract.mjs --check",
     "dev:api": "node --env-file-if-exists=.env tools/dev-proxy.mjs",
-    "api:check": "node --env-file-if-exists=.env tools/check-api.mjs"
+    "api:check": "npm run build:api && node --env-file-if-exists=.env tools/check-api.mjs"
   },
   "dependencies": {
+    "@fontsource/noto-sans": "5.3.0",
     "ajv": "8.20.0",
-    "ajv-formats": "3.0.1"
+    "ajv-formats": "3.0.1",
+    "next": "16.3.8",
+    "ol": "10.10.0",
+    "ol-mapbox-style": "13.5.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "0.0.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "@types/geojson": "7946.0.16",
     "@types/node": "24.19.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "openapi-typescript": "7.13.0",
     "typescript": "5.9.3",
     "vitest": "5.0.3"

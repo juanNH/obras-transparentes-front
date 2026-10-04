@@ -5,3 +5,10 @@ coverage/
 .env.*
 !.env.example
 *.tsbuildinfo
+.next/
+out/
+test-results/
+playwright-report/
+/public/maplibre/
+/public/map-fonts/
+/artifacts/local-validation/

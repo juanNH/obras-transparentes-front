@@ -12,7 +12,7 @@ Fecha de consulta y decisión local: **2026-10-03**, zona horaria `America/Bueno
 | [Modelo de obras](https://docs.google.com/document/d/1dnX32wzOSXM5769edSRt1MODNLdlyqS9qsiKtFOJ9v8/edit)                                | Estructura y relaciones de la información pública; consultado en esta etapa.                                                                      |
 | [Plan local de la etapa 1](etapa-1.md)                                                                                                 | Decisiones y alcance de la base de integración; checklist de validación y pendientes.                                                             |
 
-La instrucción vigente del trabajo fija NestJS y PostgreSQL/PostGIS como backend existente. Las referencias genéricas del plan a otras alternativas de backend no autorizan una reescritura. React/Vite está planteado para backoffice; la elección del framework público continúa abierta.
+La instrucción vigente fija NestJS y PostgreSQL/PostGIS. Las referencias genéricas a alternativas de backend no autorizan una reescritura. React/Vite se conserva para backoffice; la [etapa 2](etapa-2.md), autorizada el 2026-10-04, adopta Next.js para el público y documenta verificación actual de OpenFreeMap y sus límites.
 
 El plan registra 557 obras normalizadas de CABA y una ficha publicada de muestra. No se verificó con ello el número de obras publicadas en la API actual ni una cobertura nacional. Al comenzar la etapa 1, el repositorio frontend sólo tenía un `README.md`: no había benchmark móvil, bundle ni UI existente que evaluar.
 
@@ -45,7 +45,8 @@ Una instantánea OpenAPI sólo acredita el contrato de la revisión del backend 
 | Métricas móviles            | [Web Vitals](https://web.dev/articles/vitals)                                                                                                       | LCP, INP y CLS, y evaluación al percentil 75 por dispositivo; complementar con tiempos propios de exploración.         |
 | Accesibilidad               | [W3C: WCAG 2.2](https://www.w3.org/TR/WCAG22/)                                                                                                      | Objetivo AA: teclado, foco, semántica, gestos alternativos, controles táctiles y alternativa textual completa al mapa. |
 | Geolocalización             | [W3C: Geolocation](https://www.w3.org/TR/geolocation/)                                                                                              | Permiso, tratamiento de errores y privacidad; la decisión de producto exige inicio explícito y alternativa manual.     |
-| Motor de mapa               | [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/)                                                                                         | Instalación, fuentes, controles, comportamiento cliente y preparación de un prototipo móvil.                           |
+| Motor de mapa | [OpenLayers: navegadores](https://openlayers.org/doc/tutorials/background.html), [Canvas vectorial](https://openlayers.org/en/latest/apidoc/module-ol_renderer_canvas_VectorTileLayer-CanvasVectorTileLayerRenderer.html), [ol-mapbox-style](https://openlayers.org/ol-mapbox-style/index.html) | Renderer sin WebGL, fuentes locales, integración y límites de compatibilidad. |
+| Antecedente WebGL | [MapLibre v5 a v6](https://maplibre.org/maplibre-gl-js/docs/guides/v5-to-v6-migration-guide/) | v6 requiere WebGL2. Una prueba con SwiftShader no acredita un navegador con WebGL deshabilitado. |
 | Servicio de mapa propuesto  | [OpenFreeMap](https://openfreemap.org/) y [guía de integración](https://openfreemap.org/quick_start/)                                               | Instancia pública sin cargo por vistas o solicitudes; atribución y opciones de alojamiento.                            |
 | Condiciones del servicio    | [OpenFreeMap: términos](https://openfreemap.org/tos/) y [privacidad](https://openfreemap.org/privacy/)                                              | Verificar vigencia, disponibilidad, tratamiento de solicitudes y limitaciones antes del piloto.                        |
 | Alternativas de tiles       | [OSMF: política de tiles](https://operations.osmfoundation.org/policies/tiles/)                                                                     | No confundir licencia de los datos OSM con autorización para consumo irrestricto de su servidor público de tiles.      |
@@ -54,7 +55,7 @@ Una instantánea OpenAPI sólo acredita el contrato de la revisión del backend 
 
 ## Criterios para reutilizar estas referencias
 
-Separar siempre requisito de producto, hipótesis técnica y evidencia observada. La exploración accesible, la geolocalización opcional y las URLs compartibles son requisitos; Next.js, la vista inicial del explorador, el panel deslizable y MapLibre + OpenFreeMap necesitan decisiones o validaciones adicionales.
+Separar requisito, hipótesis y evidencia. La exploración accesible, geolocalización opcional y URLs compartibles son requisitos. Las decisiones de Next.js, lista inicial, panel y OpenLayers Canvas + OpenFreeMap están en etapa 2; no reemplazan validación con datos/dispositivos reales.
 
 La gratuidad por uso de OpenFreeMap no constituye garantía de disponibilidad ni elimina posibles costos de alojamiento propio. Su documentación indica que la instancia pública no ofrece SLA. Conservar la atribución aplicable y diseñar un cambio de proveedor que contemple estilo, fuentes, tiles, sprites y glifos; no asumir que cambiar una única URL siempre alcance.
 
