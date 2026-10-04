@@ -93,7 +93,11 @@ La ejecución contra la instancia actual informó `incomplete`, `NO_PUBLIC_WORKS
 
 No existe todavía un bundle web ni medición móvil. Los archivos locales sin comprimir miden aproximadamente 122 kB (OpenAPI), 79 kB (esquemas runtime) y 10 kB (ejemplos); sólo los esquemas runtime se importan en el cliente. Estos tamaños de archivos no son una medición del JavaScript transferido. En el prototipo se decidirá si conviene compilar validadores o separar la validación de fichas para cumplir el presupuesto móvil.
 
-## Pendientes para la próxima etapa
+## Continuidad hacia la etapa 2
+
+La [etapa 2](etapa-2.md) implementa Next.js y mapa diferido. Sus decisiones/validaciones actualizan las hipótesis de interfaz/framework que se enumeran abajo; esta página conserva el registro histórico. Sigue pendiente aceptación con fichas reales porque el catálogo continúa vacío.
+
+## Pendientes registrados al cerrar esta etapa
 
 - Definir búsqueda por texto (`q`) y filtro por organismo con semántica y cobertura conocidas antes de agregarlos al cliente.
 - Unificar la representación de territorio y la relación entre provincia, municipio y otros niveles disponibles; no asumir que los datos de CABA generalizan al resto del país.

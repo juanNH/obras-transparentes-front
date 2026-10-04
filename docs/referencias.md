@@ -12,7 +12,7 @@ Fecha de consulta y decisión local: **2026-10-03**, zona horaria `America/Bueno
 | [Modelo de obras](https://docs.google.com/document/d/1dnX32wzOSXM5769edSRt1MODNLdlyqS9qsiKtFOJ9v8/edit)                                | Estructura y relaciones de la información pública; consultado en esta etapa.                                                                      |
 | [Plan local de la etapa 1](etapa-1.md)                                                                                                 | Decisiones y alcance de la base de integración; checklist de validación y pendientes.                                                             |
 
-La instrucción vigente del trabajo fija NestJS y PostgreSQL/PostGIS como backend existente. Las referencias genéricas del plan a otras alternativas de backend no autorizan una reescritura. React/Vite está planteado para backoffice; la elección del framework público continúa abierta.
+La instrucción vigente fija NestJS y PostgreSQL/PostGIS. Las referencias genéricas a alternativas de backend no autorizan una reescritura. React/Vite se conserva para backoffice; la [etapa 2](etapa-2.md), autorizada el 2026-10-04, adopta Next.js para el público y documenta verificación actual de OpenFreeMap y sus límites.
 
 El plan registra 557 obras normalizadas de CABA y una ficha publicada de muestra. No se verificó con ello el número de obras publicadas en la API actual ni una cobertura nacional. Al comenzar la etapa 1, el repositorio frontend sólo tenía un `README.md`: no había benchmark móvil, bundle ni UI existente que evaluar.
 
@@ -54,7 +54,7 @@ Una instantánea OpenAPI sólo acredita el contrato de la revisión del backend 
 
 ## Criterios para reutilizar estas referencias
 
-Separar siempre requisito de producto, hipótesis técnica y evidencia observada. La exploración accesible, la geolocalización opcional y las URLs compartibles son requisitos; Next.js, la vista inicial del explorador, el panel deslizable y MapLibre + OpenFreeMap necesitan decisiones o validaciones adicionales.
+Separar requisito, hipótesis y evidencia. La exploración accesible, geolocalización opcional y URLs compartibles son requisitos. Las decisiones de Next.js, lista inicial, panel y MapLibre + OpenFreeMap están en etapa 2; no reemplazan validación con datos/dispositivos reales.
 
 La gratuidad por uso de OpenFreeMap no constituye garantía de disponibilidad ni elimina posibles costos de alojamiento propio. Su documentación indica que la instancia pública no ofrece SLA. Conservar la atribución aplicable y diseñar un cambio de proveedor que contemple estilo, fuentes, tiles, sprites y glifos; no asumir que cambiar una única URL siempre alcance.
 
