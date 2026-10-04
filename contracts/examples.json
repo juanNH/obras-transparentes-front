@@ -1,0 +1,361 @@
+{
+  "listPopulated": {
+    "items": [
+      {
+        "obraId": "10000000-0000-4000-8000-000000000001",
+        "revisionId": "20000000-0000-4000-8000-000000000001",
+        "numeroRevision": 1,
+        "nombre": "EJEMPLO SINTÉTICO — Ampliación de escuela y acceso",
+        "estado": "IN_PROGRESS",
+        "clasificaciones": [
+          {
+            "esquema": "sector",
+            "codigo": "educacion",
+            "etiqueta": "Educación"
+          }
+        ],
+        "programas": [
+          "Programa sintético de demostración"
+        ],
+        "territorios": [
+          {
+            "esquema": "nacion.departamento",
+            "codigo": "SINTETICO",
+            "nombre": "Territorio sintético",
+            "condicion": "REPORTED"
+          }
+        ],
+        "fuentes": [
+          {
+            "codigo": "nacion-obras",
+            "recursoId": "30000000-0000-4000-8000-000000000001",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "urlCatalogo": "https://example.org/datos-sinteticos"
+          }
+        ],
+        "tieneGeometria": true,
+        "metadata": {
+          "publicadoEn": "2026-01-15T12:00:00.000Z",
+          "fechaActualizacionFuente": null
+        }
+      }
+    ],
+    "nextCursor": null,
+    "limit": 20,
+    "catalogoVersion": "7"
+  },
+  "listEmpty": {
+    "items": [],
+    "nextCursor": null,
+    "limit": 20,
+    "catalogoVersion": "0"
+  },
+  "detailPopulated": {
+    "schemaVersion": "obra@1",
+    "nombre": "EJEMPLO SINTÉTICO — Ampliación de escuela y acceso",
+    "estado": "IN_PROGRESS",
+    "clasificaciones": [
+      {
+        "esquema": "sector",
+        "codigo": "educacion",
+        "etiqueta": "Educación"
+      }
+    ],
+    "programas": [
+      "Programa sintético de demostración"
+    ],
+    "territorios": [
+      {
+        "esquema": "nacion.departamento",
+        "codigo": "SINTETICO",
+        "nombre": "Territorio sintético",
+        "condicion": "REPORTED"
+      }
+    ],
+    "educacion": {
+      "establecimientos": []
+    },
+    "avanceFisico": "42.50",
+    "avanceFinanciero": null,
+    "fechasInformadas": [
+      {
+        "campo": "inicio",
+        "anio": "2025",
+        "precision": "YEAR",
+        "naturaleza": null
+      }
+    ],
+    "importes": [
+      {
+        "valor": "123456789.01",
+        "moneda": "ARS",
+        "base": null,
+        "concepto": "TOTAL_OBRA_REPORTADO",
+        "alcance": null
+      }
+    ],
+    "ubicaciones": [
+      {
+        "clave": "punto-sintetico",
+        "geometria": {
+          "type": "Point",
+          "coordinates": [
+            -58.45,
+            -34.55
+          ]
+        },
+        "condicion": "ACCEPTED",
+        "crs": {
+          "codigo": "EPSG:4326",
+          "fundamento": "REVIEW_DECISION",
+          "condicion": "APPROVED_ASSUMPTION"
+        },
+        "precision": "geometria_reportada_sin_precision",
+        "controles": [
+          "SYNTHETIC_EXAMPLE"
+        ],
+        "ubicacionId": "40000000-0000-4000-8000-000000000001"
+      },
+      {
+        "clave": "tramo-sintetico",
+        "geometria": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -58.46,
+              -34.55
+            ],
+            [
+              -58.45,
+              -34.54
+            ]
+          ]
+        },
+        "condicion": "ACCEPTED",
+        "crs": {
+          "codigo": "EPSG:4326",
+          "fundamento": "REVIEW_DECISION",
+          "condicion": "APPROVED_ASSUMPTION"
+        },
+        "precision": "geometria_reportada_sin_precision",
+        "controles": [
+          "SYNTHETIC_EXAMPLE"
+        ],
+        "ubicacionId": "40000000-0000-4000-8000-000000000002"
+      }
+    ],
+    "calidadCampos": {
+      "avanceFinanciero": {
+        "estado": "NOT_REPORTED",
+        "motivo": "Ejemplo sintético sin dato informado."
+      }
+    },
+    "procedencia": {},
+    "fuentes": [
+      {
+        "codigo": "nacion-obras",
+        "recursoId": "30000000-0000-4000-8000-000000000001",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "urlCatalogo": "https://example.org/datos-sinteticos"
+      }
+    ],
+    "obraId": "10000000-0000-4000-8000-000000000001",
+    "revisionId": "20000000-0000-4000-8000-000000000001",
+    "numeroRevision": 1,
+    "publicadaActualmente": true,
+    "catalogoVersion": "7",
+    "metadata": {
+      "publicadoEn": "2026-01-15T12:00:00.000Z",
+      "fechaActualizacionFuente": null
+    }
+  },
+  "detailPartial": {
+    "schemaVersion": "obra@1",
+    "nombre": "EJEMPLO SINTÉTICO — Obra sin ubicación aprobada",
+    "estado": null,
+    "clasificaciones": [],
+    "programas": [],
+    "territorios": [],
+    "educacion": {
+      "establecimientos": []
+    },
+    "avanceFisico": null,
+    "avanceFinanciero": null,
+    "fechasInformadas": [],
+    "importes": [],
+    "ubicaciones": [
+      {
+        "clave": "ubicacion-omitida",
+        "geometria": null,
+        "condicion": "OMITTED",
+        "crs": null,
+        "precision": "coordenada_reportada_sin_precision",
+        "controles": [],
+        "ubicacionId": null
+      }
+    ],
+    "calidadCampos": {
+      "estado": {
+        "estado": "NOT_REPORTED"
+      },
+      "avanceFisico": {
+        "estado": "NOT_REPORTED"
+      }
+    },
+    "procedencia": {},
+    "fuentes": [
+      {
+        "codigo": "nacion-obras",
+        "recursoId": "30000000-0000-4000-8000-000000000001",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "urlCatalogo": "https://example.org/datos-sinteticos"
+      }
+    ],
+    "obraId": "10000000-0000-4000-8000-000000000002",
+    "revisionId": "20000000-0000-4000-8000-000000000002",
+    "numeroRevision": 1,
+    "publicadaActualmente": false,
+    "catalogoVersion": "7",
+    "metadata": {
+      "publicadoEn": "2026-01-15T12:00:00.000Z",
+      "fechaActualizacionFuente": null
+    }
+  },
+  "geojsonPopulated": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": "40000000-0000-4000-8000-000000000001",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -58.45,
+            -34.55
+          ]
+        },
+        "properties": {
+          "obraId": "10000000-0000-4000-8000-000000000001",
+          "revisionId": "20000000-0000-4000-8000-000000000001",
+          "ubicacionId": "40000000-0000-4000-8000-000000000001",
+          "nombre": "EJEMPLO SINTÉTICO — Ampliación de escuela y acceso",
+          "estado": "IN_PROGRESS",
+          "clasificaciones": [
+            {
+              "esquema": "sector",
+              "codigo": "educacion",
+              "etiqueta": "Educación"
+            }
+          ],
+          "fuentes": [
+            {
+              "codigo": "nacion-obras",
+              "recursoId": "30000000-0000-4000-8000-000000000001",
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "urlCatalogo": "https://example.org/datos-sinteticos"
+            }
+          ],
+          "calidad": {
+            "condicion": "ACCEPTED",
+            "crs": {
+              "codigo": "EPSG:4326",
+              "fundamento": "REVIEW_DECISION",
+              "condicion": "APPROVED_ASSUMPTION"
+            },
+            "precision": "geometria_reportada_sin_precision",
+            "controles": [
+              "SYNTHETIC_EXAMPLE"
+            ]
+          }
+        }
+      },
+      {
+        "type": "Feature",
+        "id": "40000000-0000-4000-8000-000000000002",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -58.46,
+              -34.55
+            ],
+            [
+              -58.45,
+              -34.54
+            ]
+          ]
+        },
+        "properties": {
+          "obraId": "10000000-0000-4000-8000-000000000001",
+          "revisionId": "20000000-0000-4000-8000-000000000001",
+          "ubicacionId": "40000000-0000-4000-8000-000000000002",
+          "nombre": "EJEMPLO SINTÉTICO — Ampliación de escuela y acceso",
+          "estado": "IN_PROGRESS",
+          "clasificaciones": [
+            {
+              "esquema": "sector",
+              "codigo": "educacion",
+              "etiqueta": "Educación"
+            }
+          ],
+          "fuentes": [
+            {
+              "codigo": "nacion-obras",
+              "recursoId": "30000000-0000-4000-8000-000000000001",
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "urlCatalogo": "https://example.org/datos-sinteticos"
+            }
+          ],
+          "calidad": {
+            "condicion": "ACCEPTED",
+            "crs": {
+              "codigo": "EPSG:4326",
+              "fundamento": "REVIEW_DECISION",
+              "condicion": "APPROVED_ASSUMPTION"
+            },
+            "precision": "geometria_reportada_sin_precision",
+            "controles": [
+              "SYNTHETIC_EXAMPLE"
+            ]
+          }
+        }
+      }
+    ],
+    "nextCursor": null,
+    "catalogoVersion": "7"
+  },
+  "geojsonEmpty": {
+    "type": "FeatureCollection",
+    "features": [],
+    "nextCursor": null,
+    "catalogoVersion": "0"
+  },
+  "errorCatalogChanged": {
+    "error": {
+      "code": "CATALOG_CHANGED",
+      "message": "El catálogo cambió entre páginas. Reiniciá la consulta sin cursor.",
+      "requestId": "synthetic-request"
+    }
+  },
+  "errorValidation": {
+    "error": {
+      "code": "VALIDATION_FAILED",
+      "message": "Los parámetros no cumplen el contrato.",
+      "requestId": "synthetic-request"
+    }
+  },
+  "errorNotFound": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "No se encontró una revisión publicada de esta obra.",
+      "requestId": "synthetic-request"
+    }
+  },
+  "errorBroadBbox": {
+    "error": {
+      "code": "BBOX_TOO_BROAD",
+      "message": "La respuesta geográfica supera 10 MiB. Reducí el bbox o el límite de Features.",
+      "requestId": "synthetic-request"
+    }
+  }
+}

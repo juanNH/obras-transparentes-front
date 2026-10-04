@@ -1,0 +1,206 @@
+import { describe, expect, it, vi } from "vitest";
+import examples from "../contracts/examples.json" with { type: "json" };
+import {
+  createPublicApi,
+  PublicApiError,
+  assertSameCatalog,
+  serializeBBox,
+} from "../src/api/client.js";
+import { ApiContractError, parsePublicResponse } from "../src/api/contract.js";
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+const mockedFetch = (body: unknown, status = 200) =>
+  vi.fn<typeof fetch>().mockResolvedValue(json(body, status));
+
+describe("Contrato público del consumidor", () => {
+  it("conserva los rangos posicionales de longitud y latitud", () => {
+    const value = structuredClone(examples.geojsonPopulated);
+    value.features[0]!.geometry = { type: "Point", coordinates: [0, 100] };
+    expect(() =>
+      parsePublicResponse("PublicGeoFeatureCollection", value),
+    ).toThrow(ApiContractError);
+    value.features[0]!.geometry = { type: "Point", coordinates: [181, 0] };
+    expect(() =>
+      parsePublicResponse("PublicGeoFeatureCollection", value),
+    ).toThrow(ApiContractError);
+  });
+  it.each([
+    ["PublicWorkListResponse", "listPopulated"],
+    ["PublicWorkListResponse", "listEmpty"],
+    ["PublicWorkDetail", "detailPopulated"],
+    ["PublicWorkDetail", "detailPartial"],
+    ["PublicGeoFeatureCollection", "geojsonPopulated"],
+    ["PublicGeoFeatureCollection", "geojsonEmpty"],
+    ["PublicApiError", "errorCatalogChanged"],
+    ["PublicApiError", "errorValidation"],
+    ["PublicApiError", "errorNotFound"],
+    ["PublicApiError", "errorBroadBbox"],
+  ])("acepta ejemplo sintético %s / %s", (schema, key) => {
+    const value = examples[key as keyof typeof examples];
+    expect(parsePublicResponse(schema, value)).toEqual(value);
+  });
+
+  it("rechaza un detalle incompatible en lugar de presentar una ficha incorrecta", () => {
+    const value = structuredClone(examples.detailPopulated);
+    value.avanceFisico = "101";
+    expect(() => parsePublicResponse("PublicWorkDetail", value)).toThrow(
+      ApiContractError,
+    );
+    expect(() =>
+      parsePublicResponse("PublicWorkDetail", {
+        ...examples.detailPopulated,
+        candidata: { type: "Point", coordinates: [0, 0] },
+      }),
+    ).toThrow(ApiContractError);
+  });
+
+  it("no acepta null como cero ni una versión de catálogo numérica", () => {
+    expect(() =>
+      parsePublicResponse("PublicWorkListResponse", {
+        ...examples.listEmpty,
+        catalogoVersion: 0,
+      }),
+    ).toThrow(ApiContractError);
+    const value = structuredClone(examples.detailPartial);
+    expect(parsePublicResponse("PublicWorkDetail", value)).toEqual(value);
+  });
+
+  it("rechaza geometría pública no aprobada y referencias CRS contradictorias", () => {
+    const detail = examples.detailPopulated;
+    const location = detail.ubicaciones[0]!;
+    for (const invalid of [
+      { ...location, condicion: "PENDING_REVIEW" },
+      { ...location, geometria: null },
+      { ...location, ubicacionId: null },
+      {
+        ...location,
+        crs: { ...location.crs, condicion: "REPORTED_REFERENCE" },
+      },
+    ]) {
+      expect(() =>
+        parsePublicResponse("PublicWorkDetail", {
+          ...detail,
+          ubicaciones: [invalid],
+        }),
+      ).toThrow(ApiContractError);
+    }
+  });
+});
+
+describe("Cliente público", () => {
+  it("conserva cancelaciones y fallas de lectura después de recibir cabeceras", async () => {
+    for (const error of [
+      new DOMException("Cancelado", "AbortError"),
+      new TypeError("Falla de lectura"),
+    ]) {
+      const body = new ReadableStream({
+        start(controller) {
+          controller.error(error);
+        },
+      });
+      const request = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(new Response(body));
+      await expect(createPublicApi({ fetch: request }).list()).rejects.toBe(
+        error,
+      );
+    }
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response("<html>"));
+    await expect(
+      createPublicApi({ fetch: request }).list(),
+    ).rejects.toBeInstanceOf(ApiContractError);
+  });
+  it("serializa área y códigos textuales sin trasladar parámetros de la interfaz", async () => {
+    const request = mockedFetch(examples.listEmpty);
+    const api = createPublicApi({ fetch: request });
+    await api.list({
+      bbox: [-59, -35, -58, -34],
+      territorioEsquema: "pba.municipio",
+      municipioCodigo: "001",
+      tieneGeometria: true,
+      ...{ vista: "mapa", zoom: 12 },
+    });
+    const [url, init] = request.mock.calls[0]!;
+    const query = new URL(String(url), "http://127.0.0.1").searchParams;
+    expect(query.get("municipioCodigo")).toBe("001");
+    expect(query.get("bbox")).toBe("-59,-35,-58,-34");
+    expect(query.get("tieneGeometria")).toBe("true");
+    expect(query.get("limit")).toBe("20");
+    expect(query.has("vista")).toBe(false);
+    expect(query.has("zoom")).toBe(false);
+    expect(init?.credentials).toBe("omit");
+  });
+
+  it("abre la revisión de la tarjeta con cancelación proporcionada por el consumidor", async () => {
+    const request = mockedFetch(examples.detailPopulated);
+    const controller = new AbortController();
+    const api = createPublicApi({
+      baseUrl: "http://127.0.0.1:3000/api/v1",
+      fetch: request,
+    });
+    const detail = examples.detailPopulated;
+    await api.detail(detail.obraId, detail.revisionId, {
+      signal: controller.signal,
+    });
+    expect(String(request.mock.calls[0]![0])).toContain(
+      `?revisionId=${detail.revisionId}`,
+    );
+    expect(request.mock.calls[0]![1]?.signal).toBe(controller.signal);
+  });
+
+  it("rechaza consultas inválidas antes de pedir datos", () => {
+    const request = mockedFetch(examples.listEmpty);
+    const api = createPublicApi({ fetch: request });
+    expect(() => api.list({ limit: 201 })).toThrow(TypeError);
+    expect(() => api.list({ municipioCodigo: "001" })).toThrow(TypeError);
+    expect(() => serializeBBox([179, -10, -179, 10])).toThrow(TypeError);
+    expect(() => serializeBBox([0, 0, Infinity, 1])).toThrow(TypeError);
+    expect(() => api.detail("../admin")).toThrow(TypeError);
+    expect(request).not.toHaveBeenCalled();
+  });
+
+  it("expone cambio de catálogo sin reintentos que mezclen páginas", async () => {
+    const request = mockedFetch(examples.errorCatalogChanged, 409);
+    const api = createPublicApi({ fetch: request });
+    const error = await api
+      .list({ cursor: "opaque-cursor" })
+      .catch((error) => error as PublicApiError);
+    expect(error).toBeInstanceOf(PublicApiError);
+    expect((error as PublicApiError).requiresPaginationRestart).toBe(true);
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(() =>
+      assertSameCatalog(
+        { catalogoVersion: "9007199254740993" },
+        { catalogoVersion: "9007199254740994" },
+      ),
+    ).toThrow(PublicApiError);
+    expect(() =>
+      assertSameCatalog(
+        { catalogoVersion: "9007199254740993" },
+        { catalogoVersion: "9007199254740993" },
+      ),
+    ).not.toThrow();
+  });
+
+  it("distingue datos inválidos de HTTP y de red/cancelación", async () => {
+    await expect(
+      createPublicApi({ fetch: mockedFetch({ items: [] }) }).list(),
+    ).rejects.toBeInstanceOf(ApiContractError);
+    await expect(
+      createPublicApi({
+        fetch: mockedFetch(examples.errorNotFound, 404),
+      }).detail(examples.detailPopulated.obraId),
+    ).rejects.toMatchObject({ status: 404, code: "NOT_FOUND" });
+    const aborted = new DOMException("Cancelado", "AbortError");
+    const request = vi.fn<typeof fetch>().mockRejectedValue(aborted);
+    await expect(createPublicApi({ fetch: request }).list()).rejects.toBe(
+      aborted,
+    );
+  });
+});
