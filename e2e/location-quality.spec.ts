@@ -5,8 +5,12 @@ const workId = "10000000-0000-4000-8000-000000000001";
 const revisionId = "20000000-0000-4000-8000-000000000001";
 const assumedId = "40000000-0000-4000-8000-000000000001";
 const reportedId = "40000000-0000-4000-8000-000000000099";
+const derivedId = "40000000-0000-4000-8000-000000000088";
 const approximate = "Ubicación orientativa · precisión no informada";
 const explanation = "La fuente no informó el sistema de coordenadas. Se aprobó interpretarlas como WGS84 durante la revisión. El punto no acredita el sitio exacto ni el alcance de la obra.";
+const derivedLabel = "Domicilio geocodificado · ubicación orientativa";
+const derivedExplanation = "La fuente no informó coordenadas. El servicio oficial Georef obtuvo un punto a partir de la dirección. Su precisión no está verificada. El punto no acredita el sitio exacto ni el alcance de la obra.";
+const serviceReference = { codigo: "EPSG:4326", fundamento: "OFFICIAL_SERVICE", condicion: "SERVICE_REFERENCE" };
 
 async function isolateLocations(page: Page) {
   await isolateMapNetwork(page);
@@ -19,6 +23,7 @@ async function isolateLocations(page: Page) {
     detail.ubicaciones = [
       { ...original, clave: "supuesto", ubicacionId: assumedId, geometria: { type: "Point", coordinates: [-58.45, -34.55] }, crs: { codigo: "EPSG:4326", fundamento: "REVIEW_DECISION", condicion: "APPROVED_ASSUMPTION" }, precision: "coordenada_reportada_sin_precision", controles: ["WGS84_ASSUMPTION_APPROVED", "POSTGIS_VALID"] },
       { ...original, clave: "establecimiento", ubicacionId: reportedId, geometria: { type: "Point", coordinates: [-58.40, -34.58] }, crs: { codigo: "EPSG:4326", fundamento: "CATALOG_METADATA", condicion: "REPORTED_REFERENCE" }, precision: "ubicacion_establecimiento_reportada", controles: ["CATALOG_CRS_REFERENCE", "POSTGIS_VALID"] },
+      { ...original, clave: "domicilio-geocodificado", ubicacionId: derivedId, origenGeometria: "ADDRESS_GEOCODE", geometria: { type: "Point", coordinates: [-58.43, -34.57] }, crs: serviceReference, precision: "coordenada_reportada_sin_precision", controles: ["OFFICIAL_ADDRESS_GEOCODE", "POSTGIS_VALID"] },
     ];
     await route.fulfill({ response, json: detail });
   });
@@ -86,6 +91,78 @@ test("una ubicación ajena al detalle no se sustituye por otra aceptada", async 
   await page.goto(`/mapa?obra=${workId}&revisionId=${revisionId}&ubicacionId=40000000-0000-4000-8000-000000000055`);
   await expect(page.locator(".selection-strip")).toContainText("La ubicación elegida no está aceptada en esta revisión");
   await expect(page.locator(".map-region .location-quality")).toHaveCount(0);
+});
+
+test("un domicilio derivado mantiene su explicación en selección por teclado y resumen", async ({ page }, testInfo) => {
+  await page.goto(`/mapa?obra=${workId}&revisionId=${revisionId}&ubicacionId=${assumedId}`);
+  const selector = page.getByRole("combobox", { name: "Ubicación para consultar" });
+  await expect(selector).toHaveValue(assumedId);
+  await selector.focus();
+  await selector.press("End");
+  await expect(selector).toHaveValue(derivedId);
+  await expect(selector).toBeFocused();
+  const quality = page.locator(".map-region .selected-location-quality");
+  await expect(quality).toContainText(derivedLabel);
+  await expect(quality).toContainText(derivedExplanation);
+  await expect(quality).toContainText("salida del servicio oficial; no declara el sistema de coordenadas de la fuente");
+  await expect(quality).not.toContainText("Coordenada reportada");
+  await expect(quality).not.toContainText("supuesto aprobado");
+  expect(new URL(page.url()).searchParams.get("ubicacionId")).toBe(derivedId);
+  await page.locator(".selection-strip").getByRole("button", { name: "Ver resumen", exact: true }).click();
+  const derivedSummary = page.getByRole("dialog").locator(".location-list > li").filter({ hasText: derivedLabel });
+  await expect(derivedSummary).toContainText(derivedExplanation);
+  await expect(derivedSummary).not.toContainText("Coordenada reportada");
+  await page.getByRole("button", { name: "Cerrar resumen", exact: true }).click();
+  await page.locator(".map-region").screenshot({ path: testInfo.outputPath("domicilio-geocodificado.png") });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("la ficha y el BFF entregan el origen derivado sin informes administrativos", async ({ page, request }) => {
+  const fixtureWork = "10000000-0000-4000-8000-000000000005";
+  const fixtureRevision = "20000000-0000-4000-8000-000000000005";
+  const path = `/obras/${fixtureWork}?revisionId=${fixtureRevision}`;
+  const publicResponse = await request.get(`/api/public/obras/${fixtureWork}?revisionId=${fixtureRevision}`);
+  expect(publicResponse.ok()).toBe(true);
+  const body = await publicResponse.json();
+  expect(body.ubicaciones[0]).toMatchObject({ origenGeometria: "ADDRESS_GEOCODE", crs: serviceReference });
+  expect(JSON.stringify(body)).not.toMatch(/geocodificacionDireccion|corroboracionCrs/);
+  const html = await (await request.get(path)).text();
+  expect(html).toContain(derivedLabel);
+  expect(html).toContain(derivedExplanation);
+  await page.goto(path);
+  const derivedDetail = page.locator(".location-list > li").filter({ hasText: derivedLabel });
+  await expect(derivedDetail).toContainText(derivedExplanation);
+  await expect(derivedDetail).not.toContainText("Coordenada reportada");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("el punto geocodificado del GeoJSON muestra el mismo origen con toque y tooltip", async ({ page }) => {
+  await page.route("**/api/public/geojson?*", async route => {
+    const response = await route.fetch();
+    const collection = await response.json();
+    const original = collection.features.find((feature: { properties: { obraId: string } }) => feature.properties.obraId === workId);
+    collection.features = [{ ...original, id: derivedId, geometry: { type: "Point", coordinates: [-58.43, -34.57] }, properties: { ...original.properties, ubicacionId: derivedId, calidad: { ...original.properties.calidad, origenGeometria: "ADDRESS_GEOCODE", crs: serviceReference, precision: "coordenada_reportada_sin_precision" } } }];
+    collection.nextCursor = null;
+    await route.fulfill({ response, json: collection });
+  });
+  await page.goto("/mapa");
+  await expect(page.locator(".map-context")).toContainText("1 obra ubicada");
+  await expect(page.getByRole("button", { name: "Acercar mapa", exact: true })).toBeEnabled();
+  const canvas = page.locator(".map-canvas");
+  let box = (await canvas.boundingBox())!;
+  await canvas.click({ position: { x: box.width / 2, y: box.height / 2 } });
+  const quality = page.locator(".map-region .selected-location-quality");
+  await expect(quality).toContainText(derivedLabel);
+  await expect(quality).toContainText(derivedExplanation);
+  expect(new URL(page.url()).searchParams.get("ubicacionId")).toBe(derivedId);
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  if (!test.info().project.use.isMobile) {
+    box = (await canvas.boundingBox())!;
+    await canvas.hover({ position: { x: box.width / 2, y: box.height / 2 } });
+    await expect(page.getByRole("tooltip")).toContainText(derivedLabel);
+    await expect(page.getByRole("tooltip")).toContainText(derivedExplanation);
+    await expect(page.getByRole("tooltip")).not.toContainText("Coordenada reportada");
+  }
 });
 
 test("tocar un punto identifica su ubicación y muestra ayuda persistente sin abrir un modal", async ({ page }) => {

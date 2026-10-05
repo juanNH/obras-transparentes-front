@@ -96,7 +96,7 @@ describe("presupuesto compartido entre catálogo y selección", () => {
     expect(oversized.geometry.coordinates).toEqual([[Array.from({ length: MAX_MAP_POSITIONS + 1 }, () => point)]]);
   });
 
-  it("la suma de ambas capas respeta 500 ubicaciones y la selección desplaza el último elemento del catálogo", () => {
+  it("la suma de ambas capas respeta el límite y la selección desplaza el último elemento del catálogo", () => {
     const catalog = Array.from({ length: MAX_MAP_FEATURES }, (_, index) => locatedFeature({ type: "Point", coordinates: point }, `catalog-${index}`));
     const selected = locatedFeature({ type: "Point", coordinates: point }, "selected");
     const result = limitMapLayers(catalog, [selected]);

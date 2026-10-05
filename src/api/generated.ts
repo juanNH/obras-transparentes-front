@@ -127,7 +127,16 @@ export interface components {
                             condicion: "APPROVED_ASSUMPTION";
                             /** @enum {string} */
                             fundamento: "REVIEW_DECISION";
+                        } | {
+                            /** @enum {string} */
+                            codigo: "EPSG:4326";
+                            /** @enum {string} */
+                            condicion: "SERVICE_REFERENCE";
+                            /** @enum {string} */
+                            fundamento: "OFFICIAL_SERVICE";
                         };
+                        /** @enum {string} */
+                        origenGeometria?: "ADDRESS_GEOCODE";
                         /** @enum {string} */
                         precision: "ubicacion_establecimiento_reportada" | "coordenada_reportada_sin_precision" | "geometria_reportada_sin_precision";
                     };
@@ -435,6 +444,13 @@ export interface components {
                     condicion: "APPROVED_ASSUMPTION";
                     /** @enum {string} */
                     fundamento: "REVIEW_DECISION";
+                } | {
+                    /** @enum {string} */
+                    codigo: "EPSG:4326";
+                    /** @enum {string} */
+                    condicion: "SERVICE_REFERENCE";
+                    /** @enum {string} */
+                    fundamento: "OFFICIAL_SERVICE";
                 };
                 direccionReportada?: {
                     calle: string | null;
@@ -466,6 +482,8 @@ export interface components {
                     type: "MultiPolygon";
                 };
                 /** @enum {string} */
+                origenGeometria?: "ADDRESS_GEOCODE";
+                /** @enum {string} */
                 precision: "ubicacion_establecimiento_reportada" | "coordenada_reportada_sin_precision" | "geometria_reportada_sin_precision";
                 /** Format: uuid */
                 ubicacionId: string;
@@ -488,6 +506,13 @@ export interface components {
                     condicion: "APPROVED_ASSUMPTION";
                     /** @enum {string} */
                     fundamento: "REVIEW_DECISION";
+                } | {
+                    /** @enum {string} */
+                    codigo: "EPSG:4326";
+                    /** @enum {string} */
+                    condicion: "SERVICE_REFERENCE";
+                    /** @enum {string} */
+                    fundamento: "OFFICIAL_SERVICE";
                 }) | null;
                 direccionReportada?: {
                     calle: string | null;
@@ -495,6 +520,8 @@ export interface components {
                 };
                 /** @enum {string|null} */
                 geometria: null;
+                /** @enum {string} */
+                origenGeometria?: "ADDRESS_GEOCODE";
                 /** @enum {string} */
                 precision: "ubicacion_establecimiento_reportada" | "coordenada_reportada_sin_precision" | "geometria_reportada_sin_precision";
                 /** @enum {string|null} */

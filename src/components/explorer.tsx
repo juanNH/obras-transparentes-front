@@ -7,7 +7,7 @@ import type { BoundingBox, ListQuery, WorkDetail, WorkGeoJSON, WorkList } from "
 import { BrowserApiError, readPublic } from "../lib/browser-api";
 import { DEFAULT_BBOX, MAP_READ_BBOX, SOURCES, STATES, explorerHref, queryParams } from "../lib/explorer-query";
 import type { ExplorerQuery } from "../lib/explorer-query";
-import { limitMapFeatures, limitMapLayers } from "../lib/map-budget";
+import { limitMapFeatures, limitMapLayers, MAX_MAP_FEATURES } from "../lib/map-budget";
 import { detailMapFeatures } from "../lib/map-data";
 import { locationPresentation } from "../lib/presentation";
 import { LocationQuality } from "./location-quality";
@@ -16,7 +16,6 @@ import "./explorer.css";
 const WorkMap = dynamic(() => import("./work-map"), { ssr: false, loading: () => <p className="notice" role="status">Cargando el mapa… La lista sigue disponible.</p> });
 const WorkDetailContent = dynamic(() => import("./work-detail").then(module => module.WorkDetailContent), { ssr: false, loading: () => <p role="status">Preparando el resumen…</p> });
 type Selection = { id: string; revisionId?: string; locationId?: string };
-const MAX_FEATURES = 500;
 
 export function Explorer({ initial, initialError, state, styleUrl }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string }) {
   const router = useRouter();
@@ -100,7 +99,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
         next = page.nextCursor;
         if (next && seen.has(next)) throw new Error("La paginación del mapa no pudo completarse.");
         if (next) seen.add(next);
-      } while (next && collected.length < MAX_FEATURES && pages < 5);
+      } while (next && collected.length < MAX_MAP_FEATURES && pages < 5);
       if (cancelled) return;
       const budget = limitMapFeatures(collected);
       setFeatures(budget.features);

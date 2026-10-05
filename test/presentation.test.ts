@@ -36,6 +36,20 @@ describe("Presentación pública sin inferencias", () => {
     expect(html).toContain("revisión histórica");
     expect(html).not.toContain('"coordinates"');
   });
+  it("la ficha SSR explica el domicilio derivado sin convertir la precisión conservada en coordenada de origen", () => {
+    const work = structuredClone(parsePublicResponse<WorkDetail>("PublicWorkDetail", examples.detailPopulated));
+    work.ubicaciones = [{
+      ...work.ubicaciones[0]!, origenGeometria: "ADDRESS_GEOCODE",
+      crs: { codigo: "EPSG:4326", fundamento: "OFFICIAL_SERVICE", condicion: "SERVICE_REFERENCE" },
+    }];
+    const html = renderToStaticMarkup(createElement(WorkDetailContent, { work }));
+    expect(html).toContain("Domicilio geocodificado · ubicación orientativa");
+    expect(html).toContain("La fuente no informó coordenadas");
+    expect(html).toContain("El servicio oficial Georef obtuvo un punto a partir de la dirección");
+    expect(html).toContain("no declara el sistema de coordenadas de la fuente");
+    expect(html).not.toContain("Coordenada reportada");
+    expect(html).not.toContain("geocodificacionDireccion");
+  });
   it("omite enlaces inseguros de origen sin omitir la fuente y muestra cero como dato", () => {
     const work = structuredClone(parsePublicResponse<WorkDetail>("PublicWorkDetail", examples.detailPopulated));
     work.fuentes[0]!.urlCatalogo = "javascript:alert(1)";

@@ -17,6 +17,32 @@ const mockedFetch = (body: unknown, status = 200) =>
   vi.fn<typeof fetch>().mockResolvedValue(json(body, status));
 
 describe("Contrato público del consumidor", () => {
+  it("acepta origen ADDRESS_GEOCODE con referencia de servicio y conserva la precisión de origen", () => {
+    const detail = structuredClone(examples.detailPopulated);
+    const location = { ...detail.ubicaciones[0]!, origenGeometria: "ADDRESS_GEOCODE", crs: { codigo: "EPSG:4326", fundamento: "OFFICIAL_SERVICE", condicion: "SERVICE_REFERENCE" } };
+    const publicDetail = { ...detail, ubicaciones: [location] };
+    expect(parsePublicResponse("PublicWorkDetail", publicDetail)).toEqual(publicDetail);
+    const collection = structuredClone(examples.geojsonPopulated);
+    const feature = collection.features[0]!;
+    const quality = { ...feature.properties.calidad, origenGeometria: "ADDRESS_GEOCODE", crs: location.crs };
+    const publicMap = { ...collection, features: [{ ...feature, properties: { ...feature.properties, calidad: quality } }] };
+    expect(parsePublicResponse("PublicGeoFeatureCollection", publicMap)).toEqual(publicMap);
+    expect(location.precision).toBe(detail.ubicaciones[0]!.precision);
+    expect(quality.precision).toBe(feature.properties.calidad.precision);
+  });
+
+  it("rechaza informes privados de geocodificación en ubicación pública y calidad GeoJSON", () => {
+    const detail = structuredClone(examples.detailPopulated);
+    const location = detail.ubicaciones[0]!;
+    const collection = structuredClone(examples.geojsonPopulated);
+    const feature = collection.features[0]!;
+    for (const privateField of ["geocodificacionDireccion", "corroboracionCrs"]) {
+      const privateReport = { estado: "COMPATIBLE", evidencias: [{ respuesta: { informacion: "EJEMPLO SINTÉTICO PRIVADO" } }] };
+      expect(() => parsePublicResponse("PublicWorkDetail", { ...detail, ubicaciones: [{ ...location, [privateField]: privateReport }] })).toThrow(ApiContractError);
+      expect(() => parsePublicResponse("PublicGeoFeatureCollection", { ...collection, features: [{ ...feature, properties: { ...feature.properties, calidad: { ...feature.properties.calidad, [privateField]: privateReport } } }] })).toThrow(ApiContractError);
+    }
+  });
+
   it("conserva los rangos posicionales de longitud y latitud", () => {
     const value = structuredClone(examples.geojsonPopulated);
     value.features[0]!.geometry = { type: "Point", coordinates: [0, 100] };

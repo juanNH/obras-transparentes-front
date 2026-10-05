@@ -2091,6 +2091,35 @@
                             "condicion"
                           ],
                           "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "codigo": {
+                              "type": "string",
+                              "enum": [
+                                "EPSG:4326"
+                              ]
+                            },
+                            "fundamento": {
+                              "type": "string",
+                              "enum": [
+                                "OFFICIAL_SERVICE"
+                              ]
+                            },
+                            "condicion": {
+                              "type": "string",
+                              "enum": [
+                                "SERVICE_REFERENCE"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "codigo",
+                            "fundamento",
+                            "condicion"
+                          ],
+                          "additionalProperties": false
                         }
                       ]
                     },
@@ -2125,6 +2154,12 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "origenGeometria": {
+                      "type": "string",
+                      "enum": [
+                        "ADDRESS_GEOCODE"
+                      ]
                     },
                     "ubicacionId": {
                       "type": "string",
@@ -2225,6 +2260,35 @@
                             "condicion"
                           ],
                           "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "codigo": {
+                              "type": "string",
+                              "enum": [
+                                "EPSG:4326"
+                              ]
+                            },
+                            "fundamento": {
+                              "type": "string",
+                              "enum": [
+                                "OFFICIAL_SERVICE"
+                              ]
+                            },
+                            "condicion": {
+                              "type": "string",
+                              "enum": [
+                                "SERVICE_REFERENCE"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "codigo",
+                            "fundamento",
+                            "condicion"
+                          ],
+                          "additionalProperties": false
                         }
                       ]
                     },
@@ -2259,6 +2323,12 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "origenGeometria": {
+                      "type": "string",
+                      "enum": [
+                        "ADDRESS_GEOCODE"
+                      ]
                     },
                     "ubicacionId": {
                       "type": "string",
@@ -3158,6 +3228,35 @@
                                 "condicion"
                               ],
                               "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "codigo": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EPSG:4326"
+                                  ]
+                                },
+                                "fundamento": {
+                                  "type": "string",
+                                  "enum": [
+                                    "OFFICIAL_SERVICE"
+                                  ]
+                                },
+                                "condicion": {
+                                  "type": "string",
+                                  "enum": [
+                                    "SERVICE_REFERENCE"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "codigo",
+                                "fundamento",
+                                "condicion"
+                              ],
+                              "additionalProperties": false
                             }
                           ]
                         },
@@ -3167,6 +3266,12 @@
                             "ubicacion_establecimiento_reportada",
                             "coordenada_reportada_sin_precision",
                             "geometria_reportada_sin_precision"
+                          ]
+                        },
+                        "origenGeometria": {
+                          "type": "string",
+                          "enum": [
+                            "ADDRESS_GEOCODE"
                           ]
                         },
                         "controles": {

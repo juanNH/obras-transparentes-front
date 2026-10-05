@@ -1318,6 +1318,29 @@
                         "condicion"
                       ],
                       "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string",
+                          "const": "EPSG:4326"
+                        },
+                        "fundamento": {
+                          "type": "string",
+                          "const": "OFFICIAL_SERVICE"
+                        },
+                        "condicion": {
+                          "type": "string",
+                          "const": "SERVICE_REFERENCE"
+                        }
+                      },
+                      "required": [
+                        "codigo",
+                        "fundamento",
+                        "condicion"
+                      ],
+                      "additionalProperties": false
                     }
                   ]
                 },
@@ -1356,6 +1379,10 @@
                   "items": {
                     "type": "string"
                   }
+                },
+                "origenGeometria": {
+                  "type": "string",
+                  "const": "ADDRESS_GEOCODE"
                 },
                 "ubicacionId": {
                   "type": "string",
@@ -1441,6 +1468,29 @@
                             "condicion"
                           ],
                           "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "codigo": {
+                              "type": "string",
+                              "const": "EPSG:4326"
+                            },
+                            "fundamento": {
+                              "type": "string",
+                              "const": "OFFICIAL_SERVICE"
+                            },
+                            "condicion": {
+                              "type": "string",
+                              "const": "SERVICE_REFERENCE"
+                            }
+                          },
+                          "required": [
+                            "codigo",
+                            "fundamento",
+                            "condicion"
+                          ],
+                          "additionalProperties": false
                         }
                       ]
                     },
@@ -1484,6 +1534,10 @@
                   "items": {
                     "type": "string"
                   }
+                },
+                "origenGeometria": {
+                  "type": "string",
+                  "const": "ADDRESS_GEOCODE"
                 },
                 "ubicacionId": {
                   "type": "null"
@@ -2345,6 +2399,29 @@
                             "condicion"
                           ],
                           "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "codigo": {
+                              "type": "string",
+                              "const": "EPSG:4326"
+                            },
+                            "fundamento": {
+                              "type": "string",
+                              "const": "OFFICIAL_SERVICE"
+                            },
+                            "condicion": {
+                              "type": "string",
+                              "const": "SERVICE_REFERENCE"
+                            }
+                          },
+                          "required": [
+                            "codigo",
+                            "fundamento",
+                            "condicion"
+                          ],
+                          "additionalProperties": false
                         }
                       ]
                     },
@@ -2355,6 +2432,10 @@
                         "coordenada_reportada_sin_precision",
                         "geometria_reportada_sin_precision"
                       ]
+                    },
+                    "origenGeometria": {
+                      "type": "string",
+                      "const": "ADDRESS_GEOCODE"
                     },
                     "controles": {
                       "type": "array",
