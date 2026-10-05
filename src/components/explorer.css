@@ -711,6 +711,7 @@
   line-height: 1.5;
 }
 .tooltip-work-name { margin: 0 0 var(--space-2); font-weight: 700; }
+.tooltip-source { margin: 0 0 var(--space-2); font-weight: 700; }
 .location-quality p { margin: 0 0 var(--space-2); }
 .location-quality p:last-child { margin-bottom: 0; }
 .location-picker { margin-top: var(--space-3); }

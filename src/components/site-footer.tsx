@@ -10,7 +10,7 @@ export function SiteFooter() {
         </div>
         <nav aria-label="Navegación del pie de página" className="footer-nav">
           <Link href="/mapa" prefetch={false}>Explorar obras</Link>
-          <Link href="/#proyecto">El proyecto</Link>
+          <Link href="/proyecto">El proyecto</Link>
           <Link href="/#fuentes">Sobre los datos</Link>
         </nav>
       </div>

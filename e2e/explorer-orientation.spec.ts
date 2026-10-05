@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
   await disableWebGL(page);
 });
 
-// The synthetic basemap has no blue geometry. This checks actual work pixels,
+// The synthetic basemap has no work-category colors. This checks actual work pixels,
 // rather than interpreting a painted background as a visible publication.
 async function hasWorkPixels(page: Page) {
   return page.locator(".map-canvas canvas").evaluateAll(canvases => canvases.some(element => {
@@ -19,10 +19,10 @@ async function hasWorkPixels(page: Page) {
     if (!canvas.width || !canvas.height) return false;
     const pixels = canvas.getContext("2d")?.getImageData(0, 0, canvas.width, canvas.height).data;
     if (!pixels) return false;
+    const workColors = [[0, 119, 168], [180, 35, 50], [40, 122, 58], [148, 104, 0], [51, 65, 85], [89, 105, 121], [10, 76, 120]];
     for (let offset = 0; offset < pixels.length; offset += 4) {
-      const primary = Math.abs(pixels[offset]! - 23) < 4 && Math.abs(pixels[offset + 1]! - 105) < 4 && Math.abs(pixels[offset + 2]! - 157) < 4;
-      const selected = Math.abs(pixels[offset]! - 10) < 4 && Math.abs(pixels[offset + 1]! - 76) < 4 && Math.abs(pixels[offset + 2]! - 120) < 4;
-      if (pixels[offset + 3]! > 240 && (primary || selected)) return true;
+      if (pixels[offset + 3]! > 240 && workColors.some(([red, green, blue]) =>
+        Math.abs(pixels[offset]! - red!) < 4 && Math.abs(pixels[offset + 1]! - green!) < 4 && Math.abs(pixels[offset + 2]! - blue!) < 4)) return true;
     }
     return false;
   }));

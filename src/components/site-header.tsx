@@ -14,7 +14,7 @@ export function SiteHeader() {
           <span>Obras<span className="brand-second">Transparentes</span></span>
         </Link>
         <nav aria-label="Navegación principal" className="main-nav">
-          <Link href="/#proyecto" className="nav-project">El proyecto</Link>
+          <Link href="/proyecto" className="nav-project">El proyecto</Link>
           <Link href="/mapa" prefetch={false} className="nav-explore">Explorar obras <span aria-hidden="true">↗</span></Link>
         </nav>
       </div>

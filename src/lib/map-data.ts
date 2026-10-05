@@ -1,7 +1,10 @@
 import type { Feature, FeatureCollection, Geometry, Point } from "geojson";
 import type { BoundingBox, WorkDetail, WorkGeoJSON } from "../api/client.js";
+import { mapOriginCategory, type MapOriginCategory } from "./map-origin.js";
 
-export type MapProperties = Pick<WorkGeoJSON["features"][number]["properties"], "obraId" | "revisionId" | "ubicacionId" | "nombre" | "calidad">;
+export type MapProperties = Pick<WorkGeoJSON["features"][number]["properties"], "obraId" | "revisionId" | "ubicacionId" | "nombre" | "calidad" | "fuentes"> & {
+  nivelFuente: MapOriginCategory;
+};
 export type MapCollection = FeatureCollection<Geometry, MapProperties>;
 
 /** Preserve the requested public revision; only approved, real locations can be drawn. */
@@ -65,6 +68,8 @@ export function partitionMapFeatures(features: WorkGeoJSON["features"]): {
       ubicacionId: feature.properties.ubicacionId,
       nombre: feature.properties.nombre,
       calidad: feature.properties.calidad,
+      fuentes: feature.properties.fuentes,
+      nivelFuente: mapOriginCategory(feature.properties.fuentes),
     };
     const compact: Feature<Geometry, MapProperties> = {
       type: "Feature",

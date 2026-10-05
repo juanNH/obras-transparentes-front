@@ -26,6 +26,47 @@ test("dibuja el mapa base sin obras y sin WebGL", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "No hay obras para mostrar", exact: true })).toBeVisible();
 });
 
+test("explica con texto, colores y formas el nivel de cada fuente de datos", async ({ page }) => {
+  await page.goto(`/mapa?bbox=${pointArea}&vista=mapa`);
+  await expectCanvasMap(page);
+  // The isolated fixture's one visible point comes from nacion-obras.
+  await expect.poll(() => page.locator(".map-canvas canvas").evaluateAll(canvases => canvases.some(element => {
+    const canvas = element as HTMLCanvasElement;
+    if (!canvas.width || !canvas.height) return false;
+    const pixels = canvas.getContext("2d")?.getImageData(0, 0, canvas.width, canvas.height).data;
+    if (!pixels) return false;
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      if (pixels[offset + 3]! > 240 && Math.abs(pixels[offset]!) < 4 && Math.abs(pixels[offset + 1]! - 119) < 4 && Math.abs(pixels[offset + 2]! - 168) < 4) return true;
+    }
+    return false;
+  }))).toBe(true);
+  const legend = page.getByRole("group", { name: "Referencia de fuente de datos", exact: true });
+  await expect(legend).toBeVisible();
+  await expect(legend.getByRole("listitem")).toHaveCount(6);
+  const origins = [
+    { label: "Nación", color: "#0077A8", shape: "circle" },
+    { label: "Ciudad de Buenos Aires", color: "#B42332", shape: "rect" },
+    { label: "Provincia de Buenos Aires", color: "#287A3A", shape: "polygon" },
+    { label: "Municipio · Vicente López", color: "#946800", shape: "polygon" },
+    { label: "Fuentes de distintos niveles", color: "#334155", shape: "polygon" },
+    { label: "Fuente no informada", color: "#596979", shape: "circle" },
+  ];
+  for (const origin of origins) {
+    const item = legend.getByRole("listitem").filter({ hasText: origin.label });
+    await expect(item).toHaveCount(1);
+    const symbol = item.locator("svg > *").first();
+    expect(await symbol.evaluate(element => element.tagName.toLowerCase())).toBe(origin.shape);
+    await expect(symbol).toHaveAttribute("fill", origin.color);
+  }
+  await expect(legend).toContainText("El color y la forma identifican quién publica los datos.");
+  await expect(legend.getByRole("link", { name: "Por qué usamos estos colores", exact: true })).toHaveAttribute("href", "/proyecto#colores");
+  const card = page.locator(".work-card").first();
+  await expect(card.locator('.source-badge[data-source-origin="nation"]')).toContainText("Datos de: Nación");
+  await page.getByRole("button", { name: "Lista", exact: true }).click();
+  await expect(legend).toBeVisible();
+  await expect(card.locator('.source-badge[data-source-origin="nation"]')).toBeVisible();
+});
+
 test("un fallo del proveedor conserva las obras y permite reintentar la cartografía", async ({ page }) => {
   await page.route("https://tiles.openfreemap.org/**", route => route.abort());
   await page.goto(`/mapa?bbox=${pointArea}&vista=mapa`);

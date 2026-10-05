@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import examples from "../contracts/examples.json" with { type: "json" };
 import { parsePublicResponse } from "../src/api/contract.js";
 import { clampMapBBox, detailMapFeatures, partitionMapFeatures, selectedMapFeatures } from "../src/lib/map-data.js";
+import { mapOriginCategory } from "../src/lib/map-origin.js";
 import type { WorkDetail, WorkGeoJSON } from "../src/api/client.js";
 
 const seed = parsePublicResponse<WorkGeoJSON>("PublicGeoFeatureCollection", examples.geojsonPopulated).features[0]!;
@@ -113,6 +114,14 @@ describe("datos del mapa móvil", () => {
     const data = partitionMapFeatures([first, second, other]);
     expect(selectedMapFeatures(data.all, first.properties.obraId).features).toHaveLength(2);
     expect(selectedMapFeatures(data.all, null).features).toEqual([]);
+  });
+
+  it("conserva las fuentes públicas y su categoría para estilizar la geometría", () => {
+    const featureData = { ...seed, properties: { ...seed.properties, fuentes: [{ ...seed.properties.fuentes[0]!, codigo: "caba-actualizado" as const }] } };
+    const mapped = partitionMapFeatures([featureData]).all.features[0]!;
+    expect(mapped.properties.fuentes).toEqual(featureData.properties.fuentes);
+    expect(mapped.properties.nivelFuente).toBe(mapOriginCategory(featureData.properties.fuentes));
+    expect(mapped.properties.nivelFuente).toBe("caba");
   });
 
   it("limita el viewport visible a WGS84/Mercator sin cruzar el antimeridiano", () => {

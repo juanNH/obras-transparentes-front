@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import type { WorkDetail } from "../api/client.js";
 import { fieldLabel, formatExactDecimal, publicationDate, qualityLabel, reportedDate, safeSourceUrl, sourceLabel, stateLabel } from "../lib/presentation.js";
 import { LocationQuality } from "./location-quality";
+import { WorkResponsibility } from "./work-responsibility";
+import { SourceBadge } from "./source-origin";
 
 function SourceLink({ url, children }: { url: string; children: ReactNode }) {
   const href = safeSourceUrl(url);
@@ -34,8 +36,11 @@ export function WorkDetailContent({ work, compact = false }: { work: WorkDetail;
       <p className="eyebrow">Ficha pública · revisión {work.numeroRevision}</p>
       <Title>{work.nombre}</Title>
       <p><span className="status-badge">{stateLabel(work.estado)}</span></p>
+      <p><SourceBadge sources={work.fuentes} /> <a className="source-colors-link" href="/proyecto#colores">Qué significa el color</a></p>
       {!work.publicadaActualmente && <p className="notice">Esta es una revisión histórica. <a href={`/obras/${work.obraId}`}>Consultar la ficha actual</a>.</p>}
     </header>
+
+    <WorkResponsibility work={work} compact={compact} />
 
     <section className="detail-section">
       <Heading>Qué se conoce de esta obra</Heading>

@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 const escape = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
 export async function GET() {
   try {
-    const api = publicApi(); const urls = ["/", "/privacidad"]; const seen = new Set<string>();
+    const api = publicApi(); const urls = ["/", "/proyecto", "/privacidad"]; const seen = new Set<string>();
     const signal = AbortSignal.timeout(15000);
     let cursor: string | undefined; let version: string | undefined;
     for (let page = 0; page < 10; page++) {
