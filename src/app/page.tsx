@@ -16,37 +16,37 @@ function TerritoryIllustration() {
       <div className="illustration-topline"><span className="small-cross" aria-hidden="true">+</span> Una mirada sobre el territorio <span aria-hidden="true">↗</span></div>
       <svg className="territory-svg" viewBox="0 0 540 420" fill="none" aria-hidden="true" focusable="false">
         <defs>
-          <pattern id="territory-grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" stroke="#bbc7b4" strokeWidth="0.6" /></pattern>
+          <pattern id="territory-grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" stroke="var(--color-border)" strokeWidth="0.6" /></pattern>
           <clipPath id="territory-clip"><rect x="0" y="0" width="540" height="420" /></clipPath>
         </defs>
         <g clipPath="url(#territory-clip)">
-          <rect width="540" height="420" fill="#e9eddf" />
+          <rect width="540" height="420" fill="var(--color-surface-alt)" />
           <rect width="540" height="420" fill="url(#territory-grid)" />
-          <path d="M380-30 357 36 387 77 366 123 402 169 383 227 418 265 414 324 478 453H573V-30Z" fill="#bbd2cd" />
-          <path d="m365-10-36 82 28 43-28 58 31 57-9 63 65 140" stroke="#91b9b0" strokeWidth="2" strokeDasharray="5 7" />
-          <g fill="#d3ddc2" stroke="#b5c6a9" strokeWidth="1">
+          <path d="M380-30 357 36 387 77 366 123 402 169 383 227 418 265 414 324 478 453H573V-30Z" fill="var(--color-brand-celeste)" fillOpacity="0.45" />
+          <path d="m365-10-36 82 28 43-28 58 31 57-9 63 65 140" stroke="var(--color-primary)" strokeOpacity="0.4" strokeWidth="2" strokeDasharray="5 7" />
+          <g fill="var(--color-primary-soft)" stroke="var(--color-border-control)" strokeWidth="1">
             <path d="m53 52 74-20 20 61-75 23Z" />
             <path d="m89 179 49-16 23 70-47 16Z" />
             <path d="m146 309 64-23 23 66-64 24Z" />
             <path d="m260 58 57 14-14 61-56-14Z" />
             <path d="m238 193 58-19 24 68-58 20Z" />
           </g>
-          <g stroke="#fafbf4" strokeWidth="16">
+          <g stroke="var(--color-surface)" strokeWidth="16">
             <path d="m-30 168 343-112M-22 324 383 192M80-30l155 480M237-26 163 418" />
           </g>
-          <g stroke="#c0c9b5" strokeWidth="1.4">
+          <g stroke="var(--color-border)" strokeWidth="1.4">
             <path d="m-30 160 343-112M-30 176 343-112M-22 316 383 192M-22 332 383 208" />
             <path d="m72-30 155 480M88-30l155 480M229-26l-74 444M245-26l-74 444" />
           </g>
-          <path d="m-30 378 390-124" stroke="#f9faf2" strokeWidth="7" />
-          <path d="m6-30 137 452M316-30l-47 450" stroke="#f9faf2" strokeWidth="6" />
-          <circle cx="218" cy="201" r="84" fill="#d9ef8b" fillOpacity="0.27" stroke="#638d58" strokeDasharray="4 7" />
-          <circle cx="218" cy="201" r="55" stroke="#638d58" strokeOpacity="0.4" />
-          <path d="M218 144c-21 0-38 17-38 38 0 29 38 62 38 62s38-33 38-62c0-21-17-38-38-38Z" fill="#18312f" />
-          <circle cx="218" cy="181" r="13" fill="#d9ef8b" />
-          <path d="M449 47v32M433 63h32" stroke="#18312f" strokeWidth="1.5" />
-          <circle cx="449" cy="63" r="20" stroke="#18312f" strokeOpacity="0.3" />
-          <path d="M45 365v12h76v-12M83 371v6" stroke="#18312f" strokeWidth="1.5" />
+          <path d="m-30 378 390-124" stroke="var(--color-surface)" strokeWidth="7" />
+          <path d="m6-30 137 452M316-30l-47 450" stroke="var(--color-surface)" strokeWidth="6" />
+          <circle cx="218" cy="201" r="84" fill="var(--color-brand-celeste)" fillOpacity="0.2" stroke="var(--color-primary)" strokeDasharray="4 7" />
+          <circle cx="218" cy="201" r="55" stroke="var(--color-primary)" strokeOpacity="0.35" />
+          <path d="M218 144c-21 0-38 17-38 38 0 29 38 62 38 62s38-33 38-62c0-21-17-38-38-38Z" fill="var(--color-primary)" />
+          <circle cx="218" cy="181" r="13" fill="var(--color-sun)" />
+          <path d="M449 47v32M433 63h32" stroke="var(--color-primary)" strokeWidth="1.5" />
+          <circle cx="449" cy="63" r="20" stroke="var(--color-primary)" strokeOpacity="0.3" />
+          <path d="M45 365v12h76v-12M83 371v6" stroke="var(--color-primary)" strokeWidth="1.5" />
         </g>
       </svg>
       <div className="illustration-label"><span className="illustration-dot" aria-hidden="true" /><span>Del territorio a la información.</span><Arrow diagonal /></div>
@@ -80,7 +80,7 @@ export default function HomePage() {
       </div>
 
       <section className="container how-section" aria-labelledby="how-title">
-        <div className="section-intro"><p className="eyebrow">De la pregunta al dato</p><h2 id="how-title">Un recorrido simple.<br />Una mirada más informada.</h2><p>Podés empezar por una lista y abrir el mapa cuando lo necesites.</p></div>
+        <div className="section-intro"><p className="eyebrow">De la pregunta al dato</p><h2 id="how-title">Un recorrido simple.<br />Una mirada más informada.</h2><p>Mapa y resultados comparten la consulta. Elegí una obra para conocer su ubicación o seguir leyendo su ficha.</p></div>
         <ol className="steps-grid">
           <li><span className="step-number" aria-hidden="true">01 /</span><h3>Explorá las obras</h3><p>Recorré el listado o ubicá en el mapa las obras que tienen información geográfica disponible.</p></li>
           <li><span className="step-number" aria-hidden="true">02 /</span><h3>Conocé los detalles</h3><p>Abrí una ficha para consultar el estado informado, la ubicación y los datos disponibles de cada obra.</p></li>

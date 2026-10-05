@@ -1,9 +1,12 @@
 import type { BoundingBox, ListQuery } from "../api/client";
 
 export const DEFAULT_BBOX: BoundingBox = [-73.6, -55.2, -53.5, -21.7];
+// Initial camera and geometry read are different: never silently filter the list.
+// Read the representable world with the same page/byte/position budgets.
+export const MAP_READ_BBOX: BoundingBox = [-180, -85.051129, 180, 85.051129];
 export const SOURCES = { "pba-edificios": "PBA · edificios escolares", "caba-actualizado": "CABA · obras", "nacion-obras": "Nación · obras", "vl-obras": "Vicente López · obras" } as const;
 export const STATES = { COMPLETED: "Finalizada", IN_PROGRESS: "En ejecución", OTHER_REPORTED: "Otro estado informado" } as const;
-export type ExplorerQuery = { query: ListQuery; view: "lista" | "mapa"; obra?: string; revisionId?: string };
+export type ExplorerQuery = { query: ListQuery; view: "lista" | "mapa"; obra?: string; revisionId?: string; ubicacionId?: string };
 export const isUUID = (value: string) => /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
 
 export function parseExplorerQuery(params: URLSearchParams): ExplorerQuery {
@@ -37,15 +40,12 @@ export function parseExplorerQuery(params: URLSearchParams): ExplorerQuery {
   }
   const cursor = params.get("cursor");
   if (cursor) { if (cursor.length > 4096) throw new TypeError("Página inválida."); query.cursor = cursor; }
-  const view = params.get("vista") || "lista";
+  const view = params.get("vista") || "mapa";
   if (view !== "lista" && view !== "mapa") throw new TypeError("Vista desconocida.");
-  if (view === "mapa") {
-    if (query.tieneGeometria === false) throw new TypeError("Las obras sin ubicación se exploran en la lista.");
-    query.bbox ??= DEFAULT_BBOX;
-  }
-  const obra = params.get("obra"); const revisionId = params.get("revisionId");
-  if ((obra && !isUUID(obra)) || (revisionId && (!obra || !isUUID(revisionId)))) throw new TypeError("Selección inválida.");
-  return { query, view, ...(obra ? { obra: obra.toLowerCase() } : {}), ...(revisionId ? { revisionId: revisionId.toLowerCase() } : {}) };
+  const obra = params.get("obra"); const revisionId = params.get("revisionId"); const ubicacionId = params.get("ubicacionId");
+  if ((obra && !isUUID(obra)) || (revisionId && (!obra || !isUUID(revisionId))) ||
+    (ubicacionId !== null && (!obra || !revisionId || !isUUID(ubicacionId)))) throw new TypeError("Selección inválida.");
+  return { query, view, ...(obra ? { obra: obra.toLowerCase() } : {}), ...(revisionId ? { revisionId: revisionId.toLowerCase() } : {}), ...(ubicacionId ? { ubicacionId: ubicacionId.toLowerCase() } : {}) };
 }
 
 export function queryParams(query: ListQuery): URLSearchParams {
@@ -56,9 +56,9 @@ export function queryParams(query: ListQuery): URLSearchParams {
   return params;
 }
 
-export function explorerHref(query: ListQuery, view: "lista" | "mapa" = "lista"): string {
+export function explorerHref(query: ListQuery, view: "lista" | "mapa" = "mapa"): string {
   const params = queryParams(query);
-  if (view === "mapa") params.set("vista", "mapa");
+  if (view === "lista") params.set("vista", "lista");
   return "/mapa" + (params.size ? "?" + params : "");
 }
 

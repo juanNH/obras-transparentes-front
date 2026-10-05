@@ -2,6 +2,8 @@
 
 Web mobile-first con landing, exploración como lista o mapa y fichas públicas con fuentes. La etapa 2 usa Next.js App Router sobre el contrato de NestJS/PostGIS. El backoffice permanece en su repositorio React/Vite.
 
+La interfaz aplica la [guía visual](docs/guia-visual.md): blanco y celeste, acciones azules, detalles dorados y Noto Sans del mismo origen. La guía reúne tokens, patrones y criterios de accesibilidad para mantener esa identidad en próximos cambios; las decisiones funcionales y validaciones siguen en [etapa 2](docs/etapa-2.md).
+
 ## Ejecutar
 
 Requiere Node.js `>=24.21 <25` y npm `>=11.19 <12`. Con la API funcionando en el puerto 3000:
@@ -47,9 +49,10 @@ Los assets con hash aprovechan la caché del framework. El mapa base sigue las c
 ## Rutas y comportamiento
 
 - `/`: proyecto, método y acceso al catálogo, con HTML inicial.
-- `/mapa`: lista inicial de 20 obras, utilizable sin JavaScript. Filtros y página siguiente con formularios/enlaces nativos.
+- `/mapa`: mapa con encuadre de las geometrías cargadas y resultados de todo el catálogo, incluidos faltantes. Lista inicial de 20 obras, utilizable sin JavaScript; filtros y página siguiente nativos.
+- `/mapa?vista=lista`: alternativa textual sin cargar el motor ni el proveedor del mapa. Alternar vistas conserva consulta, páginas cargadas y selección.
 - `/mapa?vista=mapa&bbox=west,south,east,north`: mapa y lista de la misma área. «Buscar en esta zona» actualiza ambos; mover el mapa no consulta el catálogo.
-- `/mapa?obra=UUID&revisionId=UUID`: abre el resumen de una revisión. Atrás/Adelante restaura la selección.
+- `/mapa?obra=UUID&revisionId=UUID`: restaura y ubica la revisión seleccionada. El resumen se abre con una acción explícita; cerrarlo mantiene la selección. Atrás/Adelante la restaura.
 - `/obras/UUID`: ficha actual con canonical y fuentes. `?revisionId=UUID` conserva una publicación específica y lleva `noindex`.
 - `/privacidad`, `/robots.txt`, `/sitemap.xml`: ubicación e indexación. Sitemap consistente hasta 2.000 fichas; si supera su límite, falla explícitamente y exige particionarlo.
 

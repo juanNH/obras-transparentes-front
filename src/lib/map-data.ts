@@ -1,8 +1,39 @@
 import type { Feature, FeatureCollection, Geometry, Point } from "geojson";
-import type { BoundingBox, WorkGeoJSON } from "../api/client.js";
+import type { BoundingBox, WorkDetail, WorkGeoJSON } from "../api/client.js";
 
-type MapProperties = { obraId: string; revisionId: string };
+export type MapProperties = Pick<WorkGeoJSON["features"][number]["properties"], "obraId" | "revisionId" | "ubicacionId" | "nombre" | "calidad">;
 export type MapCollection = FeatureCollection<Geometry, MapProperties>;
+
+/** Preserve the requested public revision; only approved, real locations can be drawn. */
+export function detailMapFeatures(work: WorkDetail): WorkGeoJSON["features"] {
+  const features: WorkGeoJSON["features"] = [];
+  const seen = new Set<string>();
+  for (const location of work.ubicaciones) {
+    if (location.condicion !== "ACCEPTED" || !location.geometria || seen.has(location.ubicacionId)) continue;
+    seen.add(location.ubicacionId);
+    features.push({
+      type: "Feature",
+      id: location.ubicacionId,
+      geometry: location.geometria,
+      properties: {
+        obraId: work.obraId,
+        revisionId: work.revisionId,
+        ubicacionId: location.ubicacionId,
+        nombre: work.nombre,
+        estado: work.estado,
+        clasificaciones: work.clasificaciones,
+        fuentes: work.fuentes,
+        calidad: {
+          condicion: location.condicion,
+          controles: location.controles,
+          crs: location.crs,
+          precision: location.precision,
+        },
+      },
+    });
+  }
+  return features;
+}
 
 /** Mercator cannot display the poles; API queries must also have increasing bounds. */
 export function clampMapBBox(bbox: BoundingBox): BoundingBox | null {
@@ -30,6 +61,9 @@ export function partitionMapFeatures(features: WorkGeoJSON["features"]): {
     const properties = {
       obraId: feature.properties.obraId,
       revisionId: feature.properties.revisionId,
+      ubicacionId: feature.properties.ubicacionId,
+      nombre: feature.properties.nombre,
+      calidad: feature.properties.calidad,
     };
     const compact: Feature<Geometry, MapProperties> = {
       type: "Feature",
@@ -63,9 +97,13 @@ export function partitionMapFeatures(features: WorkGeoJSON["features"]): {
 export function selectedMapFeatures(
   collection: MapCollection,
   obraId: string | null,
+  ubicacionId?: string | null,
+  revisionId?: string | null,
 ): MapCollection {
   return {
     type: "FeatureCollection",
-    features: obraId === null ? [] : collection.features.filter((feature) => feature.properties.obraId === obraId),
+    features: obraId === null ? [] : collection.features.filter((feature) => feature.properties.obraId === obraId &&
+      (!revisionId || feature.properties.revisionId === revisionId) &&
+      (!ubicacionId || feature.properties.ubicacionId === ubicacionId)),
   };
 }

@@ -55,3 +55,51 @@ export function limitMapFeatures(input: readonly MapFeature[]): {
   }
   return { features, truncated, positions };
 }
+
+/**
+ * Catalogue and selection share one rendering budget. An accepted selection
+ * takes priority and replaces only the same work, revision and location from
+ * the catalogue; another revision remains a distinct public geometry.
+ */
+export function limitMapLayers(
+  catalogue: readonly MapFeature[],
+  selected: readonly MapFeature[],
+): {
+  catalog: MapFeature[];
+  selection: MapFeature[];
+  truncated: boolean;
+  positions: number;
+} {
+  const catalog: MapFeature[] = [];
+  const selection: MapFeature[] = [];
+  const selectedKeys = new Set<string>();
+  let positions = 0;
+  let truncated = false;
+  const key = (feature: MapFeature) => JSON.stringify([
+    feature.properties.obraId,
+    feature.properties.revisionId,
+    feature.properties.ubicacionId,
+  ]);
+  const retain = (feature: MapFeature, target: MapFeature[]): boolean => {
+    if (catalog.length + selection.length === MAX_MAP_FEATURES) {
+      truncated = true;
+      return false;
+    }
+    const size = countPositions(feature.geometry, MAX_MAP_POSITIONS - positions);
+    if (positions + size > MAX_MAP_POSITIONS) {
+      truncated = true;
+      return false;
+    }
+    target.push(feature);
+    positions += size;
+    return true;
+  };
+
+  for (const feature of selected) {
+    if (retain(feature, selection)) selectedKeys.add(key(feature));
+  }
+  for (const feature of catalogue) {
+    if (!selectedKeys.has(key(feature))) retain(feature, catalog);
+  }
+  return { catalog, selection, truncated, positions };
+}

@@ -17,7 +17,7 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
   try { initial = await publicApi().list(state.query); }
   catch (error) { initialError = error instanceof PublicApiError && error.requiresPaginationRestart ? "CATALOG_CHANGED" : "UNAVAILABLE"; }
   return <section className="container explorer-page">
-    <div className="page-heading"><p className="eyebrow">El catálogo público</p><h1>Explorá las obras.</h1><p>Conocé qué se informa, dónde está y de qué fuente proviene.</p></div>
-    <Explorer key={explorerHref(state.query, state.view)} initial={initial} initialError={initialError} state={state} styleUrl={mapStyleUrl()} />
+    <div className="page-heading"><p className="eyebrow">El catálogo público</p><h1>Las obras, en su territorio.</h1><p>Elegí una obra para ubicarla. Acercar el mapa no cambia los resultados.</p></div>
+    <Explorer key={explorerHref(state.query) + ":" + (initial?.catalogoVersion ?? initialError)} initial={initial} initialError={initialError} state={state} styleUrl={mapStyleUrl()} />
   </section>;
 }

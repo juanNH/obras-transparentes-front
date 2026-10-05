@@ -33,8 +33,10 @@ test("un fallo del proveedor conserva las obras y permite reintentar la cartogra
   await expect(page.getByRole("button", { name: "Acercar mapa", exact: true })).toBeEnabled();
   await expect(async () => {
     await page.locator(".map-canvas").click();
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 1000 });
+    await expect(page.locator(".selection-strip")).toBeVisible({ timeout: 1000 });
   }).toPass({ timeout: 10000 });
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await page.locator(".selection-strip").getByRole("button", { name: "Ver resumen", exact: true }).click();
   await expect(page.getByRole("dialog").getByRole("heading", { name: "EJEMPLO SINTÉTICO — Obra 01", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Cerrar resumen", exact: true }).click();
   await useSyntheticBasemap(page);
@@ -53,15 +55,20 @@ for (const fixture of [
     await expect(page.getByText("Ubicaciones de la consulta cargadas. Los puntos agrupados no representan un total de obras.")).toBeVisible();
     await expect(async () => {
       await page.locator(".map-canvas").click();
-      await expect(page.getByRole("dialog")).toBeVisible({ timeout: 1000 });
+      await expect(page.locator(".selection-strip")).toBeVisible({ timeout: 1000 });
     }).toPass({ timeout: 10000 });
     const name = `EJEMPLO SINTÉTICO — Obra ${fixture.number}`;
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(page.locator(".selection-strip").getByRole("heading", { name, exact: true })).toBeVisible();
+    await page.locator(".selection-strip").getByRole("button", { name: "Ver resumen", exact: true }).click();
     await expect(page.getByRole("dialog").getByRole("heading", { name, exact: true })).toBeVisible();
     const id = `10000000-0000-4000-8000-${fixture.number.padStart(12, "0")}`;
     const revisionId = `20000000-0000-4000-8000-${fixture.number.padStart(12, "0")}`;
     await expect(page).toHaveURL(new RegExp(`obra=${id}&revisionId=${revisionId}`));
     await expect(page.getByRole("link", { name: "Abrir ficha completa", exact: true })).toHaveAttribute("href", `/obras/${id}?revisionId=${revisionId}`);
     await page.getByRole("button", { name: "Cerrar resumen", exact: true }).click();
+    await expect(page.locator(".selection-strip")).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`obra=${id}&revisionId=${revisionId}`));
     await page.getByRole("button", { name: "Lista", exact: true }).click();
     await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
   });
