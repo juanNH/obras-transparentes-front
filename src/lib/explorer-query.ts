@@ -1,14 +1,27 @@
+/** @file Validación y serialización de filtros públicos, presentación y selección mediante URLs compartibles. */
 import type { BoundingBox, ListQuery } from "../api/client";
 
+/** Cámara inicial de Argentina; no limita silenciosamente el catálogo textual. */
 export const DEFAULT_BBOX: BoundingBox = [-73.6, -55.2, -53.5, -21.7];
 // Initial camera and geometry read are different: never silently filter the list.
 // Read the representable world with the same page/byte/position budgets.
+/** Área mundial representable en Mercator para leer geometrías cuando el usuario no confirmó un bbox. */
 export const MAP_READ_BBOX: BoundingBox = [-180, -85.051129, 180, 85.051129];
+/** Fuentes de catálogo admitidas en filtros públicos; sus nombres no atribuyen responsabilidad de la obra. */
 export const SOURCES = { "pba-edificios": "PBA · edificios escolares", "caba-actualizado": "CABA · obras", "nacion-obras": "Nación · obras", "vl-obras": "Vicente López · obras" } as const;
+/** Traducciones de estados informados; no se infieren del avance ni de la ausencia de datos. */
 export const STATES = { COMPLETED: "Finalizada", IN_PROGRESS: "En ejecución", OTHER_REPORTED: "Otro estado informado" } as const;
+/** Consulta de API separada de presentación y selección compartible del explorador. */
 export type ExplorerQuery = { query: ListQuery; view: "lista" | "mapa"; obra?: string; revisionId?: string; ubicacionId?: string };
+/** Comprueba el formato UUID antes de incorporar una selección a ruta/consulta pública. */
 export const isUUID = (value: string) => /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
 
+/**
+ * Valida filtros, área y selección, rechazando parámetros repetidos y combinaciones incompatibles.
+ * @param params - Parámetros de URL sin deduplicar previamente.
+ * @returns Consulta con página de 20 obras y presentación/selección separadas.
+ * @throws TypeError Si el enlace contiene valores o relaciones inválidas.
+ */
 export function parseExplorerQuery(params: URLSearchParams): ExplorerQuery {
   for (const key of new Set(params.keys())) {
     if (params.getAll(key).length > 1) throw new TypeError("Hay parámetros repetidos en el enlace.");
@@ -48,6 +61,7 @@ export function parseExplorerQuery(params: URLSearchParams): ExplorerQuery {
   return { query, view, ...(obra ? { obra: obra.toLowerCase() } : {}), ...(revisionId ? { revisionId: revisionId.toLowerCase() } : {}), ...(ubicacionId ? { ubicacionId: ubicacionId.toLowerCase() } : {}) };
 }
 
+/** Serializa filtros sin el límite interno de página y conserva los códigos territoriales como texto. */
 export function queryParams(query: ListQuery): URLSearchParams {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
@@ -56,12 +70,24 @@ export function queryParams(query: ListQuery): URLSearchParams {
   return params;
 }
 
+/** Genera un enlace de consulta, incluyendo vista lista cuando se solicita; no incorpora una selección ajena. */
 export function explorerHref(query: ListQuery, view: "lista" | "mapa" = "mapa"): string {
   const params = queryParams(query);
   if (view === "lista") params.set("vista", "lista");
   return "/mapa" + (params.size ? "?" + params : "");
 }
 
+/**
+ * Abre las publicaciones sin ubicación en la vista textual conservando los demás filtros.
+ * @param query - Consulta actual; el área y el cursor no son válidos para esta nueva consulta.
+ * @returns Enlace a la primera página sin área, con `tieneGeometria=false` y vista lista.
+ */
+export function unlocatedListHref(query: ListQuery): string {
+  const { bbox: _bbox, cursor: _cursor, ...filters } = query;
+  return explorerHref({ ...filters, tieneGeometria: false }, "lista");
+}
+
+/** Convierte searchParams de App Router conservando repeticiones para que el parser pueda rechazarlas. */
 export function searchParamsOf(values: Record<string, string | string[] | undefined>) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(values)) {

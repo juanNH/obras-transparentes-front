@@ -1,3 +1,4 @@
+/** @file Comprueba límites y clasificación de auditoría pública mediante fetch sintético, sin acceder a datos reales. */
 import { describe, expect, it, vi } from "vitest";
 import examples from "../contracts/examples.json" with { type: "json" };
 import { auditPublicApi } from "../src/api/acceptance.js";

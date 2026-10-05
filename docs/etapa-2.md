@@ -2,6 +2,8 @@
 
 La implementación inicial y la adaptación Canvas fueron autorizadas el 2026-10-04 y correspondieron al PR #2, en `feature/etapa-2-sitio-publico` desde `main`. El recorrido de consulta se actualiza el 2026-10-05 con mapa y lista iniciales, continuidad entre vistas y localización de una obra desde sus resultados. Las decisiones vigentes se describen aquí; los registros de validación anteriores conservan su alcance histórico. Se preservan NestJS/PostgreSQL/PostGIS y el backoffice; no se modifica Drive ni se publican datos o el sitio.
 
+**Integración anterior comprobada el 2026-10-05:** el PR #5 se fusionó mediante `8848de5` y su CI final pasó; el [cierre de ese PR](#integración-y-corte-operativo-del-pr-5) conserva ese registro. La [entrega de JSDoc y avisos cartográficos](#jsdoc-y-publicaciones-sin-ubicación-en-el-mapa--2026-10-05) documenta las modificaciones y verificaciones locales posteriores. Los builds, ramas y capturas anteriores corresponden a sus respectivas ejecuciones, sin identificar automáticamente el proceso activo o el head actual.
+
 ## Requisitos acordados
 
 - Landing explicativa y fichas con HTML inicial, URLs estables, canonical y metadatos sociales.
@@ -40,6 +42,8 @@ El par `territorioEsquema=pba.municipio` + `municipioCodigo` funciona en enlaces
 Lista sin bbox incluye obras sin ubicación. Abrir el mapa conserva esa consulta y no agrega un bbox al enlace. Para leer GeoJSON sin un área confirmada se usa la extensión mundial representable `[-180, -85.051129, 180, 85.051129]`, separada de la cámara y limitada por los presupuestos de páginas, Features, posiciones, bytes y tiempo. Evita excluir silenciosamente las ubicaciones fuera del encuadre argentino; una lectura parcial se informa y no acredita cobertura completa.
 
 Con bbox explícito, listado y GeoJSON consultan sólo obras con geometría aprobada que intersecta esa zona, con enlaces para quitar el área. Ambos usan los mismos filtros y comparan `catalogoVersion` como string. El filtro de obras sin ubicación mantiene su lista, deja la cartografía sin puntos inventados y explica por qué esas obras no se dibujan.
+
+Las tarjetas, fichas y resúmenes identifican la ausencia de ubicación aprobada con «Publicada · Sin ubicación en el mapa», un pin tachado decorativo y una explicación textual. La lista ofrece un aviso con la cantidad cargada y una acción para consultar únicamente publicaciones sin ubicación. Esa acción conserva fuente, estado, sector y municipio, quita bbox/cursor y abre vista lista; una consulta por área explica por qué no puede incluir obras cuya ubicación se desconoce. Las revisiones históricas muestran «Revisión sin ubicación en el mapa». El aviso es informativo y no cambia publicación, calidad ni estado reportado. La etiqueta «Con ubicación en el mapa» expresa disponibilidad de geometría aprobada, sin garantizar que esté dentro de la cámara actual o ya cargada cuando el mapa es parcial.
 
 Cada selección conserva `obraId` y `revisionId` exactos en el enlace, al alternar vistas y al cerrar el resumen. «Ver en mapa» está disponible cuando el listado informa geometría: consulta esa revisión de la ficha, comprueba identidad/versión, toma sólo ubicaciones `ACCEPTED` con geometría y dibuja una capa de selección sujeta al mismo presupuesto. Ajusta la cámara a esa geometría, incluso si queda fuera de la vista o lectura cartográfica actual, sin cambiar filtros, bbox o páginas de resultados. Si la ficha no aporta geometría aprobada o se limita por presupuesto, lo informa sin fabricar ubicaciones. La selección del mapa sigue el mismo recorrido y el resumen se abre por otra acción.
 
@@ -333,3 +337,45 @@ La corrida [37378600241](https://github.com/juanNH/obras-transparentes-front/act
 Estas fallas se conservan como antecedente y no se contabilizan como pases de la corrección.
 
 Verificación local del cambio: typecheck, build de producción, 146 unitarias, contrato y `git diff --check` pasan. La suite completa soportada en Windows pasa 106/106 E2E en Chromium escritorio/móvil/tablet y WebKit móvil, con API/cartografía sintéticas aisladas y WebGL deshabilitado. Incluye las dos regresiones de CI sin reintentos; las cinco repeticiones enfocadas son adicionales a ese total. El nuevo push permite verificar Firefox y el reflow también en el runner Linux.
+
+### Integración y corte operativo del PR #5
+
+El [workflow 37380466432](https://github.com/juanNH/obras-transparentes-front/actions/runs/37380466432), sobre `76590ca`, terminó correctamente. El PR registra typecheck, unitarias, proxy, build y **116/116 E2E en Linux**, incluidas las diez pruebas de Firefox; GitGuardian también pasó. El primer check cancelado y la corrida de 114/116 son antecedentes anteriores a estas correcciones. El [PR #5](https://github.com/juanNH/obras-transparentes-front/pull/5) se fusionó el 5 de octubre a las 19:17, hora de Buenos Aires, mediante `8848de5`; `main` local y `origin/main` coincidían en ese merge al verificar este corte.
+
+La revisión de las 19:40 comprobó HTTP 200 en `localhost:3002`, Next en desarrollo con HMR y los archivos vigentes del checkout. Vite sirve el backoffice en `127.0.0.1:5173`, con el mismo árbol que su merge `699c8f5`. La API E7 de `127.0.0.1:3000` responde `live`/`ready` 200 y publica OpenAPI 0.6.0; sus 89 JavaScript del build coinciden con la fuente integrada en `016c102`. La API arrancó después de ese build. El worker activo es anterior al build vigente y no se reinició ni se acreditó su versión cargada en esta revisión.
+
+La conciliación actual de solo lectura verificó las 709 fichas y la paginación completa de listado/GeoJSON contra la base: catálogo **20**, **709 obras públicas**, **481 obras representadas**, **483 geometrías** y **228 obras sin geometría**, sin IDs duplicados ni recorte. CABA aporta 489 obras/395 en mapa; Nación 206/84 con 86 geometrías; Vicente López 12/0; PBA 2/2. La fecha de actualización de fuente es desconocida en todas las fichas. Este corte acredita publicaciones locales; la cobertura territorial y la precisión requieren evidencia propia.
+
+Las 489 obras de fuente CABA y las 12 municipales de Vicente López publican `territorios: []`. Las 395 ubicaciones CABA tienen corroboración espacial compatible con CABA, pero esa evidencia no completa el territorio normalizado. «Territorio no informado» conserva ese faltante y no contradice la presencia de una geometría aprobada.
+
+El listado público del BFF responde con `Cache-Control: no-store`. Assets versionados y mapa base conservan sus políticas actuales. `robots.txt` responde `Disallow: /` y sitemap con origen `http://localhost:3002`. Hosting, dominio HTTPS y operación remota son tareas de producción; la consulta local puede continuar con esta configuración. No se comprobó un destino remoto de producción ni se ejecutó un despliegue. Las pruebas CI no sustituyen dispositivos físicos, lectores de pantalla ni exactitud geográfica de los datos.
+
+## JSDoc y publicaciones sin ubicación en el mapa · 2026-10-05
+
+La rama `fix/documentacion-y-catalogo` incorpora la documentación del código propio y la distinción visible de publicaciones sin ubicación aprobada. Este registro corresponde al cambio y su verificación local, antes de registrar su integración remota; los resultados del PR #5 se conservan como antecedentes de esa entrega.
+
+La [guía de documentación del código](documentacion-codigo.md) establece `@file` por módulo y JSDoc descriptivo para declaraciones propias, incluidos componentes, funciones, clases, métodos, constructores, tipos y constantes exportadas. Los comentarios explican contratos, errores, efectos de red/cancelación, semántica de datos y presupuestos, sin duplicar los tipos de TypeScript. Las pruebas documentan propósito y aislamiento por módulo. Los artefactos generados mantienen su procedimiento de exportación y no se comentan a mano.
+
+`npm run docs:check` analiza archivos mantenidos con TypeScript y falla con archivo/línea cuando falta documentación. `prebuild` ejecuta la comprobación antes de preparar tipografías y compilar. La plantilla de PR y las instrucciones de colaboración exigen mantener los comentarios con cada cambio futuro. La comprobación evalúa presencia/descripción; su precisión semántica requiere revisión del código.
+
+`MapAvailability` comparte la etiqueta entre tarjeta, ficha y resumen. «Publicada · Sin ubicación en el mapa» combina un pin tachado decorativo y texto visible, con superficie neutra y colores forzados compatibles; no usa una alerta de error. La ficha determina disponibilidad a partir de ubicaciones `ACCEPTED` con geometría. Una revisión histórica sin ubicación conserva ese carácter en su etiqueta y explicación.
+
+El aviso de lista cuenta sólo las publicaciones cargadas que carecen de geometría y actualiza el número al paginar. La acción para consultar esas publicaciones conserva los demás filtros, elimina bbox/cursor y abre vista lista. El aviso de una consulta por área explica que se desconoce si las publicaciones sin ubicación están dentro de esa zona. Fichas y resúmenes permanecen disponibles sin ofrecer «Ver en mapa» para una obra sin geometría.
+
+### Verificación local de esta entrega
+
+Windows, Node 24.21.0/npm 11.19.0. E2E utiliza la API sintética de sólo lectura en 4100 y Next de producción en 3102, con cartografía sintética y WebGL deshabilitado; no carga datos en la API activa.
+
+| Comprobación | Resultado y alcance |
+| --- | --- |
+| `npm run docs:check` | 63 módulos y 212 declaraciones documentadas; sin faltantes. |
+| `npm run typecheck`, `npm run build` | Pasan; el build ejecuta la comprobación JSDoc. |
+| `npm test`, `npm run test:proxy` | 147 unitarias y 5 pruebas del proxy pasan. La prueba de URL verifica quitar área/cursor conservando fuente y municipio. |
+| Chromium escritorio y móvil | 96 E2E distintos pasan tras actualizar dos assertions del texto anterior del aviso. Incluyen 10 casos nuevos de ausencia cartográfica, paginación, ficha/resumen, filtros de área, HTML sin JavaScript, reflow a 320 px/texto 200 %, colores forzados y revisión histórica. |
+| Chromium tablet y WebKit móvil | 20/20 E2E de compatibilidad pasan. |
+| Total E2E local | 116 casos distintos verificados. La primera ejecución fue 92/94; las dos assertions antiguas y dos casos históricos nuevos pasan en una repetición enfocada 4/4. Los fallos iniciales no se cuentan como pases. |
+| Firefox de esta entrega | Diez casos pendientes de CI Linux. Se conserva el proyecto; el antecedente de inicialización fallida en Windows y el pase histórico del PR #5 no acreditan esta nueva entrega. |
+| Comparación AST y diff | 55 archivos modificados sólo en comentarios, sin cambios de comportamiento inesperados; `git diff --check` pasa. |
+| Observación real de sólo lectura | Catálogo municipal de Vicente López en `localhost:3002`: 12 tarjetas y 12 etiquetas en escritorio 1280 px y móvil 390 px; ficha móvil conserva aviso. HTTP 200, sin errores JS ni desbordamiento. |
+
+Las capturas reales `publicadas-sin-mapa-1280.png`, `publicadas-sin-mapa-390.png` y `ficha-publicada-sin-mapa-390.png` se inspeccionaron visualmente. Son evidencia local de la presentación con datos publicados; los casos E2E permanecen aislados y sintéticos. Axe, emulación y estos recorridos no sustituyen teléfonos físicos, lectores de pantalla ni la evaluación completa de WCAG AA.

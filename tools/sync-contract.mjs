@@ -1,3 +1,4 @@
+/** @file Exportación pública y generación de tipos desde el backend sin iniciar su servidor ni acceder a su base. */
 import { execFileSync } from "node:child_process";
 import { mkdtemp, readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";

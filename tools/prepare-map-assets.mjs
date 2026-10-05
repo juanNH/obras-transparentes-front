@@ -1,3 +1,4 @@
+/** @file Preparación de subconjuntos Noto Sans fijados y su licencia para servirlos desde el mismo origen. */
 import { copyFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 

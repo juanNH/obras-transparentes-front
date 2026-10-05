@@ -1,8 +1,17 @@
+/** @file Comprueba URLs compartibles, filtros incompatibles y conservación de consulta entre presentaciones. */
 import { describe, expect, it } from "vitest";
-import { explorerHref, parseExplorerQuery, queryParams } from "../src/lib/explorer-query";
+import { explorerHref, parseExplorerQuery, queryParams, unlocatedListHref } from "../src/lib/explorer-query";
 
 const parse = (query: string) => parseExplorerQuery(new URLSearchParams(query));
 describe("consultas públicas compartibles", () => {
+  it("abre publicaciones sin ubicación quitando área y cursor, conservando fuente y municipio", () => {
+    const query = { fuente: "nacion-obras", bbox: [-58.5, -34.6, -58.2, -34.4], cursor: "pagina-anterior", territorioEsquema: "pba.municipio", municipioCodigo: "0861", tieneGeometria: true } as const;
+    const href = unlocatedListHref(query);
+    expect(href).toBe("/mapa?fuente=nacion-obras&territorioEsquema=pba.municipio&municipioCodigo=0861&tieneGeometria=false&vista=lista");
+    expect(parse(href.split("?")[1]!)).toEqual({ query: { limit: 20, fuente: "nacion-obras", territorioEsquema: "pba.municipio", municipioCodigo: "0861", tieneGeometria: false }, view: "lista" });
+    expect(query.bbox).toEqual([-58.5, -34.6, -58.2, -34.4]);
+    expect(query.cursor).toBe("pagina-anterior");
+  });
   it("abre mapa y resultados sin aplicar un límite espacial al catálogo", () => {
     expect(parse("")).toEqual({ query: { limit: 20 }, view: "mapa" });
   });

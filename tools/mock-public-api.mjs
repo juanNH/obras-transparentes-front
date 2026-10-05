@@ -1,3 +1,4 @@
+/** @file Servidor E2E sintético de sólo lectura; no conecta ni persiste datos en la API activa. */
 // Isolated, read-only E2E server. Never connects to the backend or persists fixtures.
 import { createServer } from "node:http";
 import { Ajv } from "ajv";
@@ -10,11 +11,13 @@ if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error("Inv
 
 const ajv = new Ajv({ allErrors: true, strict: false, formats: fullFormats });
 ajv.addSchema({ $id: "fixture-contract", components: { schemas } });
+/** Comprueba las respuestas sintéticas contra los esquemas públicos antes de servirlas en E2E. */
 function validate(schema, value) {
   const check = ajv.getSchema(`fixture-contract#/components/schemas/${schema}`);
   if (!check(value)) throw new Error(`Invalid synthetic fixture ${schema}: ${ajv.errorsText(check.errors)}`);
   return value;
 }
+/** Genera UUID estables sintéticos por tipo y ordinal para que las pruebas puedan seleccionar revisiones exactas. */
 const id = (prefix, index) => `${prefix}0000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
 const catalogoVersion = "7";
 const details = new Map();
@@ -53,12 +56,14 @@ const items = Array.from({ length: 24 }, (_, index) => {
 validate("PublicWorkListResponse", { items, nextCursor: null, limit: 24, catalogoVersion });
 validate("PublicGeoFeatureCollection", { type: "FeatureCollection", features, nextCursor: null, catalogoVersion });
 
+/** Aplica intersección por extensión de figuras sintéticas; no simula ni acredita las reglas topológicas PostGIS. */
 function inArea(item, area) {
   if (!area) return true;
   const [west, south, east, north] = area;
   return features.some(feature => {
     if (feature.properties.obraId !== item.obraId) return false;
     const positions = [];
+    /** Extrae posiciones de coordenadas anidadas para calcular extensión del fixture sintético. */
     const collect = coordinates => {
       if (typeof coordinates[0] === "number") positions.push(coordinates);
       else coordinates.forEach(collect);
@@ -70,6 +75,7 @@ function inArea(item, area) {
       Math.min(...positions.map(position => position[1])) <= north;
   });
 }
+/** Aplica filtros admitidos al catálogo sintético conservando obras sin geometría cuando no hay área. */
 function filtered(params) {
   const area = params.has("bbox") ? params.get("bbox").split(",").map(Number) : null;
   return items.filter(item =>
@@ -81,6 +87,7 @@ function filtered(params) {
     inArea(item, area),
   );
 }
+/** Pagina fixtures por cursor sintético con límite acotado, sin persistir estado. */
 function pageOf(values, params, defaultLimit) {
   const limit = Math.min(500, Math.max(1, Number(params.get("limit") || defaultLimit)));
   const cursor = params.get("cursor");
@@ -90,6 +97,7 @@ function pageOf(values, params, defaultLimit) {
 }
 const server = createServer((request, response) => {
   const url = new URL(request.url, `http://127.0.0.1:${port}`);
+  /** Entrega JSON sin caché al consumidor E2E con el estado indicado. */
   const send = (status, value) => { response.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" }); response.end(JSON.stringify(value)); };
   if (request.method !== "GET") return send(405, { error: { code: "METHOD_NOT_ALLOWED", message: "Read-only fixture server", requestId: null } });
   if (url.pathname === "/__health") return send(200, { fixture: "synthetic-e2e-only" });

@@ -10,6 +10,10 @@
 
 <!-- Indica qué comprobaste y qué quedó pendiente. -->
 
+- [ ] JSDoc actualizado y `npm run docs:check` aprobado.
+- [ ] Swagger y contratos generados sincronizados cuando cambia una API.
+- [ ] Las obras publicadas sin ubicación conservan una indicación clara en los listados cuando se modifica esa interfaz.
+
 ## Decisiones pendientes o riesgos
 
 <!-- Indicá los pendientes relevantes o escribí "Ninguno". -->

@@ -8,6 +8,8 @@
 - Distinguí desconocidos de cero, fuente de organismo responsable y fecha de publicación de fecha del dato.
 - Verificá typecheck, tests, build y sincronización de contrato según el cambio. Para UI ejecutá también E2E con fixtures aislados. Documentá resultados en la etapa correspondiente.
 - Hacé commit o push cuando el usuario lo solicite.
+- Seguí [docs/documentacion-codigo.md](docs/documentacion-codigo.md): JSDoc `@file` en módulos propios y descripción de contratos en declaraciones mantenidas. El código nuevo debe pasar `npm run docs:check`, incluido en el build; no edites los artefactos generados para cumplirlo.
+- Las obras publicadas sin ubicación aprobada deben indicar claramente que no aparecen en el mapa y conservar acceso a lista y ficha. La ausencia de geometría no equivale a una obra sin publicar.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

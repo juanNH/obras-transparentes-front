@@ -10,7 +10,8 @@
   },
   "scripts": {
     "predev": "node tools/prepare-map-assets.mjs",
-    "prebuild": "node tools/prepare-map-assets.mjs",
+    "prebuild": "npm run docs:check && node tools/prepare-map-assets.mjs",
+    "docs:check": "node tools/check-jsdoc.mjs",
     "dev": "next dev --webpack --port 3002",
     "build": "next build --webpack",
     "start": "next start --port 3002",

@@ -1,7 +1,11 @@
+/** @file Presupuestos de features y posiciones para mapa/selección, sin simplificar ni inventar geometrías. */
 import type { WorkGeoJSON } from "../api/client.js";
 
+/** Ubicación GeoJSON tipada usada para contar features y posiciones del mapa. */
 type MapFeature = WorkGeoJSON["features"][number];
+/** Máximo conjunto de ubicaciones representables entre catálogo y selección. */
 export const MAX_MAP_FEATURES = 500;
+/** Presupuesto de posiciones reales del renderer; no cuenta ordenadas individuales. */
 export const MAX_MAP_POSITIONS = 10_000;
 
 /** Count position tuples, not their ordinates, without recursively walking input. */
@@ -75,11 +79,13 @@ export function limitMapLayers(
   const selectedKeys = new Set<string>();
   let positions = 0;
   let truncated = false;
+  /** Identifica obra/revisión/ubicación para evitar duplicados entre catálogo y selección. */
   const key = (feature: MapFeature) => JSON.stringify([
     feature.properties.obraId,
     feature.properties.revisionId,
     feature.properties.ubicacionId,
   ]);
+  /** Conserva features completas que caben en ambos presupuestos, identificando cualquier omisión como mapa parcial. */
   const retain = (feature: MapFeature, target: MapFeature[]): boolean => {
     if (catalog.length + selection.length === MAX_MAP_FEATURES) {
       truncated = true;

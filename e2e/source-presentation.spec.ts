@@ -1,3 +1,4 @@
+/** @file Comprueba fuente por texto/forma/color sin atribuir automáticamente responsabilidad o territorio. */
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { disableWebGL, expectCanvasMap, isolateMapNetwork } from "./map-fixture";

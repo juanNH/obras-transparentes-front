@@ -1,3 +1,4 @@
+/** @file Ficha pública por obra y revisión, con canonical actual e indexación restringida de revisiones históricas. */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,12 +9,14 @@ import { publicApi } from "../../../lib/public-api.js";
 import { reportEmail, siteUrl } from "../../../lib/config.js";
 import { stateLabel } from "../../../lib/presentation.js";
 
+/** Parámetros asíncronos de App Router para obra y revisión pública opcional. */
 type PageProps = {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 const uuid = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/i;
+/** Deduplica la lectura entre metadatos y HTML de una solicitud; una publicación inexistente produce 404. */
 const readWork = cache(async (id: string, revisionId?: string) => {
   try { return await publicApi().detail(id, revisionId); }
   catch (error) {
@@ -22,6 +25,7 @@ const readWork = cache(async (id: string, revisionId?: string) => {
   }
 });
 
+/** Valida obra y revisión antes de consultar y normaliza UUID; rechaza revisiones repetidas o inválidas. */
 async function route(props: PageProps) {
   const [{ id }, query] = await Promise.all([props.params, props.searchParams]);
   const revisionId = query.revisionId;
@@ -29,6 +33,7 @@ async function route(props: PageProps) {
   return { id: id.toLowerCase(), revisionId: revisionId?.toLowerCase() };
 }
 
+/** Genera canonical actual y marca revisiones solicitadas/históricas como noindex. */
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const { id, revisionId } = await route(props);
   const work = await readWork(id, revisionId);
@@ -42,6 +47,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   };
 }
 
+/** Entrega ficha HTML de la revisión solicitada, enlaces permanentes y reporte de datos si existe contacto. */
 export default async function WorkPage(props: PageProps) {
   const { id, revisionId } = await route(props);
   const work = await readWork(id, revisionId);

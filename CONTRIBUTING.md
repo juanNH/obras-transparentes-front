@@ -7,6 +7,13 @@
 - Documentá las decisiones acordadas; señalá las que sigan abiertas.
 - Para diseño o estilos del frontend público, consultá [docs/guia-visual.md](docs/guia-visual.md). Reutilizá sus tokens y patrones; documentá cualquier extensión o excepción junto con su verificación de accesibilidad.
 
+## JSDoc y documentación HTTP
+
+- Seguí [docs/documentacion-codigo.md](docs/documentacion-codigo.md) para documentar módulos y declaraciones propias con JSDoc descriptivo.
+- Actualizá los comentarios junto con el comportamiento y ejecutá `npm run docs:check`; el build exige esta convención también al código nuevo.
+- Documentá cada contrato HTTP con sus solicitudes, respuestas, errores y seguridad. Regenerá los snapshots y tipos afectados desde el backend.
+- Al revisar, comprobá que los comentarios expliquen el contrato y los límites, y que las obras publicadas sin ubicación se identifiquen claramente en los listados.
+
 ## Ramas y commits
 
 - Para cambios que requieran revisión, trabajá en una rama breve creada desde `main` y abrí un pull request.

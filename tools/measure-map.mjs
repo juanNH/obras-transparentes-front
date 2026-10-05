@@ -1,3 +1,4 @@
+/** @file Laboratorio aislado de mapa con API/cartografía sintéticas, CPU/red emuladas y WebGL deshabilitado. */
 import { chromium } from "@playwright/test";
 import { spawn } from "node:child_process";
 import { createServer as createPortProbe } from "node:net";
@@ -48,6 +49,7 @@ const report = {
   ], scenarios: [], memory: [], visual: [],
 };
 
+/** Inicia un proceso de laboratorio aislado, oculto en Windows, y retiene sus logs para verificar el bind propio. */
 function startNode(label, args, env) {
   const child = spawn(process.execPath, args, { cwd: process.cwd(), env: { ...process.env, ...env }, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
   let logs = "";
@@ -56,6 +58,7 @@ function startNode(label, args, env) {
   children.push({ child, label, logs: () => logs });
   return child;
 }
+/** Comprueba que el puerto esté libre para evitar medir accidentalmente un servidor ya activo. */
 async function assertAvailablePort(port) {
   const probe = createPortProbe();
   await new Promise((resolve, reject) => {
@@ -63,6 +66,7 @@ async function assertAvailablePort(port) {
     probe.listen(port, "127.0.0.1", () => probe.close(error => error ? reject(error) : resolve()));
   });
 }
+/** Exige log de bind del proceso creado y salud HTTP antes de medir, con tiempo máximo de espera. */
 async function waitForServer(url, child, readyText) {
   const deadline = Date.now() + 20000;
   while (Date.now() < deadline) {
@@ -75,9 +79,11 @@ async function waitForServer(url, child, readyText) {
   }
   throw new Error(`Lab server did not become ready: ${url}`);
 }
+/** Configura emulación móvil y táctil sin service workers para mantener la muestra reproducible. */
 function mobileOptions(viewport = { width: 390, height: 844 }) {
   return { viewport, deviceScaleFactor: 1, isMobile: true, hasTouch: true, serviceWorkers: "block" };
 }
+/** Crea una página con red externa aislada, mapa sintético y recolección de fallas de navegador. */
 async function setupPage(context) {
   const page = await context.newPage();
   const errors = [], unexpectedExternal = [];
@@ -92,6 +98,7 @@ async function setupPage(context) {
   await disableWebGL(page);
   return { page, errors, unexpectedExternal };
 }
+/** Aplica CPU y red emuladas mediante CDP y deshabilita caché en esta muestra. */
 async function throttle(page) {
   const session = await page.context().newCDPSession(page);
   await session.send("Network.enable");
@@ -103,8 +110,10 @@ async function throttle(page) {
   await session.send("Emulation.setCPUThrottlingRate", { rate: 4 });
   return session;
 }
+/** Captura el heap JavaScript a disco para diagnóstico opcional y retira el listener al finalizar. */
 async function heapSnapshot(session, iteration) {
   const chunks = [];
+  /** Acumula fragmentos de snapshot CDP sin procesarlos ni exponerlos en el informe compacto. */
   const collect = ({ chunk }) => chunks.push(chunk);
   session.on("HeapProfiler.addHeapSnapshotChunk", collect);
   try { await session.send("HeapProfiler.takeHeapSnapshot", { reportProgress: false }); }
@@ -113,6 +122,7 @@ async function heapSnapshot(session, iteration) {
   await writeFile(path.join(outputDirectory, fileName), chunks.join(""));
   return fileName;
 }
+/** Espera controles listos, un píxel pintado y carga GeoJSON terminada; background vacío no acredita el mapa. */
 async function waitForPaint(page) {
   await page.waitForFunction(() => {
     if (document.querySelector(".work-map")?.getAttribute("data-map-state") !== "ready") return false;
@@ -125,6 +135,7 @@ async function waitForPaint(page) {
   }, null, { timeout: 60000 });
   await page.waitForFunction(() => ![...document.querySelectorAll(".map-region [role=status]")].some(element => element.textContent.includes("Consultando ubicaciones")), null, { timeout: 60000 });
 }
+/** Resume recursos/scripts desde Performance API usando rutas, sin conservar hosts o parámetros del usuario. */
 async function resources(page) {
   return page.evaluate(() => {
     const all = performance.getEntriesByType("resource").map(entry => ({
@@ -158,6 +169,7 @@ const budgetFeatures = Array.from({ length: 500 }, (_, index) => {
 const ajv = new Ajv({ allErrors: true, strict: false, formats: fullFormats });
 ajv.addSchema({ $id: "map-lab-contract", components: { schemas } });
 const validateGeo = ajv.getSchema("map-lab-contract#/components/schemas/PublicGeoFeatureCollection");
+/** Intercepta GeoJSON exclusivamente en laboratorio con 500 features sintéticas validadas por contrato. */
 async function installBudget(page) {
   await page.route("**/api/public/geojson?*", route => {
     const url = new URL(route.request().url());
@@ -168,6 +180,7 @@ async function installBudget(page) {
     return route.fulfill({ contentType: "application/json", body: JSON.stringify(response) });
   });
 }
+/** Mide una carga fría y activación de mapa en un contexto nuevo con presupuestos de laboratorio declarados. */
 async function sample(name, route, expectedFeatures, budget = false) {
   console.log(`Map lab: cold ${name}`);
   const context = await browser.newContext(mobileOptions());
@@ -198,6 +211,7 @@ async function sample(name, route, expectedFeatures, budget = false) {
     const mapButton = [...document.querySelectorAll(".view-switch button")].find(button => button.textContent === "Mapa");
     mapButton.addEventListener("click", () => {
       window.__mapLab.clickAtMs = performance.now();
+      /** Registra cuándo los controles y un píxel cartográfico quedan listos después de la acción explícita. */
       const observe = () => {
         const workMap = document.querySelector(".work-map");
         if (workMap?.getAttribute("data-map-state") === "ready" && !window.__mapLab.controlsReadyAtMs) window.__mapLab.controlsReadyAtMs = performance.now();
@@ -279,6 +293,7 @@ async function sample(name, route, expectedFeatures, budget = false) {
   await context.close();
 }
 
+/** Captura escenarios responsive aislados y registra reflow/errores sin consultar datos o cartografía reales. */
 async function visual() {
   const sizes = [
     { width: 320, height: 740 }, { width: 768, height: 1024 }, { width: 820, height: 1180 },

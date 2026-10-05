@@ -1,3 +1,4 @@
+/** @file Comprueba que las categorías visuales provienen de fuentes y preservan procedencias mixtas/desconocidas. */
 import { describe, expect, it } from "vitest";
 import { mapOriginCategory } from "../src/lib/map-origin.js";
 

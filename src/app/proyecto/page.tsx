@@ -1,7 +1,9 @@
+/** @file Referencia pública de fuentes, roles, colores, alcance del piloto y créditos cartográficos. */
 import type { Metadata } from "next";
 import { SourceLegend, SourceSymbol } from "../../components/source-origin";
 import { MAP_ORIGINS, type MapOriginCategory } from "../../lib/map-origin";
 
+/** Metadatos de referencia pública sobre fuentes, roles y créditos. */
 export const metadata: Metadata = {
   title: "El proyecto y los colores del mapa",
   description: "Conocé Obras Transparentes, la referencia de colores inspirada en las banderas y los créditos del mapa.",
@@ -15,6 +17,7 @@ const flagReferences: { category: MapOriginCategory; description: string; href: 
   { category: "municipality", description: "Oro del sol del escudo que lleva la bandera de Vicente López, adaptado a un tono oscuro. Esta referencia corresponde a ese municipio; cada municipio tiene sus propios símbolos.", href: "https://legislacion.vicentelopez.gov.ar/digesto-digital/resultados/135", reference: "Bandera de Vicente López · Ordenanza 23450" },
 ];
 
+/** Muestra cómo interpretar fuente, roles, colores y mapa sin atribuir autoridad o cobertura no acreditadas. */
 export default function ProjectPage() {
   return <article className="container page-heading prose">
     <p className="eyebrow">El proyecto</p>

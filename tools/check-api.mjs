@@ -1,3 +1,4 @@
+/** @file CLI de auditoría acotada y de sólo lectura; informa passed/incomplete/failed sin volcar registros ni coordenadas. */
 import { createPublicApi } from "../dist/src/api/client.js";
 import { auditPublicApi } from "../dist/src/api/acceptance.js";
 

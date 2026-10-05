@@ -1,3 +1,4 @@
+/** @file Comprueba serialización, validación de contrato y errores de transporte del cliente público. */
 import { describe, expect, it, vi } from "vitest";
 import examples from "../contracts/examples.json" with { type: "json" };
 import {

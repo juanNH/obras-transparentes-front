@@ -1,7 +1,10 @@
+/** @file Adaptación de estilo y atribución para Canvas 2D con fuentes tipográficas del mismo origen. */
 import type { AttributionLike } from "ol/source/Source.js";
 
+/** URL versionada de tipografías locales para la UI y las etiquetas de Canvas. */
 export const MAP_FONT_STYLESHEET = "/map-fonts/5.3.0/noto-sans.css";
 
+/** Retira únicamente el enlace opcional exacto de marca del proveedor y conserva todos los créditos de datos. */
 function removeOptionalOpenFreeMapLink(attribution: string): string {
   return attribution.replace(/<a\b([^>]*)>\s*OpenFreeMap\s*<\/a>\s*/gi, (link, attributes: string) => {
     const href = /(?:^|\s)href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i.exec(attributes);

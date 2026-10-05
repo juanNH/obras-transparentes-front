@@ -346,6 +346,20 @@
   gap: var(--space-3);
 }
 
+.explorer .unlocated-notice {
+  margin-block: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-control);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-alt);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.explorer .unlocated-notice p { margin-bottom: 0; }
+.explorer .unlocated-notice a { display: inline-flex; align-items: center; min-height: var(--control-min); margin-top: var(--space-1); }
+.explorer .work-card .map-availability-note { margin-bottom: 0; }
+
 .explorer .work-card {
   position: relative;
   padding: var(--space-4);
@@ -654,6 +668,7 @@
   .explorer .work-card.selected,
   .explorer details.map-help,
   .explorer .scope-note,
+  .explorer .unlocated-notice,
   .explorer .filter-group > summary,
   .explorer .view-switch,
   .explorer dialog.detail-panel {

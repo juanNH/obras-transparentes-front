@@ -1,10 +1,18 @@
+/** @file Pasarela GET de mismo origen para rutas públicas admitidas; valida consultas y oculta detalles internos. */
 import { PublicApiError } from "../../../../api/client";
 import { parseExplorerQuery, isUUID } from "../../../../lib/explorer-query";
 import { publicApi } from "../../../../lib/public-api";
 
+/** Evita caché de rutas BFF para consultar la versión vigente del catálogo. */
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store" };
 const allowed = new Set(["fuente", "estado", "sector", "territorioEsquema", "municipioCodigo", "tieneGeometria", "bbox", "cursor"]);
+/**
+ * Acepta sólo lista, GeoJSON y ficha pública, validando filtros antes de leer la API.
+ * @param request - GET de mismo origen; su señal cancela la lectura upstream.
+ * @param params - Segmentos de la ruta pública resueltos por App Router.
+ * @returns JSON validado sin caché o un error público que no revela URLs internas.
+ */
 export async function GET(request: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const path = (await params).path;
   const url = new URL(request.url);

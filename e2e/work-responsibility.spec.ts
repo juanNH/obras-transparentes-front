@@ -1,3 +1,4 @@
+/** @file Comprueba roles reportados en ficha/resumen y conserva responsabilidades desconocidas sin inventarlas. */
 import { expect, test, type Page } from "@playwright/test";
 import type { WorkDetail } from "../src/api/client.js";
 import { isolateMapNetwork } from "./map-fixture";

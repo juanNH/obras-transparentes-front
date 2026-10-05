@@ -1,3 +1,4 @@
+/** @file Proxy de diagnóstico limitado a GET/HEAD públicos, sin credenciales entrantes y con origen fijo. */
 import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 import { resolve } from "node:path";
@@ -15,6 +16,7 @@ const responseHeaders = [
   "last-modified",
 ];
 
+/** Envía JSON sin caché respetando HEAD, que debe mantener cabeceras sin body. */
 function json(res, status, body, head = false) {
   res.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
@@ -23,6 +25,7 @@ function json(res, status, body, head = false) {
   res.end(head ? undefined : JSON.stringify(body));
 }
 
+/** Construye el sobre público de error del proxy con su requestId de diagnóstico. */
 function fail(res, status, code, message, requestId, head = false) {
   return json(res, status, { error: { code, message, requestId } }, head);
 }
@@ -124,6 +127,7 @@ export function createPublicProxy({
       timedOut = true;
       controller.abort();
     }, timeoutMs);
+    /** Cancela upstream si el consumidor cierra la respuesta antes de completarla. */
     const disconnect = () => {
       if (!res.writableEnded) controller.abort();
     };

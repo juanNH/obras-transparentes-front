@@ -1,7 +1,14 @@
+/** @file Sitemap dinámico de fichas actuales; exige paginación completa de una misma versión del catálogo. */
 import { siteUrl } from "../../lib/config";
 import { publicApi } from "../../lib/public-api";
+/** Impide servir un sitemap almacenado cuando cambia el catálogo. */
 export const dynamic = "force-dynamic";
+/** Escapa texto de URL para incluirlo en XML sin alterar su estructura. */
 const escape = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
+/**
+ * Construye hasta 2.000 fichas actuales con una misma versión y cursores únicos.
+ * @returns XML sin caché, o 503 explícito si falta completitud o se requiere particionar.
+ */
 export async function GET() {
   try {
     const api = publicApi(); const urls = ["/", "/proyecto", "/privacidad"]; const seen = new Set<string>();

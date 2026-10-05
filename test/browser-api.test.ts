@@ -1,3 +1,4 @@
+/** @file Comprueba errores, cancelación y presupuesto de bytes al leer el BFF desde el navegador. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BrowserApiError, readPublic } from "../src/lib/browser-api.js";
 

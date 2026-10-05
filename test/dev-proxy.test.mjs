@@ -1,3 +1,4 @@
+/** @file Comprueba aislamiento de rutas, credenciales, redirecciones y cancelación del proxy de diagnóstico. */
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { createServer, request } from "node:http";

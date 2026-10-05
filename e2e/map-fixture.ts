@@ -1,3 +1,4 @@
+/** @file Helpers E2E de red/cartografía sintéticas para verificar Canvas sin descargar servicios reales. */
 import { expect, type Page } from "@playwright/test";
 
 // This style draws synthetic geography in Canvas; it needs no remote tiles,
@@ -24,6 +25,7 @@ const baseStyle = {
   ],
 };
 
+/** Bloquea tráfico externo y conserva únicamente los servidores locales de prueba. */
 export async function isolateMapNetwork(page: Page) {
   await page.route("**/*", route => {
     const url = new URL(route.request().url());
@@ -32,6 +34,7 @@ export async function isolateMapNetwork(page: Page) {
   });
 }
 
+/** Sustituye el estilo del proveedor por geografía sintética pintada en Canvas, sin teselas remotas. */
 export async function useSyntheticBasemap(page: Page) {
   await page.route("https://tiles.openfreemap.org/**", route => route.fulfill({
     contentType: "application/json",
@@ -39,6 +42,7 @@ export async function useSyntheticBasemap(page: Page) {
   }));
 }
 
+/** Fuerza APIs WebGL no disponibles antes de cargar la página para comprobar la alternativa Canvas. */
 export async function disableWebGL(page: Page) {
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
@@ -49,6 +53,7 @@ export async function disableWebGL(page: Page) {
   });
 }
 
+/** Exige controles listos y un píxel pintado por capas reales del fixture, además de ausencia de fallas cartográficas. */
 export async function expectCanvasMap(page: Page) {
   await expect(page.getByRole("button", { name: "Acercar mapa", exact: true })).toBeEnabled();
   await expect(page.locator(".map-canvas canvas").first()).toBeVisible();
@@ -62,6 +67,7 @@ export async function expectCanvasMap(page: Page) {
   await expect(page.getByText(/No pudimos mostrar el mapa|No se pudo cargar una parte del mapa/)).toHaveCount(0);
 }
 
+/** Inspecciona píxeles Canvas con tolerancia RGB para probar que se dibujaron formas del escenario. */
 export async function hasMapColor(page: Page, rgb: readonly [number, number, number]) {
   return page.locator(".map-canvas canvas").evaluateAll((canvases, color) => canvases.some(element => {
     const canvas = element as HTMLCanvasElement;

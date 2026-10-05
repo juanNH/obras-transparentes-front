@@ -1,3 +1,4 @@
+/** @file Explorador con lista/mapa sincronizados, paginación versionada y selección explícita de obra y ubicación. */
 "use client";
 
 import dynamic from "next/dynamic";
@@ -5,19 +6,26 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BoundingBox, ListQuery, WorkDetail, WorkGeoJSON, WorkList } from "../api/client";
 import { BrowserApiError, readPublic } from "../lib/browser-api";
-import { DEFAULT_BBOX, MAP_READ_BBOX, SOURCES, STATES, explorerHref, queryParams } from "../lib/explorer-query";
+import { DEFAULT_BBOX, MAP_READ_BBOX, SOURCES, STATES, explorerHref, queryParams, unlocatedListHref } from "../lib/explorer-query";
 import type { ExplorerQuery } from "../lib/explorer-query";
 import { limitMapFeatures, limitMapLayers, MAX_MAP_FEATURES } from "../lib/map-budget";
 import { detailMapFeatures } from "../lib/map-data";
 import { locationPresentation } from "../lib/presentation";
 import { LocationQuality } from "./location-quality";
 import { SourceBadge, SourceLegend } from "./source-origin";
+import { MapAvailability } from "./map-availability";
 import "./explorer.css";
 
 const WorkMap = dynamic(() => import("./work-map"), { ssr: false, loading: () => <p className="notice" role="status">Cargando el mapa… La lista sigue disponible.</p> });
 const WorkDetailContent = dynamic(() => import("./work-detail").then(module => module.WorkDetailContent), { ssr: false, loading: () => <p role="status">Preparando el resumen…</p> });
+/** Identidad compartible de obra y revisión; una ubicación específica se conserva sólo cuando fue elegida. */
 type Selection = { id: string; revisionId?: string; locationId?: string };
 
+/**
+ * Mantiene lista/mapa y selección dentro de una sola versión del catálogo con alternativa textual HTML.
+ * @param props - Página inicial, estado validado de URL y estilo cartográfico configurado.
+ * @returns Explorador que conserva filtros al alternar presentación y confirma área sólo por acción explícita.
+ */
 export function Explorer({ initial, initialError, state, styleUrl }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string }) {
   const router = useRouter();
   const { query } = state;
@@ -63,11 +71,13 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
   const selectedGeometry = useMemo(() => limitMapFeatures(selectedLocations), [selectedLocations]);
   const mapLayers = useMemo(() => limitMapLayers(features, selectedGeometry.features), [features, selectedGeometry]);
   const representedFeatures = useMemo(() => {
+    /** Identifica obra/revisión/ubicación para contar únicamente capas de la consulta, sin sumar selección externa. */
     const key = (feature: WorkGeoJSON["features"][number]) => `${feature.properties.obraId}:${feature.properties.revisionId}:${feature.properties.ubicacionId}`;
     const queryKeys = new Set(features.map(key));
     return [...mapLayers.catalog, ...mapLayers.selection.filter(feature => queryKeys.has(key(feature)))];
   }, [features, mapLayers]);
 
+  /** Cancela paginación y retira lista, mapa y selección para evitar mezclar versiones de una publicación. */
   const invalidate = useCallback(() => {
     listRequest.current?.abort();
     setItems([]); setCursor(null); setFeatures([]); setListError("CATALOG_CHANGED"); setSelection(null);
@@ -80,6 +90,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
     const controller = new AbortController();
     let cancelled = false;
     setMapLoading(true); setMapMessage(""); setFeatures([]);
+    /** Recorre GeoJSON con límites de páginas/bytes/features y cancela o invalida el mapa al cambiar el catálogo. */
     const load = async () => {
       let next: string | null = null;
       const seen = new Set<string>();
@@ -117,6 +128,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
   }, [view, initial, mismatch, query, version, invalidate]);
 
   useEffect(() => {
+    /** Restaura presentación y selección al navegar Atrás/Adelante sin abrir automáticamente un resumen. */
     const restore = () => {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("obra")?.toLowerCase(); const revisionId = params.get("revisionId")?.toLowerCase(); const locationId = params.get("ubicacionId")?.toLowerCase();
@@ -155,6 +167,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
     }
   }, [view, selection, selectionFocus]);
 
+  /** Selecciona una revisión/ubicación y actualiza el enlace; abrir resumen requiere una acción explícita. */
   function select(id: string, revisionId: string, summary = false, locationId?: string) {
     setFocusBBox(null);
     if (selection?.id !== id || selection.revisionId !== revisionId) {
@@ -169,12 +182,14 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
     else url.searchParams.delete("ubicacionId");
     if (url.href !== window.location.href) window.history.pushState(null, "", url);
   }
+  /** Retira selección y parámetros compartibles, devolviendo el foco al contexto del mapa. */
   function clearSelection() {
     mapRegion.current?.focus({ preventScroll: true });
     setSelection(null); setSummaryOpen(false);
     const url = new URL(window.location.href); url.searchParams.delete("obra"); url.searchParams.delete("revisionId"); url.searchParams.delete("ubicacionId");
     window.history.replaceState(null, "", url);
   }
+  /** Agrega una página sin obras duplicadas ni cursores repetidos y retira resultados si cambia la versión. */
   async function loadMore() {
     if (!cursor || loading || mismatch) return;
     if (paginationCursors.current.has(cursor)) { setListError("PAGINATION_ERROR"); return; }
@@ -195,6 +210,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
       else setListError("UNAVAILABLE");
     } finally { if (!controller.signal.aborted) setLoading(false); }
   }
+  /** Alterna lista/mapa conservando filtros, páginas cargadas, selección y cámara en memoria. */
   function navigateView(next: "lista" | "mapa") {
     if (next === view) return;
     setFocusBBox(null);
@@ -204,6 +220,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
     setView(next);
     window.history.pushState(null, "", url);
   }
+  /** Activa mapa y enfoca la revisión elegida sin aplicar su encuadre como filtro de consulta. */
   function locateWork(id: string, revisionId: string, locationId?: string) {
     camera.current = null;
     focusMap.current = true;
@@ -211,17 +228,20 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
     navigateView("mapa");
     select(id, revisionId, false, locationId);
   }
+  /** Destaca la ubicación elegida de la revisión seleccionada, manteniendo los filtros de la lista. */
   function chooseLocation(locationId?: string) {
     if (!selectedDetail) return;
     camera.current = null;
     setSelectionFocus(value => value + 1);
     select(selectedDetail.obraId, selectedDetail.revisionId, false, locationId);
   }
+  /** Confirma el encuadre candidato como bbox de una nueva consulta y elimina el filtro incompatible sin geometría. */
   function searchArea() {
     const nextQuery = { ...firstQuery, bbox: candidate };
     delete nextQuery.tieneGeometria;
     router.push(explorerHref(nextQuery, "mapa"), { scroll: false });
   }
+  /** Solicita permiso sólo al pulsar el control y centra cámara; no envía un área al catálogo hasta confirmarla. */
   function useLocation() {
     if (!navigator.geolocation) { setLocationMessage("Tu navegador no ofrece ubicación. Podés mover el mapa o usar la lista."); return; }
     setLocating(true); setLocationMessage("Esperando tu permiso. Tu ubicación no se guarda en el enlace automáticamente.");
@@ -234,6 +254,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
       setLocationMessage("Mapa centrado cerca tuyo. Buscar en esta zona incorporará esa área al enlace y la enviará al catálogo. Podés mover el mapa antes.");
     }, () => { if (alive.current) { setLocating(false); setLocationMessage("No pudimos obtener tu ubicación. Podés mover el mapa o explorar todas las obras en la lista."); } }, { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 });
   }
+  /** Copia el enlace de filtros/selección sin cursor de página y ofrece alternativa si el portapapeles falla. */
   async function share() {
     const url = new URL(window.location.href); url.searchParams.delete("cursor");
     try { await navigator.clipboard.writeText(url.href); setShareMessage("Enlace copiado."); }
@@ -273,7 +294,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
     <div className="scope-note">
       <p><strong>{query.bbox ? "Consulta por área" : "Todo el catálogo"}</strong> · {query.bbox ? "Solo obras con ubicación aprobada que intersecta la zona consultada." : "Sin filtro de área. Incluye obras con y sin ubicación aprobada."}</p>
       {query.territorioEsquema && <p>Municipio PBA: código {query.municipioCodigo}. Este filtro territorial no equivale al área del mapa.</p>}
-      {query.bbox && <p><a href={explorerHref(clearArea)}>Quitar área y ver todo el catálogo</a> · <a href={explorerHref({ ...clearArea, tieneGeometria: false })}>Ver obras sin ubicación</a></p>}
+      {query.bbox && <><p>Las obras publicadas sin ubicación no aparecen en una consulta por área porque no se puede determinar si están dentro de esta zona.</p><p><a href={explorerHref(clearArea, view)}>Quitar área y ver todo el catálogo</a> · <a href={unlocatedListHref(query)}>Ver obras sin ubicación en el mapa</a></p></>}
     </div>
     {mismatch && <div className="notice error" role="alert"><h2>El catálogo cambió</h2><p>Retiramos los resultados anteriores para evitar mezclar publicaciones. Conservamos tus filtros.</p><a className="button" href={firstHref}>Reiniciar consulta</a></div>}
     {listError && !mismatch && <div className="notice error" role="alert"><h2>No pudimos completar la consulta</h2><p>El catálogo puede estar temporalmente fuera de servicio. Los resultados que ya ves corresponden a la última consulta completada.</p><a className="button secondary" href={firstHref}>Reintentar consulta</a></div>}
@@ -316,14 +337,19 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
       </section>}
       <section id="resultados" className={view === "mapa" ? "list-region beside-map" : "list-region"} aria-label="Lista de obras">
         <div className="results-heading"><h2>Obras publicadas</h2><p aria-live="polite">{items.length} {items.length === 1 ? "obra cargada" : "obras cargadas"}{cursor ? " · hay más páginas" : ""}</p></div>
-        <p className="results-footnote">{unlocatedLoaded > 0 ? `${unlocatedLoaded} de las obras cargadas no ${unlocatedLoaded === 1 ? "tiene" : "tienen"} ubicación aprobada. ` : ""}La lista conserva todos los resultados, aunque no puedan dibujarse en el mapa.</p>
+        <p className="results-footnote">La lista conserva las obras publicadas, incluso cuando no tienen una ubicación aprobada para el mapa.</p>
+        {unlocatedLoaded > 0 && <div className="unlocated-notice">
+          <p><strong>{unlocatedLoaded} {unlocatedLoaded === 1 ? "obra cargada no aparece" : "obras cargadas no aparecen"} en el mapa.</strong> {query.tieneGeometria === false ? "Esta consulta muestra publicaciones sin ubicación aprobada. Sus fichas siguen disponibles." : "Están identificadas en las tarjetas como «Publicada · Sin ubicación en el mapa»."}</p>
+          {query.tieneGeometria !== false && <a href={unlocatedListHref(query)}>Ver solo obras sin ubicación en el mapa</a>}
+        </div>}
         {hasData && !mismatch && items.length === 0 && <div className="empty-state"><span className="empty-symbol" aria-hidden="true">↗</span><h3>No hay obras para mostrar</h3><p>No encontramos obras publicadas para esta consulta. Esto no significa que no existan obras en el territorio.</p><a href="/mapa">Ver todo el catálogo</a></div>}
         <ul className="results-list">{items.map((work, index) => <li className={`work-card${selection?.id === work.obraId ? " selected" : ""}`} key={work.obraId}>
-          <div className="work-card-meta"><span className="status-badge">{work.estado ? STATES[work.estado] : "Estado no informado"}</span><span className={`location-label${work.tieneGeometria ? "" : " unlocated"}`}>{work.tieneGeometria ? "Ubicación aprobada" : "Sin ubicación aprobada"}</span></div>
+          <div className="work-card-meta"><span className="status-badge">{work.estado ? STATES[work.estado] : "Estado no informado"}</span><MapAvailability hasGeometry={work.tieneGeometria} /></div>
           <div className="work-card-identity"><span className="result-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><h3><a href={`/obras/${work.obraId}?revisionId=${work.revisionId}`}>{work.nombre}</a></h3></div>
           {selection?.id === work.obraId && <p className="selection-label">Obra seleccionada</p>}
           <p>{work.territorios.map(t => t.nombre ?? t.codigo).join(" · ") || "Territorio no informado"}</p>
           <p><SourceBadge sources={work.fuentes} /></p>
+          {!work.tieneGeometria && <p className="map-availability-note">Esta publicación no tiene una ubicación aprobada para dibujar. Podés consultar su resumen y su ficha.</p>}
           <div className="card-actions">{work.tieneGeometria && <button type="button" className="button secondary" disabled={!hydrated} onClick={() => locateWork(work.obraId, work.revisionId)}>Ver en mapa<span className="sr-only">: {work.nombre}</span></button>}<button type="button" className="button secondary" disabled={!hydrated} onClick={() => select(work.obraId, work.revisionId, true, selection?.id === work.obraId && selection.revisionId === work.revisionId ? selectedLocationId : undefined)}>Ver resumen<span className="sr-only"> de {work.nombre}</span></button><a href={`/obras/${work.obraId}?revisionId=${work.revisionId}`}>Ver ficha<span className="sr-only"> de {work.nombre}</span> <span aria-hidden="true">↗</span></a></div>
         </li>)}</ul>
         {cursor && <div className="pagination">{items.length < 100 && <button type="button" className="button secondary" disabled={!hydrated || loading} onClick={() => void loadMore()}>{loading ? "Cargando obras…" : "Cargar más obras"}</button>}<a href={explorerHref({ ...query, cursor }, view)}>{items.length >= 100 ? "Ir a la página siguiente" : "Página siguiente sin JavaScript"}</a></div>}

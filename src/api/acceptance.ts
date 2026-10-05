@@ -1,3 +1,4 @@
+/** @file Auditoría pública de lectura con límites de páginas, fichas y tiempo; un pase describe únicamente la muestra. */
 import {
   createPublicApi,
   PublicApiError,
@@ -7,12 +8,15 @@ import {
 } from "./client.js";
 import { ApiContractError } from "./contract.js";
 
+/** Resultado de la muestra: consistente, inconclusa por límites o fallida por inconsistencia/lectura. */
 export type AcceptanceStatus = "passed" | "incomplete" | "failed";
+/** Resultado de una comprobación sin datos de obras; conserva código y estado HTTP cuando aplica. */
 export interface AcceptanceCheck {
   status: AcceptanceStatus;
   code: string;
   httpStatus?: number;
 }
+/** Área WGS84 y presupuestos que impiden barrer indefinidamente el catálogo activo. */
 export interface AcceptanceOptions {
   bbox: BoundingBox;
   maxPages?: number;
@@ -21,6 +25,7 @@ export interface AcceptanceOptions {
   requestTimeoutMs?: number;
   totalTimeoutMs?: number;
 }
+/** Informe de sólo lectura con conteos, completitud y límites; no incluye identidades ni ubicaciones de obras. */
 export interface AcceptanceReport {
   mode: "read-only";
   status: AcceptanceStatus;
@@ -50,7 +55,9 @@ export interface AcceptanceReport {
   };
 }
 
+/** Incidencia interna de auditoría que distingue falta de evidencia de una falla y permite detener la muestra. */
 class AuditIssue extends Error {
+  /** Conserva clasificación, código y señal de interrupción sin incluir datos de registros. */
   constructor(
     readonly status: AcceptanceStatus,
     readonly code: string,
@@ -60,6 +67,10 @@ class AuditIssue extends Error {
   }
 }
 
+/**
+ * Exige un entero positivo dentro del presupuesto antes de iniciar solicitudes.
+ * @throws TypeError Si la opción excede el límite admitido.
+ */
 function boundedInteger(value: number, maximum: number, name: string): number {
   if (!Number.isSafeInteger(value) || value < 1 || value > maximum) {
     throw new TypeError(`${name} debe ser un entero entre 1 y ${maximum}.`);
@@ -87,6 +98,7 @@ export async function auditPublicApi(
     "totalTimeoutMs",
   );
   const deadline = Date.now() + totalTimeoutMs;
+  /** Inicializa una comprobación sin evidencia; nunca la presenta como aprobada antes de ejecutarla. */
   const pending = (): AcceptanceCheck => ({
     status: "incomplete",
     code: "NOT_RUN",
@@ -124,6 +136,7 @@ export async function auditPublicApi(
   const geoWorks = new Map<string, string>();
   const locations = new Set<string>();
 
+  /** Fija la versión de la primera respuesta y detiene la auditoría si cambia durante la lectura. */
   function catalog(response: { catalogoVersion: string }): void {
     if (report.catalogoVersion === null) {
       report.catalogoVersion = response.catalogoVersion;
@@ -132,6 +145,7 @@ export async function auditPublicApi(
     }
   }
 
+  /** Retiene una ficha de muestra por obra y detecta revisiones/fechas incompatibles entre resúmenes. */
   function sample(summary: WorkSummary): void {
     const existing = samples.get(summary.obraId);
     if (
@@ -145,6 +159,7 @@ export async function auditPublicApi(
     samples.set(summary.obraId, summary);
   }
 
+  /** Limita cada lectura al menor timeout disponible y cancela la solicitud al vencer el presupuesto global. */
   async function request<T>(
     read: (signal: AbortSignal) => Promise<T>,
   ): Promise<T> {
@@ -173,6 +188,7 @@ export async function auditPublicApi(
     }
   }
 
+  /** Registra el resultado de un bloque sin volcar excepciones ni registros y propaga la necesidad de detenerse. */
   async function check(
     name: keyof AcceptanceReport["checks"],
     action: () => Promise<void>,

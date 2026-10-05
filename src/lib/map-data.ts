@@ -1,10 +1,13 @@
+/** @file Conversión de ubicaciones aprobadas a capas 2D, preservando identidad de obra, revisión y ubicación. */
 import type { Feature, FeatureCollection, Geometry, Point } from "geojson";
 import type { BoundingBox, WorkDetail, WorkGeoJSON } from "../api/client.js";
 import { mapOriginCategory, type MapOriginCategory } from "./map-origin.js";
 
+/** Propiedades compactas que conservan identidad y calidad y agregan categoría visual por fuente. */
 export type MapProperties = Pick<WorkGeoJSON["features"][number]["properties"], "obraId" | "revisionId" | "ubicacionId" | "nombre" | "calidad" | "fuentes"> & {
   nivelFuente: MapOriginCategory;
 };
+/** Colección de figuras reales con identidad de obra, revisión y ubicación preservada. */
 export type MapCollection = FeatureCollection<Geometry, MapProperties>;
 
 /** Preserve the requested public revision; only approved, real locations can be drawn. */
@@ -100,6 +103,10 @@ export function partitionMapFeatures(features: WorkGeoJSON["features"]): {
   };
 }
 
+/**
+ * Filtra la colección por obra y, cuando se especifican, revisión y ubicación exactas.
+ * @returns Colección vacía si no hay selección, sin reemplazar una ubicación ausente por otra.
+ */
 export function selectedMapFeatures(
   collection: MapCollection,
   obraId: string | null,
