@@ -1,6 +1,6 @@
 # Etapa 2 · sitio público y exploración móvil
 
-Implementación y adaptación Canvas autorizadas el 2026-10-04. La adaptación permanece en el mismo PR #2 para una sola integración a main. Rama `feature/etapa-2-sitio-publico`, creada desde `main`. Se preservan NestJS/PostgreSQL/PostGIS y el backoffice; no se modifica Drive ni se publican datos o el sitio.
+La implementación inicial y la adaptación Canvas fueron autorizadas el 2026-10-04 y correspondieron al PR #2, en `feature/etapa-2-sitio-publico` desde `main`. El recorrido de consulta se actualiza el 2026-10-05 con mapa y lista iniciales, continuidad entre vistas y localización de una obra desde sus resultados. Las decisiones vigentes se describen aquí; los registros de validación anteriores conservan su alcance histórico. Se preservan NestJS/PostgreSQL/PostGIS y el backoffice; no se modifica Drive ni se publican datos o el sitio.
 
 ## Requisitos acordados
 
@@ -17,11 +17,13 @@ Implementación y adaptación Canvas autorizadas el 2026-10-04. La adaptación p
 | --- | --- |
 | Next.js App Router, Node y Webpack | Landing prerenderizada; listas/fichas renderizadas en servidor y rutas de lectura de mismo origen. Agrega un proceso Node separado del backend. Webpack permite `extensionAlias` para conservar el cliente NodeNext existente. |
 | Ajv y contrato en servidor | Conserva validación real sin enviar los esquemas al celular. Las rutas públicas agregan un salto HTTP y necesitan límites operativos. |
-| Lista inicial; mapa y resumen diferidos | Contenido consultable antes de descargar motor y fichas. El mapa tiene una espera al abrirlo por primera vez. |
+| Mapa y lista al entrar; lista en HTML del servidor | El territorio y los resultados se leen juntos. El mapa se inicializa con JavaScript y agrega descargas al ingreso; la lista, los filtros y las fichas siguen disponibles sin JavaScript. `vista=lista` permite entrar sólo con resultados y cargar el mapa al elegirlo. |
 | OpenLayers Canvas 2D como único motor | Mapa utilizable con WebGL deshabilitado. Conserva OpenFreeMap sin tarifa por solicitud. Procesar vectores/etiquetas sigue consumiendo CPU y memoria; requiere medir dispositivos reales. |
-| Búsqueda explícita de área | «Buscar en esta zona» cambia bbox y reinicia consulta. Evita peticiones mientras se mueve el mapa o se centra ubicación. Requiere una acción adicional y distinguir vista de área consultada. |
-| Panel modal nativo | Foco contenido, Escape y retorno al control. En móvil aparece desde abajo; Ampliar/Reducir reemplaza la necesidad de arrastre. Es un panel de lectura con scroll, sin gesto de arrastre propio. |
-| Sin caché de datos del catálogo | Evita servir revisiones inconsistentes hasta acordar invalidación con backend. Aumenta lecturas. Assets con hash se cachean; sin prefetch masivo de teselas ni PWA offline. |
+| Búsqueda explícita de área | Sólo «Buscar en esta zona» incorpora el bbox visible y reinicia consulta. Abrir el mapa, moverlo o encuadrar una obra conserva filtros y resultados. Requiere distinguir encuadre visual de área consultada. |
+| Vistas mediante estado local e historial nativo | Alternar Lista/Mapa conserva páginas cargadas, selección exacta y cámara en memoria, sin remontar el explorador ni repetir el listado. La primera apertura carga el motor y el GeoJSON; las lecturas completadas se reutilizan dentro de la misma consulta. Cambiar filtros o confirmar área crea otra consulta. |
+| Selección cartográfica y resumen separados | Elegir una geometría o «Ver en mapa» destaca la obra sin abrir un modal. La franja de selección muestra nombre y condición de ubicación; «Ver resumen» abre el diálogo nativo. Escape/Cerrar devuelve foco y conserva selección; «Quitar selección» la retira explícitamente. |
+| Mesa territorial compacta | Mapa principal y resultados contiguos desde 1000 px, aproximadamente 60/40; en móvil se apilan y ambos permanecen disponibles. Cabecera de consulta, ordinales de lista y señales de selección mantienen el contexto. La lista usa scroll de página y paginación. |
+| Sin caché HTTP de datos del catálogo | Evita servir revisiones inconsistentes hasta acordar invalidación con backend. Aumenta lecturas. El estado ya cargado se conserva en memoria durante la consulta; assets con hash se cachean, sin prefetch masivo de teselas ni PWA offline. |
 | UUID estable en ficha | No depende de nombres cambiantes. Menos legible que un slug, pero identifica obra/revisión inequívocamente. |
 | Error visible por cambio de catálogo | Retira lista/mapa anteriores y ofrece reinicio con filtros. No hace reintentos infinitos ni mezcla versiones. |
 
@@ -33,19 +35,27 @@ Filtros visibles: fuente, estado informado, educación y presencia de ubicación
 
 Los filtros se abren con un control nativo «Filtrar obras» y muestran cuántos están activos. Esto evita empujar los resultados debajo de un formulario alto en la primera pantalla móvil; sigue funcionando sin JavaScript.
 
-El par `territorioEsquema=pba.municipio` + `municipioCodigo` funciona en enlaces y se preserva en el formulario, pero no se inventa un selector de municipios sin catálogo de códigos/nombres. No se elige una localidad piloto por inferencia. La extensión inicial amplia del mapa es orientativa, no una declaración de cobertura nacional.
+El par `territorioEsquema=pba.municipio` + `municipioCodigo` funciona en enlaces y se preserva en el formulario, pero no se inventa un selector de municipios sin catálogo de códigos/nombres. No se elige una localidad piloto por inferencia. Sin bbox explícito, el mapa encuadra una vez las primeras geometrías reales cargadas; si el visitante ya movió la cámara, se respeta su navegación. Con catálogo vacío conserva un encuadre argentino orientativo y cartografía visible. Ninguno de esos encuadres declara cobertura territorial.
 
-Lista sin bbox incluye obras sin ubicación. Con bbox muestra sólo obras con geometría aprobada que intersecta la zona, con enlaces para quitar el área. Se usan los mismos filtros para GeoJSON y lista, comparando `catalogoVersion` como string. Una obra puede aportar varias Features y MultiPoint varios puntos; los grupos no se rotulan como obras.
+Lista sin bbox incluye obras sin ubicación. Abrir el mapa conserva esa consulta y no agrega un bbox al enlace. Para leer GeoJSON sin un área confirmada se usa la extensión mundial representable `[-180, -85.051129, 180, 85.051129]`, separada de la cámara y limitada por los presupuestos de páginas, Features, posiciones, bytes y tiempo. Evita excluir silenciosamente las ubicaciones fuera del encuadre argentino; una lectura parcial se informa y no acredita cobertura completa.
 
-Cada selección abre `obraId` y `revisionId` exactos. La ficha actual se consulta sin revisión; los enlaces de revisión llevan `noindex` y canonical a la actual. UUID inválido/publicación inexistente da 404; backend caído es un fallo recuperable. No se deriva el estado de avance, null no se transforma en cero ni publicación en fecha de fuente.
+Con bbox explícito, listado y GeoJSON consultan sólo obras con geometría aprobada que intersecta esa zona, con enlaces para quitar el área. Ambos usan los mismos filtros y comparan `catalogoVersion` como string. El filtro de obras sin ubicación mantiene su lista, deja la cartografía sin puntos inventados y explica por qué esas obras no se dibujan.
+
+Cada selección conserva `obraId` y `revisionId` exactos en el enlace, al alternar vistas y al cerrar el resumen. «Ver en mapa» está disponible cuando el listado informa geometría: consulta esa revisión de la ficha, comprueba identidad/versión, toma sólo ubicaciones `ACCEPTED` con geometría y dibuja una capa de selección sujeta al mismo presupuesto. Ajusta la cámara a esa geometría, incluso si queda fuera de la vista o lectura cartográfica actual, sin cambiar filtros, bbox o páginas de resultados. Si la ficha no aporta geometría aprobada o se limita por presupuesto, lo informa sin fabricar ubicaciones. La selección del mapa sigue el mismo recorrido y el resumen se abre por otra acción.
+
+Una ubicación individual agrega `ubicacionId` junto a obra/revisión. El selector conserva foco al recorrer opciones con teclado y no repite la ficha si sólo cambia la ubicación. Atrás/Adelante, recarga, alternancia y resumen de la misma obra preservan ese destino; una ubicación ajena o no aceptada no se sustituye por otra. La condición y precisión quedan visibles junto al nombre; la explicación completa está debajo del canvas, abierta para una ubicación y plegable para varias. La ayuda al pasar el puntero también queda debajo del canvas para no interceptar marcadores; admite recorrer su texto y Escape desde cualquier foco. Se conserva la diferencia entre referencia reportada y supuesto WGS84 aprobado, sin afirmar que un punto orientativo acredita sitio o alcance exactos.
+
+Los indicadores distinguen obras cargadas en lista, obras únicas representadas por los `obraId` del GeoJSON cargado y geometrías recibidas. Las obras cargadas sin ubicación se cuentan desde el listado. Son cantidades de la lectura actual, no totales del catálogo ni cobertura nacional. Una obra puede aportar varias Features y MultiPoint varios puntos; los grupos cuentan puntos. Los ordinales `01`, `02`, etc. son una ayuda visual de la lista cargada, no identificadores oficiales ni números compartidos con marcadores.
+
+El historial nativo modifica sólo la presentación/selección al alternar vistas; Atrás/Adelante restaura esos estados. La cámara y las páginas acumuladas se conservan en memoria durante esa consulta; recargar reconstruye los parámetros y la revisión seleccionada del enlace. La ficha actual se consulta sin revisión; los enlaces de revisión llevan `noindex` y canonical a la actual. UUID inválido/publicación inexistente da 404; backend caído es un fallo recuperable. No se deriva el estado de avance, null no se transforma en cero ni publicación en fecha de fuente.
 
 ## Presupuestos y fallas
 
 - Lista: 20 obras por solicitud. «Cargar más» mantiene hasta 100 en el DOM; después ofrece página siguiente nativa para continuar todo el catálogo.
-- GeoJSON: 100 Features por página, máximo 5 páginas/500 Features, 10.000 posiciones y 15 segundos por consulta. Se conserva o excluye una geometría completa; no se corta, simplifica o inventa.
+- GeoJSON: 100 Features por página, máximo 5 páginas/500 Features, 10.000 posiciones y 15 segundos por consulta. Catálogo y selección comparten el límite de representación de 500 Features/10.000 posiciones, priorizando la selección y deduplicando la misma obra/revisión/ubicación; si desplaza geometrías del catálogo, se informa mapa parcial. Se conserva o excluye una geometría completa; no se corta, simplifica o inventa.
 - BFF: 8 segundos por lectura y 2 MiB de respuesta descomprimida; cancela lectura excesiva. Presupuesto del navegador para un recorrido espacial: 2 MiB; el último chunk puede superar ese valor antes de cancelarse. No es un presupuesto de teselas del proveedor.
 - OpenLayers con Canvas 2D, pixel ratio limitado a 2, hasta 8 teselas simultáneas, sin precarga de otros niveles y limpieza de capas/listeners/fetch/observer al cambiar de vista; sólo puntos se agrupan. Líneas/polígonos conservan geometría. Límites y resultados parciales se indican; la lista sigue paginando.
-- Fichas se descargan al abrirlas, con igual límite de respuesta. Incluyen geometría del contrato aunque el resumen no la dibuja: una proyección pública liviana requiere decisión posterior si la muestra real supera el presupuesto.
+- Fichas se descargan al seleccionar o abrir una revisión, con igual límite de respuesta. Sus geometrías aprobadas alimentan la selección cartográfica; el resumen mantiene la lectura de sus datos. Una proyección pública liviana requiere decisión posterior si la muestra real supera el presupuesto.
 - Sitemap: hasta 10 páginas de 200 fichas, 15 segundos totales y versiones consistentes. Devuelve 503 antes que publicar resultado parcial; antes de superar 2.000 fichas, implementar índice/particiones o generación por publicación.
 - Rutas de mismo origen limitadas a GET público; sin redirecciones, cookies o autorización hacia NestJS. No exponen rutas administrativas ni datos privados.
 
@@ -55,17 +65,17 @@ OpenLayers 10.10.0 + ol-mapbox-style 13.5.1 + Liberty de OpenFreeMap reemplazan 
 
 El adaptador conserva las huellas de edificios convirtiendo fill-extrusion en fill 2D. ol-mapbox-style usa fuentes web, no los glifos PBF de MapLibre: el build copia Noto Sans 5.3.0 Latin/Latin-ext regular, italic y bold, con licencia OFL, a `/map-fonts/5.3.0/`. Los metadatos del estilo se ajustan para usar ese origen propio; no se descargan fuentes desde Fontsource/jsDelivr. La ruta versionada admite caché inmutable. Cambiar proveedor exige revisar expresiones del estilo, fuentes, sprites, teselas, atribución y privacidad, no sólo una URL. Referencias: [integración oficial](https://openfreemap.org/quick_start/), [renderer Canvas](https://openlayers.org/en/latest/apidoc/module-ol_renderer_canvas_VectorTileLayer-CanvasVectorTileLayerRenderer.html), [fuentes y compatibilidad](https://openlayers.org/ol-mapbox-style/index.html).
 
-Vista única hasta 999 px y mapa/lista contiguos desde 1000 px. Alturas dvh con fallback vh, orientación horizontal y áreas seguras en el panel. Controles por botones/teclado y dos dedos para arrastrar; rueda con Ctrl/⌘. Cambios de vista sin animaciones. La atribución del estilo permanece debajo del mapa y fuera del panel. La compatibilidad del motor no certifica todas las versiones de navegadores ni WCAG AA.
+Mapa y lista contiguos desde 1000 px; en móvil, mapa seguido de resultados, con un enlace ancla para ir a ellos sin modificar consulta. La vista Lista concentra los resultados y permite volver al mapa conservando contexto. El autoencuadre inicial y la localización de una obra cambian cámara, no filtros. Alturas dvh con fallback vh, orientación horizontal y áreas seguras en el resumen. Controles por botones/teclado y dos dedos para arrastrar; rueda con Ctrl/⌘. Cambios de vista sin animaciones. La atribución del estilo permanece debajo del mapa y fuera del resumen. La compatibilidad del motor no certifica todas las versiones de navegadores ni WCAG AA.
 
 Fuentes consultadas el 2026-10-04: [guía de OpenFreeMap](https://openfreemap.org/quick_start/), [términos del 2026-09-09](https://openfreemap.org/tos/) y [privacidad del 2026-10-04](https://openfreemap.org/privacy/). El servicio se declara gratuito, sin garantía de disponibilidad y puede discontinuarse. No se instala fallback automático a tiles OSM: su [política](https://operations.osmfoundation.org/policies/tiles/) exige uso compatible, no suministro ilimitado. La atribución OpenFreeMap/OpenMapTiles/OpenStreetMap del estilo permanece visible. Autoalojamiento evita tarifa por solicitud pero exige infraestructura/operación; alternativa si el piloto requiere disponibilidad controlada.
 
-Abrir mapa genera solicitudes a un tercero. OpenFreeMap declara ausencia de IP en registros normales de acceso; los logs de error pueden conservar IP y URL hasta 7 días, los de incidentes hasta 30 días, y Cloudflare puede procesar solicitudes. La UI enlaza esa política. No se incorpora analítica de terceros.
+Entrar al explorador con su vista inicial de mapa genera solicitudes de cartografía a un tercero al inicializar JavaScript. El enlace `vista=lista` permite consultar resultados antes de abrir el mapa. Las solicitudes transmiten datos técnicos y la zona visualizada, aunque no se pida geolocalización ni se confirme un bbox de consulta. OpenFreeMap declara ausencia de IP en registros normales de acceso; los logs de error pueden conservar IP y URL hasta 7 días, los de incidentes hasta 30 días, y Cloudflare puede procesar solicitudes. La UI enlaza esa política. No se incorpora analítica de terceros.
 
 Geolocalización: sólo botón, sin precisión alta, timeout y alternativa manual. La posición centra en memoria. «Buscar en esta zona» incorpora el área a la URL y la envía al catálogo con aviso previo; copiar enlace es otra acción explícita. Las solicitudes del mapa base ya revelan la zona visualizada. Registros del alojamiento y contacto del operador deben definirse antes del lanzamiento. Referencia: [W3C Geolocation](https://www.w3.org/TR/geolocation/).
 
 ## Accesibilidad
 
-HTML semántico, es-AR, skip link, foco visible, controles de al menos 44 px, labels y regiones de estado. Lista paginada/fichas no dependen de canvas ni JavaScript. El mapa tiene controles de dirección/zoom; todas las obras se seleccionan desde la lista. Panel con diálogo nativo, Escape, retorno de foco y botones de tamaño; movimiento reducido respetado. Referencia: [WCAG 2.2](https://www.w3.org/TR/WCAG22/).
+HTML semántico, es-AR, skip link, foco visible, controles de al menos 44 px, labels y regiones de estado. Lista paginada/fichas no dependen de canvas ni JavaScript y permanecen junto al mapa en móvil. El mapa tiene controles de dirección/zoom; las obras con ubicación se localizan desde la lista por teclado. «Ver en mapa» lleva foco/contexto a la región cartográfica; la selección se identifica con borde, indicador y texto. «Ver resumen» abre un diálogo nativo con Escape, retorno de foco y botones de tamaño; cerrarlo conserva la obra seleccionada. Movimiento reducido respetado. Referencia: [WCAG 2.2](https://www.w3.org/TR/WCAG22/).
 
 Axe y pruebas de teclado detectan regresiones concretas, no acreditan por sí solas AA. Pendientes NVDA/VoiceOver/TalkBack, zoom/texto ampliado y usuarios con necesidades de acceso en dispositivos reales.
 
@@ -166,3 +176,74 @@ Diez ciclos mapa/lista con el presupuesto máximo: heap JavaScript tras GC pasó
 Seis layouts pasan: 320×740, 768×1024, 820×1180, 1024×768, 1440×900 y 844×390. Mapa/panel dentro del viewport, sin overflow horizontal, botones de al menos 44 px y lista contigua sólo desde 1000 px; capturas revisadas en móvil, tablet y orientación horizontal. Sin errores de página. La cartografía sintética no incluye el costo de teselas, sprites o fuentes reales; el smoke del proveedor es una comprobación funcional separada, no una medición móvil representativa.
 
 Reproducir con `node tools/measure-map.mjs` después del build; `--memory-only` acota a presupuesto y alternancia. El runner comprueba puertos libres, inicia y cierra únicamente sus procesos, bloquea servicios externos y falla si supera la guarda de memoria. Reporte y capturas: `artifacts/local-validation/map-lab/`, ignorados. Las mediciones no equivalen a LCP/INP/p75 de campo. Persisten las pruebas en equipos modestos, Safari/Chrome móviles físicos y lectores de pantalla antes del lanzamiento.
+
+## Guía de identidad visual · 2026-10-05
+
+Rama `refactor/guia-visual`, creada desde `main` en `7f1ffaa`, coincidente con `origin/main` después de fetch. Se conserva el trabajo local previo en `AGENTS.md` y `next-env.d.ts`.
+
+La [guía visual](guia-visual.md) establece una base clara con blanco y celeste, elegida por el usuario, azul profundo para interacción y dorado puntual. Adapta el Markdown de referencia de Mapbox al uso ciudadano de lista/mapa, filtros, fichas y procedencia. Define tokens semánticos, tipografía, patrones, accesibilidad y puntos de migración del CSS/SVG/Canvas actuales. README y CONTRIBUTING la enlazan para próximos cambios.
+
+Esta entrega es documental: los estilos de la aplicación todavía conservan su paleta anterior. La adopción de los tokens/fuentes y la validación de la UI quedan para su implementación; no se modifican contrato, API, datos ni proveedor cartográfico.
+
+Validación de la guía: 13 pares de contraste sRGB calculados y coherentes con los valores publicados; texto de al menos 4,5:1 y bordes/foco esenciales de al menos 3:1 en los fondos indicados. El texto sobre dorado se ajustó a `#6B4B09` para alcanzar 4,75:1. Los contrastes sobre cartografía/transparencias requieren verificar la composición real al implementar. Comprobación de lectura con Node: 9 enlaces locales existentes, 21 tokens de color coincidentes entre paleta y snippet, variables CSS definidas y bloques Markdown cerrados. `git diff --check` pasa; sin cambios adicionales en los archivos ajenos.
+
+No se vuelven a ejecutar typecheck, tests, build, contrato ni E2E para este cambio de documentación. Los resultados históricos anteriores no acreditan esta futura identidad; al cambiar la UI se aplicará el checklist de la guía y se registrará evidencia nueva, incluida la revisión manual pendiente de accesibilidad.
+
+## Aplicación de la guía visual · 2026-10-05
+
+El usuario autorizó aplicar el tema al frontend en la misma rama `refactor/guia-visual`. La UI ahora usa blanco/celeste, acciones azules y dorado puntual; se conserva la estructura pública, contenido, rutas, filtros y semántica de los datos.
+
+- `globals.css` centraliza los tokens, tipografía, foco con halo, controles, avisos, tarjetas y fichas. Los textos secundarios son de al menos 14 px de referencia, las fichas agrupan campos en superficies claras y los controles mantienen al menos 44 px.
+- El layout registra Noto Sans 400/700 y precarga Latin desde los assets existentes del mismo origen. Se conserva Latin-ext, fallback, `font-display: swap` y licencia; sin nuevas dependencias ni fuentes externas.
+- La ilustración conceptual utiliza tokens, sin presentar cobertura o publicaciones. La landing reemplaza el bloque oscuro por una sección celeste clara y mantiene las advertencias del piloto.
+- `explorer.css` queda legible y acotado al explorador para evitar contaminar otras rutas. Selector adaptable, filtros blancos, acciones claras y panel con áreas seguras, scroll, Escape y retorno de foco.
+- Las capas propias de OpenLayers usan una paleta Canvas nombrada: azul, halo blanco y selección más grande/gruesa. No cambia el proveedor, geometrías, presupuestos ni ciclo de vida. El halo añade una pasada de trazo en líneas/polígonos; esta entrega no constituye una nueva medición de rendimiento en dispositivos.
+
+### Verificación del resultado
+
+Build definitivo `soG3nncEfUkGOFCBEm2fD`, Windows, Node 24.21.0/npm 11.19.0.
+
+| Verificación | Resultado |
+| --- | --- |
+| `npm run typecheck`, `npm run build` | Pasan sobre los cambios completos. |
+| `npm test`, `npm run test:proxy` | 96/96 y 5/5 pasan. |
+| `npm run contract:check` | Pasa; sin cambios en snapshots ni tipos generados. |
+| E2E Chromium escritorio/móvil/tablet y WebKit móvil en Windows | 58/58 pasan sobre el build definitivo, sin reintentos. |
+| E2E Firefox en Linux aislado | 8/8 pasan sobre el mismo build, con fixtures propios. Firefox en Windows falla al iniciar (`spawn UNKNOWN`); no se presenta como un pase ni se elimina su proyecto. Imagen Playwright 1.63.0, Node 24.20.0/npm 11.19.0: el patch de Node difiere y npm advierte el requisito de engines. |
+| Texto ampliado, foco y alto contraste | Landing/filtros/ficha a 320 px y raíz al 200 %, selección por teclado, colores forzados y movimiento reducido pasan en los E2E Chromium. También axe con el diálogo abierto y carga/origen de Noto Sans. |
+| Capturas y layout | Runner aislado verifica landing/lista/ficha a 320, 390 y 1440 px sin overflow; también 320 px con texto ampliado. Genera panel y mapa en esos anchos. Se inspeccionaron landing, lista, panel y selección en alto contraste. |
+| OpenFreeMap real, API sintética | Chromium con WebGL deshabilitado: tesela PBF 200, cartografía/etiquetas y capas propias visibles, atribución completa, sin errores de página. Único host externo observado: `tiles.openfreemap.org`. Es un smoke acotado, no aceptación de datos reales. |
+| Diff y archivos previos | `git diff --check` pasa. Se preservan `AGENTS.md` y el estado previo de `next-env.d.ts`, que Next regeneró durante los checks; `tsc --noEmit` también pasa después de preservarlo. |
+
+La primera ejecución E2E detectó overflow del selector con texto ampliado en escritorio: se corrigió con límite al contenedor y envoltura, sin ocultar contenido. La revisión visual de colores forzados detectó un backplate blanco del navegador que tapaba «Mapa»: sólo el botón seleccionado usa `forced-color-adjust: none`, manteniendo colores del sistema Highlight/HighlightText. La nueva prueba de Canvas también necesitó un bbox dentro de su cartografía sintética; se corrigió el área del fixture y se conservó el chequeo de píxel pintado. La ejecución definitiva pasa; las fallas iniciales no se contabilizan como pases.
+
+Capturas, script de preview y reporte agregado quedan en `artifacts/local-validation/theme/` y `artifacts/local-validation/theme-preview.mjs`, ignorados por Git. El runner sólo usa API sintética separada y cierra su servidor Next; no carga datos ni modifica la API activa. Se cierra también la API sintética al finalizar la comprobación.
+
+Pendientes: zoom nativo/espaciado personalizado, NVDA/VoiceOver/TalkBack, dispositivos físicos, rendimiento con teselas/datos representativos y contraste de todas las combinaciones cartográficas. Las verificaciones de laboratorio y axe no certifican WCAG AA por sí solas. Sin commit, push ni publicación del sitio en esta entrega.
+
+## Validación del nuevo recorrido territorial · 2026-10-05
+
+Build integrado `-tzjReUwJCt9O9j5NI_Cg`, rama `refactor/guia-visual` desde main, Node 24.21.0/npm 11.19.0 en Windows. La modificación agrega mapa y resultados iniciales sin filtro espacial implícito, autoencuadre de geometrías reales y selección cartográfica separada del resumen. La cabecera se compacta; el mapa precede a las acciones de búsqueda y ayuda en móvil, y la selección muestra nombre/condición/precisión antes de su geometría. La explicación completa queda debajo del canvas. Se integraron y preservaron los cambios de CRS y calidad del chat «Revisar circuito de aprobación», coordinados con autorización del usuario. La guía visual v2 recoge estos patrones para componentes futuros.
+
+| Verificación | Resultado |
+| --- | --- |
+| Typecheck, build y TypeScript después de preservar archivos previos | Pasan. |
+| Unitarias y proxy | 120/120 y 5/5 pasan; consultas sin bbox implícito, seis tipos de geometría aprobada/revisión exacta, calidad de ubicación y presupuesto compartido con omisiones completas. |
+| Contrato | `contract:check` pasa; snapshots y tipos generados sin cambios. |
+| E2E en Windows | 80/80: Chromium escritorio/móvil/tablet y WebKit móvil, fixtures aislados y WebGL deshabilitado, sin reintentos. |
+| Firefox en Linux aislado | 8/8 sobre el mismo build. Se conserva el proyecto Firefox; la limitación de inicio en Windows está documentada en el registro anterior. Imagen Playwright 1.63.0, Node 24.20.0/npm 11.19.0; npm advierte el patch de Node distinto del requerido. |
+| Continuidad territorial | 20 resultados iniciales con faltantes; 24 después de paginar permanecen al alternar. Vista, cursor, obra y revisión compartibles; un mapa vacío no oculta la lista. «Ver en mapa» usa la ficha exacta aunque no esté en las geometrías cargadas y vuelve a encuadrarla sin nueva consulta de área. |
+| Cámara y foco | Centro y escala equivalentes al alternar después de seleccionar, acercar y desplazar. «Quitar selección» lleva foco al mapa antes de desmontar la franja; resumen con Escape/retorno de foco y selección persistente. |
+| Ubicación exacta y ayuda | Selector por teclado conserva foco entre opciones. Obra/revisión/ubicación y filtros persisten con historial, recarga, alternancia y resumen de tarjeta. Click desde consulta sin selección identifica el punto; una ubicación ajena no obtiene geometría sustituta. Ayuda recorrible con puntero y Escape desde otro control. |
+| Accesibilidad y alternativa textual | Axe en páginas/diálogo/mapa, teclado, 320 px con texto al 200 %, colores forzados y movimiento reducido pasan. Lista/fichas/paginación continúan sin JavaScript, con estado de mapa pendiente veraz. |
+| Inspección visual | Explorador y selección en 320/390/1440 px, sin overflow ni errores de página. Ayuda colapsable y acciones debajo de la cartografía evitan empujar las ubicaciones fuera de la entrada móvil. |
+| Proveedor real y API sintética | PBF 200, cartografía y capas propias visibles, atribución, carga de base completada sin aviso de fallo y sin errores de página. Único host externo observado: `tiles.openfreemap.org`. |
+| Alternancia/memoria | `measure-map --memory-only`: 500 MultiPoint/10.000 posiciones, diez ciclos, cero Canvas en cada muestra de Lista. Heap JS tras GC de 7.852.316 a 9.194.908 B después de 16 s de reposo: crecimiento 1,28 MiB, bajo guarda de 4 MiB. Sin errores de página. |
+
+La primera ejecución detectó un `aria-label` sin rol válido en el contenedor de atribución cuando falla el proveedor; se agregó `role="group"` y los checks pasan. La revisión detectó que reencuadrar la selección al remontar perdía la cámara: la restauración conserva centro/zoom sin padding ni el máximo de zoom usado para ubicar una obra. Se agregaron pruebas de cámara y foco sin relajar verificaciones. Los fallos iniciales no se contabilizan como pases.
+
+La integración de ubicaciones detectó pérdida de foco del selector y pérdida de `ubicacionId` al abrir el resumen de la misma tarjeta; se corrigieron ambos recorridos y se verifican con teclado e historial. Firefox expuso una ayuda flotante que interceptaba el marcador: se trasladó debajo del canvas, conservando lectura con puntero y Escape global. Los tests nuevos también requerían leer sólo la calidad mostrada, sin incluir las opciones no seleccionadas del combobox, y usar hover del locator que desplaza el canvas a pantalla después de insertar la franja. La ejecución definitiva de 88 casos pasa sin reintentos. Las corridas anteriores fallidas o interrumpidas por builds paralelos no se presentan como pases.
+
+Reportes y capturas locales: `artifacts/local-validation/orientation/`, runner `orientation-preview.mjs`, y `map-lab/report.json`, ignorados por Git. Los runners usan API sintética, comprueban/cierran sus propios procesos y no publican datos ni modifican la API activa. Se preservan los cambios previos de `AGENTS.md`/`next-env.d.ts`. No se hizo commit, push ni publicación del sitio.
+
+Estos 88 E2E y el laboratorio no certifican WCAG AA, memoria nativa/Canvas, ausencia de toda fuga ni percentiles de campo. La entrada con mapa agrega su descarga/proveedor automáticamente; `vista=lista` conserva la alternativa diferida. Siguen pendientes lectores de pantalla y dispositivos físicos, rendimiento con cartografía/datos representativos y aceptación de cobertura/datos reales con los límites ya documentados.

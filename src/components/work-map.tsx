@@ -29,28 +29,54 @@ import { Circle, Fill, Stroke, Style, Text } from "ol/style.js";
 import { apply } from "ol-mapbox-style";
 import "ol/ol.css";
 import type { BoundingBox, WorkGeoJSON } from "../api/client.js";
-import { clampMapBBox, partitionMapFeatures, selectedMapFeatures } from "../lib/map-data.js";
+import { clampMapBBox, partitionMapFeatures, selectedMapFeatures, type MapProperties } from "../lib/map-data.js";
 import { canvasMapStyle, MAP_FONT_STYLESHEET } from "../lib/map-style.js";
+import { LocationQuality } from "./location-quality";
 
 export interface WorkMapProps {
   features: WorkGeoJSON["features"];
+  selectionFeatures: WorkGeoJSON["features"];
+  /** Initial permission for this mount; remembered or explicit areas disable it. */
+  autoFit: boolean;
+  preserveCamera: boolean;
+  selectionFocus?: number;
   initialBBox: BoundingBox;
   selectedId: string | null;
+  selectedLocationId?: string | null;
+  selectedRevisionId?: string | null;
   focusBBox: BoundingBox | null;
   onViewport: (bbox: BoundingBox) => void;
-  onSelect: (obraId: string, revisionId: string) => void;
+  onSelect: (obraId: string, revisionId: string, ubicacionId: string) => void;
   styleUrl: string;
 }
 
 const geojson = new GeoJSON({ dataProjection: "EPSG:4326", featureProjection: "EPSG:3857" });
-const workStyle = new Style({
-  fill: new Fill({ color: "rgba(36,100,84,0.25)" }), stroke: new Stroke({ color: "#123e34", width: 4 }),
-  image: new Circle({ radius: 12, fill: new Fill({ color: "#123e34" }), stroke: new Stroke({ color: "#fff", width: 2 }) }),
-});
-const selectionStyle = new Style({
-  fill: new Fill({ color: "rgba(191,70,12,0.3)" }), stroke: new Stroke({ color: "#bf460c", width: 6 }),
-  image: new Circle({ radius: 14, fill: new Fill({ color: "#bf460c" }), stroke: new Stroke({ color: "#fff", width: 3 }) }),
-});
+// Canvas pixels mirror the semantic roles in docs/guia-visual.md; CSS cannot style them.
+const MAP_PALETTE = {
+  primary: "#17699d",
+  primaryFill: "rgba(23,105,157,0.22)",
+  selected: "#0a4c78",
+  selectedFill: "rgba(10,76,120,0.24)",
+  halo: "#ffffff",
+  onPrimary: "#ffffff",
+} as const;
+
+const workStyle = [
+  new Style({ stroke: new Stroke({ color: MAP_PALETTE.halo, width: 8 }) }),
+  new Style({
+    fill: new Fill({ color: MAP_PALETTE.primaryFill }),
+    stroke: new Stroke({ color: MAP_PALETTE.primary, width: 4 }),
+    image: new Circle({ radius: 12, fill: new Fill({ color: MAP_PALETTE.primary }), stroke: new Stroke({ color: MAP_PALETTE.halo, width: 2 }) }),
+  }),
+];
+const selectionStyle = [
+  new Style({ stroke: new Stroke({ color: MAP_PALETTE.halo, width: 12 }) }),
+  new Style({
+    fill: new Fill({ color: MAP_PALETTE.selectedFill }),
+    stroke: new Stroke({ color: MAP_PALETTE.selected, width: 7 }),
+    image: new Circle({ radius: 16, fill: new Fill({ color: MAP_PALETTE.selected }), stroke: new Stroke({ color: MAP_PALETTE.halo, width: 4 }) }),
+  }),
+];
 
 function createWorkLayers() {
   const points = new VectorSource<Feature<Geometry>>({ wrapX: false });
@@ -63,8 +89,8 @@ function createWorkLayers() {
     if (!members || members.length <= 1) return workStyle;
     const count = members.length;
     if (!styles.has(count)) styles.set(count, new Style({
-      image: new Circle({ radius: count < 50 ? 22 : 27, fill: new Fill({ color: "#123e34" }), stroke: new Stroke({ color: "#fff", width: 2 }) }),
-      text: new Text({ text: String(count), font: "bold 14px sans-serif", fill: new Fill({ color: "#fff" }) }),
+      image: new Circle({ radius: count < 50 ? 22 : 27, fill: new Fill({ color: MAP_PALETTE.primary }), stroke: new Stroke({ color: MAP_PALETTE.halo, width: 3 }) }),
+      text: new Text({ text: String(count), font: '700 14px "Noto Sans", sans-serif', fill: new Fill({ color: MAP_PALETTE.onPrimary }) }),
     }));
     return styles.get(count)!;
   } });
@@ -74,19 +100,51 @@ function createWorkLayers() {
 }
 type WorkLayers = ReturnType<typeof createWorkLayers>;
 
-function updateSelection(work: WorkLayers, features: WorkGeoJSON["features"], selectedId: string | null) {
+function updateSelection(work: WorkLayers, features: WorkGeoJSON["features"], selectedId: string | null, ubicacionId?: string | null, revisionId?: string | null): string | null {
+  const collection = selectedMapFeatures(partitionMapFeatures(features).all, selectedId, ubicacionId, revisionId);
+  const seen = new Set<string | number | undefined>();
+  collection.features = collection.features.filter(feature => {
+    if (seen.has(feature.id)) return false;
+    seen.add(feature.id);
+    return true;
+  });
   work.selected.clear(true);
-  work.selected.addFeatures(geojson.readFeatures(selectedMapFeatures(partitionMapFeatures(features).all, selectedId)));
+  work.selected.addFeatures(geojson.readFeatures(collection));
+  return collection.features.length
+    ? `${selectedId}:${collection.features.map(feature => `${feature.id}:${feature.properties.revisionId}`).join("|")}`
+    : null;
 }
-function updateWorks(work: WorkLayers, features: WorkGeoJSON["features"], selectedId: string | null) {
+
+function featureLocation(feature: Feature<Geometry>): MapProperties | null {
+  const properties = feature.getProperties() as Partial<MapProperties>;
+  if (typeof properties.obraId !== "string" || typeof properties.revisionId !== "string" ||
+    typeof properties.ubicacionId !== "string" || typeof properties.nombre !== "string" ||
+    properties.calidad?.condicion !== "ACCEPTED") return null;
+  return { obraId: properties.obraId, revisionId: properties.revisionId, ubicacionId: properties.ubicacionId, nombre: properties.nombre, calidad: properties.calidad };
+}
+function updateWorks(work: WorkLayers, features: WorkGeoJSON["features"]) {
   const data = partitionMapFeatures(features);
   work.points.clear(true); work.points.addFeatures(geojson.readFeatures(data.points) as Feature<Point>[]);
   work.shapes.clear(true); work.shapes.addFeatures(geojson.readFeatures(data.shapes));
-  updateSelection(work, features, selectedId);
 }
-function fit(map: Map, bbox: BoundingBox) {
+function fit(map: Map, bbox: BoundingBox, restoreCamera = false) {
   const bounds = clampMapBBox(bbox);
-  if (bounds) map.getView().fit(transformExtent([...bounds], "EPSG:4326", "EPSG:3857"), { padding: [36, 36, 36, 36], maxZoom: 16, duration: 0 });
+  if (bounds) map.getView().fit(transformExtent([...bounds], "EPSG:4326", "EPSG:3857"), {
+    padding: restoreCamera ? [0, 0, 0, 0] : [36, 36, 36, 36],
+    ...(restoreCamera ? {} : { maxZoom: 16 }), duration: 0,
+  });
+}
+
+/** Fit rendered geometry extents directly: a Point's zero-size extent is valid. */
+function fitSources(map: Map, sources: readonly VectorSource<Feature<Geometry>>[]): boolean {
+  const extent = createEmpty();
+  for (const source of sources) {
+    const bounds = source.getExtent();
+    if (bounds && bounds.every(Number.isFinite)) extend(extent, bounds);
+  }
+  if (!extent.every(Number.isFinite)) return false;
+  map.getView().fit(extent, { padding: [36, 36, 36, 36], maxZoom: 16, duration: 0 });
+  return true;
 }
 
 // The adapter caches request options. Bind a shared prototype method rather
@@ -113,15 +171,26 @@ export default function WorkMap(props: WorkMapProps) {
   const mapRef = useRef<Map | null>(null);
   const worksRef = useRef<WorkLayers | null>(null);
   const current = useRef(props);
+  const autoFitPending = useRef(props.autoFit);
+  const selectionFitKey = useRef<string | null>(null);
   const instructionId = useId();
+  const tooltipId = useId();
   const [status, setStatus] = useState<"loading" | "ready" | "unavailable">("loading");
   const [baseLoading, setBaseLoading] = useState(true);
   const [warning, setWarning] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [hoveredLocation, setHoveredLocation] = useState<MapProperties | null>(null);
+  useEffect(() => {
+    if (!hoveredLocation) return;
+    const dismiss = (event: KeyboardEvent) => { if (event.key === "Escape") setHoveredLocation(null); };
+    window.addEventListener("keydown", dismiss);
+    return () => window.removeEventListener("keydown", dismiss);
+  }, [hoveredLocation]);
   current.current = props;
 
   useEffect(() => {
     if (!container.current || !attribution.current) return;
+    const target = container.current;
     let active = true;
     let styleApplied = false;
     let providerFailed = false;
@@ -144,6 +213,21 @@ export default function WorkMap(props: WorkMapProps) {
       else if (active) setWarning("El mapa está tardando en cargar. Podés seguir explorando las obras desde la lista.");
     }, 20000);
 
+    // Cancel a pending data fit as soon as the visitor starts navigating the map.
+    const onUserInput = (event: Event) => {
+      if (event.type === "wheel" && !(event as WheelEvent).ctrlKey && !(event as WheelEvent).metaKey) return;
+      if (event.type === "keydown" && !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "+", "-", "="].includes((event as KeyboardEvent).key)) return;
+      autoFitPending.current = false;
+    };
+    target.addEventListener("pointerdown", onUserInput);
+    target.addEventListener("wheel", onUserInput, { passive: true });
+    target.addEventListener("keydown", onUserInput);
+    const removeUserInput = () => {
+      target.removeEventListener("pointerdown", onUserInput);
+      target.removeEventListener("wheel", onUserInput);
+      target.removeEventListener("keydown", onUserInput);
+    };
+
     try {
       if (!document.createElement("canvas").getContext("2d")) throw new Error("Canvas 2D no disponible");
       const dragPan = new DragPan({ condition: (event) => noModifierKeys(event) &&
@@ -157,10 +241,18 @@ export default function WorkMap(props: WorkMapProps) {
         view: new View({ center: [0, 0], zoom: 2, minZoom: 1, maxZoom: 19, enableRotation: false, multiWorld: false }),
       });
       mapRef.current = map; worksRef.current = works;
-      updateWorks(works, current.current.features, current.current.selectedId);
-      fit(map, current.current.focusBBox ?? current.current.initialBBox);
+      updateWorks(works, current.current.features);
+      const selectedKey = updateSelection(works, current.current.selectionFeatures, current.current.selectedId, current.current.selectedLocationId, current.current.selectedRevisionId);
+      fit(map, current.current.focusBBox ?? current.current.initialBBox, current.current.preserveCamera && !current.current.focusBBox);
+      if (current.current.selectedId || current.current.focusBBox) autoFitPending.current = false;
+      if (selectedKey && (current.current.preserveCamera || fitSources(map, [works.selected]))) {
+        selectionFitKey.current = `${current.current.selectionFocus ?? 0}:${selectedKey}`;
+      } else if (autoFitPending.current && fitSources(map, [works.points, works.shapes])) {
+        autoFitPending.current = false;
+      }
       const publishViewport = () => {
         if (!active) return;
+        setHoveredLocation(null);
         const extent = transformExtent(map.getView().calculateExtent(map.getSize()), "EPSG:3857", "EPSG:4326");
         const bbox = clampMapBBox([extent[0]!, extent[1]!, extent[2]!, extent[3]!]);
         if (bbox) current.current.onViewport(bbox);
@@ -186,18 +278,28 @@ export default function WorkMap(props: WorkMapProps) {
           return;
         }
         const selected = members?.[0] ?? feature;
-        const obraId: unknown = selected.get("obraId");
-        const revisionId: unknown = selected.get("revisionId");
-        if (typeof obraId === "string" && typeof revisionId === "string") current.current.onSelect(obraId, revisionId);
+        const location = featureLocation(selected as Feature<Geometry>);
+        if (location) {
+          setHoveredLocation(null);
+          current.current.onSelect(location.obraId, location.revisionId, location.ubicacionId);
+        }
       }));
       subscriptions.push(map.on("pointermove", (event) => {
-        if (!event.dragging) map.getTargetElement().style.cursor = map.hasFeatureAtPixel(event.pixel, {
+        if (event.dragging || (event.originalEvent as PointerEvent).pointerType === "touch") { setHoveredLocation(null); return; }
+        const feature = map.forEachFeatureAtPixel(event.pixel, (item) => item, {
           hitTolerance: 10, layerFilter: (layer) => works.layers.includes(layer as typeof works.layers[number]),
-        }) ? "pointer" : "";
+        });
+        map.getTargetElement().style.cursor = feature ? "pointer" : "";
+        const members = feature?.get("features") as Feature<Point>[] | undefined;
+        const location = feature && (!members || members.length === 1) ? featureLocation((members?.[0] ?? feature) as Feature<Geometry>) : null;
+        // Keep the last point's help while crossing the canvas to read it.
+        // Leaving the map, Escape or navigation dismisses it.
+        if (location) setHoveredLocation(previous => previous?.ubicacionId === location.ubicacionId && previous?.revisionId === location.revisionId ? previous : location);
       }));
       observer = new ResizeObserver(() => map.updateSize()); observer.observe(container.current);
     } catch {
       window.clearTimeout(timeout);
+      removeUserInput();
       requests.dispose();
       observer?.disconnect(); unByKey(subscriptions);
       mapRef.current?.getLayers().clear(); mapRef.current?.dispose();
@@ -241,25 +343,44 @@ export default function WorkMap(props: WorkMapProps) {
     })().catch(() => { if (active && !controller.signal.aborted) warn(); });
 
     return () => {
-      active = false; controller.abort(); requests.dispose(); window.clearTimeout(timeout); observer?.disconnect(); unByKey(subscriptions);
+      active = false; controller.abort(); requests.dispose(); window.clearTimeout(timeout); removeUserInput(); observer?.disconnect(); unByKey(subscriptions);
       map.getLayers().clear();
       disposeWorkLayers(works);
       for (const layer of base.getLayers().getArray()) layer.dispose();
-      base.getLayers().clear(); base.dispose(); map.dispose(); mapRef.current = null; worksRef.current = null;
+      base.getLayers().clear(); base.dispose(); map.dispose(); mapRef.current = null; worksRef.current = null; selectionFitKey.current = null;
     };
   }, [props.styleUrl, attempt]);
 
-  useEffect(() => { if (worksRef.current) updateWorks(worksRef.current, props.features, props.selectedId); }, [props.features]);
-  useEffect(() => { if (worksRef.current) updateSelection(worksRef.current, current.current.features, props.selectedId); }, [props.selectedId]);
-  useEffect(() => { if (mapRef.current && props.focusBBox) fit(mapRef.current, props.focusBBox); }, [props.focusBBox]);
+  useEffect(() => {
+    const works = worksRef.current; const map = mapRef.current;
+    if (!works || !map) return;
+    setHoveredLocation(null);
+    updateWorks(works, props.features);
+    if (autoFitPending.current && fitSources(map, [works.points, works.shapes])) autoFitPending.current = false;
+  }, [props.features]);
+  useEffect(() => {
+    const works = worksRef.current; const map = mapRef.current;
+    if (!works || !map) return;
+    if (props.selectedId) autoFitPending.current = false;
+    const selectedKey = updateSelection(works, props.selectionFeatures, props.selectedId, props.selectedLocationId, props.selectedRevisionId);
+    const key = selectedKey ? `${props.selectionFocus ?? 0}:${selectedKey}` : null;
+    if (!key) { selectionFitKey.current = null; return; }
+    if (key !== selectionFitKey.current && fitSources(map, [works.selected])) selectionFitKey.current = key;
+  }, [props.selectionFeatures, props.selectedId, props.selectedLocationId, props.selectedRevisionId, props.selectionFocus]);
+  useEffect(() => {
+    if (mapRef.current && props.focusBBox) {
+      autoFitPending.current = false;
+      fit(mapRef.current, props.focusBBox);
+    }
+  }, [props.focusBBox]);
 
-  const zoom = (delta: number) => { const view = mapRef.current?.getView(); if (view) view.setZoom((view.getZoom() ?? 0) + delta); };
+  const zoom = (delta: number) => { autoFitPending.current = false; const view = mapRef.current?.getView(); if (view) view.setZoom((view.getZoom() ?? 0) + delta); };
   const pan = (x: number, y: number) => {
+    autoFitPending.current = false;
     const view = mapRef.current?.getView(); const center = view?.getCenter(); const resolution = view?.getResolution();
     if (center && resolution) view!.setCenter([center[0]! + x * resolution, center[1]! - y * resolution]);
   };
   return <section className="work-map" aria-label="Mapa interactivo de obras" data-map-state={status}>
-    <p id={instructionId} className="map-help">Usá las flechas del teclado o los botones para mover el mapa. En pantallas táctiles, usá dos dedos; con mouse, Ctrl o ⌘ y la rueda para acercar. Los grupos cuentan puntos, no obras: una obra puede tener varias ubicaciones. La lista permite acceder a todas las fichas de la consulta.</p>
     <div role="group" aria-label="Controles del mapa" className="map-controls">
       <button className="button button-secondary" type="button" disabled={status !== "ready"} aria-label="Acercar mapa" onClick={() => zoom(1)}>+</button>
       <button className="button button-secondary" type="button" disabled={status !== "ready"} aria-label="Alejar mapa" onClick={() => zoom(-1)}>−</button>
@@ -272,7 +393,14 @@ export default function WorkMap(props: WorkMapProps) {
     {status === "unavailable" && <p role="status">No pudimos mostrar el mapa en este dispositivo. Podés explorar las mismas obras desde la lista.</p>}
     {warning && <p role="status">{warning}</p>}
     {(warning || status === "unavailable") && <button type="button" className="button button-secondary" onClick={() => setAttempt(value => value + 1)}>Reintentar mapa</button>}
-    <div ref={container} className="map-canvas" role="region" aria-label="Área del mapa" aria-describedby={instructionId} tabIndex={0} />
-    <div ref={attribution} className="map-attribution" aria-label="Atribución del mapa" />
+    <div className="map-canvas-wrap" onPointerLeave={() => setHoveredLocation(null)}>
+      <div ref={container} className="map-canvas" role="region" aria-label="Área del mapa" aria-describedby={hoveredLocation ? `${instructionId} ${tooltipId}` : instructionId} tabIndex={0} onKeyDown={event => { if (event.key === "Escape") setHoveredLocation(null); }} />
+      {hoveredLocation && <div className="map-location-tooltip" id={tooltipId} role="tooltip">
+        <p className="tooltip-work-name">{hoveredLocation.nombre}</p>
+        <LocationQuality location={hoveredLocation.calidad} />
+      </div>}
+    </div>
+    <div ref={attribution} className="map-attribution" role="group" aria-label="Atribución del mapa" />
+    <details className="map-help"><summary>Cómo recorrer el mapa</summary><p id={instructionId}>Usá las flechas del teclado o los botones para mover el mapa. En pantallas táctiles, usá dos dedos; con mouse, Ctrl o ⌘ y la rueda para acercar. Los grupos cuentan puntos, no obras: una obra puede tener varias ubicaciones. La lista permite acceder a todas las fichas de la consulta.</p></details>
   </section>;
 }

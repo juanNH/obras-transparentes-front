@@ -1,13 +1,67 @@
 import { describe, expect, it } from "vitest";
 import examples from "../contracts/examples.json" with { type: "json" };
 import { parsePublicResponse } from "../src/api/contract.js";
-import { clampMapBBox, partitionMapFeatures, selectedMapFeatures } from "../src/lib/map-data.js";
-import type { WorkGeoJSON } from "../src/api/client.js";
+import { clampMapBBox, detailMapFeatures, partitionMapFeatures, selectedMapFeatures } from "../src/lib/map-data.js";
+import type { WorkDetail, WorkGeoJSON } from "../src/api/client.js";
 
 const seed = parsePublicResponse<WorkGeoJSON>("PublicGeoFeatureCollection", examples.geojsonPopulated).features[0]!;
+const detailSeed = parsePublicResponse<WorkDetail>("PublicWorkDetail", examples.detailPopulated);
+type ApprovedLocation = Extract<WorkDetail["ubicaciones"][number], { condicion: "ACCEPTED" }>;
+const approved = detailSeed.ubicaciones.find((location): location is ApprovedLocation => location.condicion === "ACCEPTED")!;
 function feature(geometry: WorkGeoJSON["features"][number]["geometry"]): WorkGeoJSON["features"][number] {
   return { ...seed, geometry };
 }
+
+describe("ubicaciones de la revisión pública seleccionada", () => {
+  const geometries: WorkGeoJSON["features"][number]["geometry"][] = [
+    { type: "Point", coordinates: [-58, -34] },
+    { type: "MultiPoint", coordinates: [[-58, -34], [-59, -35]] },
+    { type: "LineString", coordinates: [[-58, -34], [-59, -35]] },
+    { type: "MultiLineString", coordinates: [[[-58, -34], [-59, -35]]] },
+    { type: "Polygon", coordinates: [[[-58, -34], [-59, -34], [-59, -35], [-58, -34]]] },
+    { type: "MultiPolygon", coordinates: [[[[-58, -34], [-59, -34], [-59, -35], [-58, -34]]]] },
+  ];
+
+  it.each(geometries)("conserva la geometría $type aprobada completa y conforme al contrato", geometry => {
+    const work: WorkDetail = { ...detailSeed, ubicaciones: [{ ...approved, geometria: geometry }] };
+    const features = detailMapFeatures(work);
+    expect(features).toHaveLength(1);
+    expect(features[0]!.geometry).toBe(geometry);
+    expect(features[0]!.id).toBe(approved.ubicacionId);
+    expect(features[0]!.properties.ubicacionId).toBe(approved.ubicacionId);
+    expect(features[0]!.properties.calidad).toEqual({
+      condicion: "ACCEPTED", controles: approved.controles, crs: approved.crs, precision: approved.precision,
+    });
+    expect(() => parsePublicResponse("PublicGeoFeatureCollection", {
+      type: "FeatureCollection", features, nextCursor: null, catalogoVersion: work.catalogoVersion,
+    })).not.toThrow();
+  });
+
+  it("mantiene la identidad de la revisión pedida incluso cuando es histórica", () => {
+    const work: WorkDetail = { ...detailSeed, revisionId: "20000000-0000-4000-8000-000000000099", publicadaActualmente: false };
+    const result = detailMapFeatures(work)[0]!;
+    expect(result.properties).toMatchObject({
+      obraId: work.obraId, revisionId: work.revisionId, nombre: work.nombre, estado: work.estado,
+      fuentes: work.fuentes, clasificaciones: work.clasificaciones,
+    });
+    expect(work.ubicaciones).toEqual(detailSeed.ubicaciones);
+  });
+
+  it("no representa ubicaciones omitidas, pendientes ni inválidas", () => {
+    const ubicaciones: WorkDetail["ubicaciones"] = (["PENDING_REVIEW", "OMITTED", "INVALID"] as const).map(condicion => ({
+      ...approved, condicion, geometria: null, ubicacionId: null,
+    }));
+    expect(detailMapFeatures({ ...detailSeed, ubicaciones })).toEqual([]);
+    expect(detailMapFeatures({ ...detailSeed, ubicaciones: [] })).toEqual([]);
+  });
+
+  it("conserva varias ubicaciones reales sin duplicar una misma ubicación", () => {
+    const other = { ...approved, clave: "otra-ubicacion", ubicacionId: "40000000-0000-4000-8000-000000000099" };
+    const work: WorkDetail = { ...detailSeed, ubicaciones: [approved, other, approved] };
+    expect(detailMapFeatures(work).map(item => item.id)).toEqual([approved.ubicacionId, other.ubicacionId]);
+    expect(work.ubicaciones).toHaveLength(3);
+  });
+});
 
 describe("datos del mapa móvil", () => {
   it("agrupa Point/MultiPoint conservando las coordenadas y la identidad de obra/revisión", () => {

@@ -74,7 +74,7 @@ async function throttle(page) {
 async function visual() {
   const routes = [
     { name: "landing", route: "/" },
-    { name: "list-empty", route: "/mapa" },
+    { name: "list-empty", route: "/mapa?vista=lista" },
     { name: "detail-missing", route: "/obras/00000000-0000-4000-8000-000000000001" },
   ];
   for (const width of [1440, 390, 360, 320]) {
@@ -150,7 +150,7 @@ async function probeHydratedListAction() {
   });
   const page = await context.newPage();
   await throttle(page);
-  await page.goto(new URL("/mapa", origin).href, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await page.goto(new URL("/mapa?vista=lista", origin).href, { waitUntil: "domcontentloaded", timeout: 60000 });
   const button = page.getByRole("button", { name: "Copiar enlace", exact: true });
   await button.waitFor({ state: "visible" });
   const firstAttemptAtMs = await page.evaluate(() => performance.now());
@@ -169,7 +169,7 @@ try {
   await visual();
   if (!process.argv.includes("--visual-only")) {
     await measure("/");
-    await measure("/mapa");
+    await measure("/mapa?vista=lista");
     await probeHydratedListAction();
   }
   await writeFile(path.join(outputDirectory, "mobile-lab.json"), JSON.stringify(report, null, 2) + "\n");

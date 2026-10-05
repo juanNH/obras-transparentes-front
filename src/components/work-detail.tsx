@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { WorkDetail } from "../api/client.js";
-import { fieldLabel, formatExactDecimal, locationPrecision, publicationDate, qualityLabel, reportedDate, safeSourceUrl, sourceLabel, stateLabel } from "../lib/presentation.js";
+import { fieldLabel, formatExactDecimal, publicationDate, qualityLabel, reportedDate, safeSourceUrl, sourceLabel, stateLabel } from "../lib/presentation.js";
+import { LocationQuality } from "./location-quality";
 
 function SourceLink({ url, children }: { url: string; children: ReactNode }) {
   const href = safeSourceUrl(url);
@@ -28,7 +29,6 @@ function Evidence({ evidence, obraId }: { evidence: WorkDetail["procedencia"][st
 export function WorkDetailContent({ work, compact = false }: { work: WorkDetail; compact?: boolean }) {
   const Title = compact ? "h2" : "h1";
   const Heading = compact ? "h3" : "h2";
-  const condition = { ACCEPTED: "Ubicación aprobada", PENDING_REVIEW: "Ubicación pendiente de revisión", OMITTED: "Ubicación omitida", INVALID: "Ubicación inválida" };
   return <article className={`work-detail${compact ? " work-detail-compact" : ""}`}>
     <header className="detail-heading">
       <p className="eyebrow">Ficha pública · revisión {work.numeroRevision}</p>
@@ -54,11 +54,9 @@ export function WorkDetailContent({ work, compact = false }: { work: WorkDetail;
       <Heading>Territorio y ubicaciones</Heading>
       {work.territorios.length ? <ul>{work.territorios.map((territory, index) => <li key={index}>{territory.nombre} <span className="muted">(territorio reportado · {territory.esquema}: {territory.codigo})</span></li>)}</ul> : <p>Territorio no informado.</p>}
       {work.ubicaciones.length ? <ol className="location-list">{work.ubicaciones.map((location, index) => <li key={location.clave + index}>
-        <p><strong>{condition[location.condicion]}</strong></p>
+        <LocationQuality location={location} />
         <p>Dirección reportada: {[location.direccionReportada?.calle, location.direccionReportada?.numero].filter((item) => item !== null && item !== undefined && item !== "").join(" ") || "No informada"}.</p>
-        <p>{locationPrecision(location.precision)}</p>
         <p>{location.geometria === null ? "Sin geometría aprobada para mostrar en el mapa." : `Representación disponible: ${{ Point: "punto", MultiPoint: "varios puntos", LineString: "tramo", MultiLineString: "varios tramos", Polygon: "área", MultiPolygon: "varias áreas" }[location.geometria.type]}.`}</p>
-        {location.crs && <p className="muted">Referencia geográfica {location.crs.codigo}: {location.crs.fundamento === "CATALOG_METADATA" ? "informada por el catálogo de origen" : "supuesto aprobado mediante revisión"}.</p>}
         {location.controles.length > 0 && <details><summary>Controles de esta ubicación</summary><ul>{location.controles.map((control, controlIndex) => <li key={controlIndex}>{control}</li>)}</ul></details>}
       </li>)}</ol> : <p>No hay ubicaciones informadas para esta revisión.</p>}
     </section>

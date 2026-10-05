@@ -20,7 +20,7 @@ if (![apiPort, sitePort].every(port => Number.isInteger(port) && port >= 1024 &&
   throw new Error("Map lab needs two different nonprivileged ports.");
 const origin = `http://127.0.0.1:${sitePort}`;
 const area = "-59,-35,-58,-34"; // Synthetic fixture extent, never browser/user location.
-const listPath = `/mapa?bbox=${area}`;
+const listPath = `/mapa?bbox=${area}&vista=lista`;
 const firstId = "10000000-0000-4000-8000-000000000001";
 const firstRevision = "20000000-0000-4000-8000-000000000001";
 const firstName = "EJEMPLO SINTÉTICO — Obra 01";
@@ -288,7 +288,7 @@ async function visual() {
     console.log(`Map lab: visual ${viewport.width}x${viewport.height}`);
     const context = await browser.newContext(viewport.width >= 1000 ? { viewport, serviceWorkers: "block" } : mobileOptions(viewport));
     const { page, errors, unexpectedExternal } = await setupPage(context);
-    await page.goto(origin + listPath + "&vista=mapa", { waitUntil: "load" });
+    await page.goto(origin + listPath.replace("vista=lista", "vista=mapa"), { waitUntil: "load" });
     await waitForPaint(page);
     await page.locator(".map-canvas").scrollIntoViewIfNeeded();
     const layout = await page.evaluate(() => {
@@ -303,7 +303,8 @@ async function visual() {
     });
     const screenshot = `map-${viewport.width}x${viewport.height}.png`;
     await page.locator(".map-region").screenshot({ path: path.join(outputDirectory, screenshot) });
-    await page.goto(origin + listPath + `&vista=mapa&obra=${firstId}&revisionId=${firstRevision}`, { waitUntil: "load" });
+    await page.goto(origin + listPath.replace("vista=lista", "vista=mapa") + `&obra=${firstId}&revisionId=${firstRevision}`, { waitUntil: "load" });
+    await page.locator(".selection-strip").getByRole("button", { name: "Ver resumen", exact: true }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByRole("heading", { name: firstName, exact: true }).waitFor();
     const panel = await dialog.evaluate(element => {

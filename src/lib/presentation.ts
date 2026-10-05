@@ -58,6 +58,32 @@ export function locationPrecision(value: WorkDetail["ubicaciones"][number]["prec
   }[value];
 }
 
+type LocationQuality = Pick<WorkDetail["ubicaciones"][number], "condicion" | "crs" | "precision">;
+
+/** Acceptance, precision and a reviewed CRS assumption are separate facts. */
+export function locationPresentation(location: LocationQuality): { label: string; explanation: string; reference: string | null } {
+  const assumed = location.crs?.fundamento === "REVIEW_DECISION" && location.crs.condicion === "APPROVED_ASSUMPTION";
+  const undocumentedPrecision = location.precision !== "ubicacion_establecimiento_reportada";
+  const reference = location.crs
+    ? `Referencia geográfica ${location.crs.codigo}: ${assumed ? "supuesto aprobado mediante revisión" : "informada por el catálogo de origen"}.`
+    : null;
+  if (location.condicion === "ACCEPTED" && assumed && undocumentedPrecision) {
+    return {
+      label: "Ubicación orientativa · precisión no informada",
+      explanation: "La fuente no informó el sistema de coordenadas. Se aprobó interpretarlas como WGS84 durante la revisión. El punto no acredita el sitio exacto ni el alcance de la obra.",
+      reference,
+    };
+  }
+  const condition = { ACCEPTED: "Ubicación aprobada", PENDING_REVIEW: "Ubicación pendiente de revisión", OMITTED: "Ubicación omitida", INVALID: "Ubicación inválida" };
+  return {
+    label: location.condicion !== "ACCEPTED" ? condition[location.condicion]
+      : location.precision === "ubicacion_establecimiento_reportada" ? "Ubicación reportada del establecimiento"
+      : "Ubicación reportada · precisión no informada",
+    explanation: locationPrecision(location.precision),
+    reference,
+  };
+}
+
 const fields: Record<string, string> = {
   nombre: "Nombre", estado: "Estado", avanceFisico: "Avance físico", avanceFinanciero: "Avance financiero",
   clasificaciones: "Clasificaciones", programas: "Programas", territorios: "Territorios",

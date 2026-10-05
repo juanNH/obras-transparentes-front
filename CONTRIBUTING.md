@@ -5,6 +5,7 @@
 - Mantené cada cambio acotado a un objetivo que se pueda revisar.
 - Revisá el estado de Git antes de empezar y no incluyas cambios ajenos en tu commit.
 - Documentá las decisiones acordadas; señalá las que sigan abiertas.
+- Para diseño o estilos del frontend público, consultá [docs/guia-visual.md](docs/guia-visual.md). Reutilizá sus tokens y patrones; documentá cualquier extensión o excepción junto con su verificación de accesibilidad.
 
 ## Ramas y commits
 
