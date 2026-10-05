@@ -25,13 +25,15 @@ import { createEmpty, extend } from "ol/extent.js";
 import { unByKey } from "ol/Observable.js";
 import type { EventsKey } from "ol/events.js";
 import { listen } from "ol/events.js";
-import { Circle, Fill, Stroke, Style, Text } from "ol/style.js";
+import { Circle, Fill, RegularShape, Stroke, Style, Text } from "ol/style.js";
 import { apply } from "ol-mapbox-style";
 import "ol/ol.css";
 import type { BoundingBox, WorkGeoJSON } from "../api/client.js";
 import { clampMapBBox, partitionMapFeatures, selectedMapFeatures, type MapProperties } from "../lib/map-data.js";
-import { canvasMapStyle, MAP_FONT_STYLESHEET } from "../lib/map-style.js";
+import { MAP_ORIGINS, type MapOriginCategory } from "../lib/map-origin.js";
+import { canvasMapStyle, MAP_FONT_STYLESHEET, withoutOptionalOpenFreeMapCredit } from "../lib/map-style.js";
 import { LocationQuality } from "./location-quality";
+import { SourceBadge } from "./source-origin";
 
 export interface WorkMapProps {
   features: WorkGeoJSON["features"];
@@ -51,51 +53,77 @@ export interface WorkMapProps {
 }
 
 const geojson = new GeoJSON({ dataProjection: "EPSG:4326", featureProjection: "EPSG:3857" });
-// Canvas pixels mirror the semantic roles in docs/guia-visual.md; CSS cannot style them.
+// Canvas layers use the same source colors and symbols shown in the HTML legend.
 const MAP_PALETTE = {
-  primary: "#17699d",
-  primaryFill: "rgba(23,105,157,0.22)",
   selected: "#0a4c78",
-  selectedFill: "rgba(10,76,120,0.24)",
   halo: "#ffffff",
-  onPrimary: "#ffffff",
 } as const;
 
-const workStyle = [
-  new Style({ stroke: new Stroke({ color: MAP_PALETTE.halo, width: 8 }) }),
-  new Style({
-    fill: new Fill({ color: MAP_PALETTE.primaryFill }),
-    stroke: new Stroke({ color: MAP_PALETTE.primary, width: 4 }),
-    image: new Circle({ radius: 12, fill: new Fill({ color: MAP_PALETTE.primary }), stroke: new Stroke({ color: MAP_PALETTE.halo, width: 2 }) }),
-  }),
-];
-const selectionStyle = [
-  new Style({ stroke: new Stroke({ color: MAP_PALETTE.halo, width: 12 }) }),
-  new Style({
-    fill: new Fill({ color: MAP_PALETTE.selectedFill }),
-    stroke: new Stroke({ color: MAP_PALETTE.selected, width: 7 }),
-    image: new Circle({ radius: 16, fill: new Fill({ color: MAP_PALETTE.selected }), stroke: new Stroke({ color: MAP_PALETTE.halo, width: 4 }) }),
-  }),
-];
+function markerImage(category: MapOriginCategory, radius: number, outline: string, outlineWidth: number, color: string = MAP_ORIGINS[category].color) {
+  const origin = MAP_ORIGINS[category];
+  const fill = new Fill({ color });
+  const stroke = new Stroke({ color: outline, width: outlineWidth });
+  switch (origin.marker) {
+    case "square": return new RegularShape({ points: 4, radius, angle: Math.PI / 4, fill, stroke });
+    case "triangle": return new RegularShape({ points: 3, radius, angle: 0, fill, stroke });
+    case "diamond": return new RegularShape({ points: 4, radius, angle: 0, fill, stroke });
+    case "hexagon": return new RegularShape({ points: 6, radius, angle: 0, fill, stroke });
+    default: return new Circle({ radius, fill, stroke });
+  }
+}
+
+function createOriginStyles(selected = false): Record<MapOriginCategory, Style[]> {
+  return Object.fromEntries(Object.keys(MAP_ORIGINS).map((key) => {
+    const category = key as MapOriginCategory;
+    const origin = MAP_ORIGINS[category];
+    return [category, [
+      new Style({
+        stroke: new Stroke({ color: MAP_PALETTE.halo, width: selected ? 12 : 8 }),
+        ...(selected ? { image: markerImage(category, 19, MAP_PALETTE.halo, 5, MAP_PALETTE.halo) } : {}),
+      }),
+      // The focus outline sits underneath the source color, including linear works.
+      ...(selected ? [new Style({ stroke: new Stroke({ color: MAP_PALETTE.selected, width: 8 }) })] : []),
+      new Style({
+        fill: new Fill({ color: origin.fill }),
+        stroke: new Stroke({ color: origin.color, width: 4, ...(origin.lineDash ? { lineDash: [...origin.lineDash] } : {}) }),
+        image: markerImage(category, selected ? 16 : 12, selected ? MAP_PALETTE.selected : MAP_PALETTE.halo, selected ? 4 : 2),
+      }),
+    ]];
+  })) as Record<MapOriginCategory, Style[]>;
+}
+
+const workStyles = createOriginStyles();
+const selectionStyles = createOriginStyles(true);
+
+function featureOrigin(feature: { get(key: string): unknown } | undefined): MapOriginCategory {
+  const value = feature?.get("nivelFuente");
+  return typeof value === "string" && Object.hasOwn(MAP_ORIGINS, value) ? value as MapOriginCategory : "unknown";
+}
 
 function createWorkLayers() {
   const points = new VectorSource<Feature<Geometry>>({ wrapX: false });
   const shapes = new VectorSource<Feature<Geometry>>({ wrapX: false });
   const selected = new VectorSource<Feature<Geometry>>({ wrapX: false });
   const clusters = new Cluster({ source: points, distance: 48, wrapX: false });
-  const styles = new globalThis.Map<number, Style>();
+  const styles = new globalThis.Map<string, Style>();
   const pointLayer = new VectorLayer<VectorSource<Feature<Geometry>>>({ source: clusters, style: (feature) => {
     const members = feature.get("features") as Feature<Point>[] | undefined;
-    if (!members || members.length <= 1) return workStyle;
+    // Above the cluster zoom threshold, OpenLayers renders original points directly.
+    if (!members) return workStyles[featureOrigin(feature)];
+    if (members.length === 0) return workStyles.unknown;
+    if (members.length === 1) return workStyles[featureOrigin(members[0])];
     const count = members.length;
-    if (!styles.has(count)) styles.set(count, new Style({
-      image: new Circle({ radius: count < 50 ? 22 : 27, fill: new Fill({ color: MAP_PALETTE.primary }), stroke: new Stroke({ color: MAP_PALETTE.halo, width: 3 }) }),
-      text: new Text({ text: String(count), font: '700 14px "Noto Sans", sans-serif', fill: new Fill({ color: MAP_PALETTE.onPrimary }) }),
+    const categories = new Set(members.map(featureOrigin));
+    const category = categories.size === 1 ? categories.values().next().value! : "mixed";
+    const key = `${category}:${count}`;
+    if (!styles.has(key)) styles.set(key, new Style({
+      image: markerImage(category, count < 50 ? 22 : 27, MAP_PALETTE.halo, 3),
+      text: new Text({ text: String(count), font: '700 14px "Noto Sans", sans-serif', fill: new Fill({ color: "#ffffff" }) }),
     }));
-    return styles.get(count)!;
+    return styles.get(key)!;
   } });
-  const shapeLayer = new VectorLayer({ source: shapes, style: workStyle });
-  const selectedLayer = new VectorLayer({ source: selected, style: selectionStyle });
+  const shapeLayer = new VectorLayer({ source: shapes, style: (feature) => workStyles[featureOrigin(feature)] });
+  const selectedLayer = new VectorLayer({ source: selected, style: (feature) => selectionStyles[featureOrigin(feature)] });
   return { points, shapes, selected, clusters, pointLayer, layers: [shapeLayer, pointLayer, selectedLayer] };
 }
 type WorkLayers = ReturnType<typeof createWorkLayers>;
@@ -119,8 +147,8 @@ function featureLocation(feature: Feature<Geometry>): MapProperties | null {
   const properties = feature.getProperties() as Partial<MapProperties>;
   if (typeof properties.obraId !== "string" || typeof properties.revisionId !== "string" ||
     typeof properties.ubicacionId !== "string" || typeof properties.nombre !== "string" ||
-    properties.calidad?.condicion !== "ACCEPTED") return null;
-  return { obraId: properties.obraId, revisionId: properties.revisionId, ubicacionId: properties.ubicacionId, nombre: properties.nombre, calidad: properties.calidad };
+    properties.calidad?.condicion !== "ACCEPTED" || !properties.fuentes || !properties.nivelFuente) return null;
+  return { obraId: properties.obraId, revisionId: properties.revisionId, ubicacionId: properties.ubicacionId, nombre: properties.nombre, calidad: properties.calidad, fuentes: properties.fuentes, nivelFuente: properties.nivelFuente };
 }
 function updateWorks(work: WorkLayers, features: WorkGeoJSON["features"]) {
   const data = partitionMapFeatures(features);
@@ -337,6 +365,15 @@ export default function WorkMap(props: WorkMapProps) {
         for (const layer of base.getLayers().getArray()) layer.dispose();
         base.getLayers().clear(); return;
       }
+      // Credits arrive through TileJSON; only the optional provider brand is omitted.
+      const creditedSources = new Set<object>();
+      for (const layer of base.getLayers().getArray()) {
+        if (!(layer instanceof Layer)) continue;
+        const source = layer.getSource();
+        if (!source || creditedSources.has(source)) continue;
+        creditedSources.add(source);
+        source.setAttributions(withoutOptionalOpenFreeMapCredit(source.getAttributions()));
+      }
       styleApplied = true;
       // Confirm readiness on a rendered frame rather than only on style JSON.
       map.render();
@@ -397,10 +434,14 @@ export default function WorkMap(props: WorkMapProps) {
       <div ref={container} className="map-canvas" role="region" aria-label="Área del mapa" aria-describedby={hoveredLocation ? `${instructionId} ${tooltipId}` : instructionId} tabIndex={0} onKeyDown={event => { if (event.key === "Escape") setHoveredLocation(null); }} />
       {hoveredLocation && <div className="map-location-tooltip" id={tooltipId} role="tooltip">
         <p className="tooltip-work-name">{hoveredLocation.nombre}</p>
+        <p className="tooltip-source"><SourceBadge sources={hoveredLocation.fuentes} /></p>
         <LocationQuality location={hoveredLocation.calidad} />
       </div>}
     </div>
-    <div ref={attribution} className="map-attribution" role="group" aria-label="Atribución del mapa" />
+    <div className="map-credits-row">
+      <div ref={attribution} className="map-attribution" role="group" aria-label="Atribución del mapa" />
+      <a className="map-credits-link" href="/proyecto#mapa">Créditos del mapa</a>
+    </div>
     <details className="map-help"><summary>Cómo recorrer el mapa</summary><p id={instructionId}>Usá las flechas del teclado o los botones para mover el mapa. En pantallas táctiles, usá dos dedos; con mouse, Ctrl o ⌘ y la rueda para acercar. Los grupos cuentan puntos, no obras: una obra puede tener varias ubicaciones. La lista permite acceder a todas las fichas de la consulta.</p></details>
   </section>;
 }

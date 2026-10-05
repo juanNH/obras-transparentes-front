@@ -284,3 +284,52 @@ Ocho recorridos en Chrome local —las cuatro obras a 1440×1000 y 390×844 con 
 La primera consulta del harness enviaba `limit=500` al BFF; éste lo rechaza porque controla el tamaño de página. Se corrigió el harness para recorrer la paginación normal API/BFF, conservando las restricciones de la aplicación. La corrida final pasa y ese rechazo inicial no se presenta como defecto ni como pase.
 
 Reporte, runner reproducible y ocho capturas reales: `artifacts/local-validation/address-geocode-live/`, ignorados por Git. Estas comprobaciones no mutan publicaciones ni reinician servidores, no solicitan geolocalización y no equivalen a dispositivos físicos, lectores de pantalla, mediciones de campo o precisión topográfica. Las cinco consultas adicionales de domicilios sólo en títulos CABA/descripción Nación resultaron ambiguas y no agregaron puntos; esa revisión de fuentes se registra en la API y documentación central. Sin commit, push ni despliegue externo.
+
+## Identificación de fuente en el mapa · 2026-10-05
+
+Rama `fix/colores-fuente-obras` creada desde `main`. Las geometrías aprobadas usan el código de `fuentes` que entrega el GeoJSON; el nivel no se deduce del territorio de la obra. Por pedido del usuario, la paleta se inspira en las banderas: Nación (`nacion-obras`) celeste oscuro/círculo `#0077A8`; CABA (`caba-actualizado`) rojo de su cruz/cuadrado `#B42332`; Provincia de Buenos Aires (`pba-edificios`) verde/triángulo `#287A3A`; Municipio · Vicente López (`vl-obras`) oro de su sol/rombo `#946800`. Los tonos son decisiones de diseño para contraste, no valores oficiales. Las fuentes conocidas de más de un nivel usan gris azulado/hexágono; una fuente vacía, gris/círculo. Líneas y polígonos conservan el color y diferencian contornos con guiones. Los grupos homogéneos comparten color; los de varias categorías usan el símbolo mixto. Seleccionar aumenta tamaño y grosor con un doble halo azul, manteniendo visible el color interior.
+
+La leyenda se ubica arriba de la consulta en ambas vistas; las tarjetas, la franja de selección, el tooltip y la ficha muestran una marca común de color/forma con «Datos de». El color identifica quién publica los datos. La ficha destaca `municipal.areaResponsableReportada`, `nacional.participantes.ejecutor` y `nacional.participantes.financiadores` si existen; el responsable faltante se explicita. No se infiere rol desde territorio, jurisdicción o razón social. La lista y el GeoJSON no informan responsables. Actualmente el catálogo municipal corresponde a Vicente López; cualquier nueva fuente requiere incorporarse al mapeo explícito. Los colores sólidos de los marcadores y la leyenda, medidos contra blanco, tienen contraste de 4,95:1 a 10,35:1; los rellenos translúcidos y las teselas no están cubiertos por ese cálculo.
+
+`/proyecto`, accesible desde navegación y footer, explica banderas, roles, cobertura piloto y créditos cartográficos. Fuentes primarias consultadas el 2026-10-05: [bandera nacional](https://www.argentina.gob.ar/pais/simbolos/bandera), [bandera CABA](https://buenosaires.gob.ar/gcaba_historico/laciudad/simbolos-de-la-ciudad/bandera-de-la-ciudad), [bandera bonaerense](https://www.argentina.gob.ar/node/216040), [Ordenanza 23450 de Vicente López](https://legislacion.vicentelopez.gov.ar/api/pdf/135) y [Ordenanza 22820 sobre su escudo](https://legislacion.vicentelopez.gov.ar/api/pdf/39487).
+
+Se omite únicamente el enlace opcional OpenFreeMap en el crédito resuelto desde TileJSON; los demás créditos y su dinámica por encuadre se conservan. La [guía oficial de OpenFreeMap](https://openfreemap.org/#attribution) permite omitir esa marca. [OpenMapTiles](https://github.com/openmaptiles/openmaptiles/blob/master/LICENSE.md) exige crédito visible/enlace y [OSMF](https://osmfoundation.org/wiki/Licence/Attribution_Guidelines) indica atribución del dato y licencia: ambos siguen visibles junto al mapa. OpenFreeMap queda acreditado en `/proyecto#mapa`, sin cambiar proveedor ni solicitudes externas. Esta decisión actualiza la atribución completa registrada en la verificación inicial del 2026-10-04.
+
+La discrepancia local provenía de dos servidores en 3002: producción antigua en `127.0.0.1` y desarrollo en IPv6/`localhost`. Se detuvo sólo el proceso antiguo; ambas direcciones ahora sirven el frontend de desarrollo actualizado. La API no se reinicia ni se modifica.
+
+### Verificación
+
+| Verificación | Resultado |
+| --- | --- |
+| `npm run typecheck`, `npm test`, `npm run build` | Pasan; 144 pruebas unitarias. |
+| `npm run contract:check` | Pasa; no se modifica el contrato ni sus archivos generados. |
+| E2E con fixtures aislados y WebGL deshabilitado | 100/100 pasan en Chromium escritorio, Chromium móvil, Chromium tablet y WebKit móvil. Incluyen leyenda en ambas vistas, categoría dibujada en el píxel de Canvas, selección, marcas en tarjetas, roles/faltantes en resumen, atribución preservada, página de proyecto, reflow a 320 px con texto al 200 % y axe. |
+| Capturas e inspección visual | Leyenda y página del proyecto revisadas en `artifacts/local-validation/flag-source-colors/`, ignorado por Git. Smoke del sitio local real en 1440×1000 y 390×844: mapa base cargado, marcas visibles de CABA/Nación/Vicente López, créditos OpenMapTiles/OSM, sin errores de página ni overflow horizontal. El reporte no mide cobertura de datos ni precisión geográfica. Las capturas de la primera propuesta sintética en `map-source-colors/` no representan la paleta final. |
+| `git diff --check` | Pasa. |
+
+Playwright Firefox no pudo iniciar en este Windows (`spawn UNKNOWN`); no se contabiliza como pase. La revisión de laboratorio no representa cobertura de datos reales ni certifica WCAG AA sobre cada estilo de cartografía. Sin publicación del sitio.
+
+### Revisión y correcciones del PR #5 · 2026-10-05
+
+La revisión del commit `c00c679` encontró tres defectos concretos:
+
+- La selección reemplazaba por azul el trazo de fuente de líneas y bordes de polígonos. Se conserva ahora el trazo interior de categoría de 4 px y se dibuja el contorno azul de 8 px debajo, con halo blanco exterior de 12 px. Los puntos conservan su núcleo y forma. Las regresiones verifican píxeles de fuente y foco en punto, línea y polígono seleccionados, más un MultiLineString CABA rojo sintético.
+- Un financiador informado hacía desaparecer el aviso de responsable desconocido aunque no hubiera área responsable ni ejecutor. Se separan ambos criterios: los financiadores siguen visibles y el faltante se muestra mientras falten área y ejecutor, incluidos valores compuestos sólo por espacios.
+- El callback de atribución de OpenLayers TileJSON puede devolver `null` fuera de sus límites, aunque sus tipos no lo reflejen. El adaptador normaliza `null` y `undefined` a una lista vacía; dentro del área sigue conservando OpenMapTiles/OSM y omitiendo sólo OpenFreeMap. La regresión usa la clase TileJSON real con metadatos y límites sintéticos, sin solicitudes remotas.
+
+Antes de las correcciones se reprodujeron dos fallas de color de selección en E2E (línea y polígono; el punto pasaba) y dos excepciones unitarias por callbacks `null`/`undefined`. Esos fallos previos no se contabilizan como pases.
+
+Verificación final: `npm run typecheck`, `npm run build`, `npm run contract:check` y `git diff --check` pasan; 146 pruebas unitarias pasan y la regresión de atribución completa pasa 17/17 tras adaptar el fixture al tipo Config instalado. Los 106 E2E aislados pasan en Chromium escritorio/móvil/tablet y WebKit móvil, con WebGL deshabilitado. Firefox conserva la limitación local de inicialización registrada arriba. El ciclo de vida del mapa y los archivos generados del contrato permanecen sin cambios.
+
+El check `verify` del primer commit fue cancelado por GitHub porque no pudo obtener un runner hosted, antes de ejecutar verificaciones. El escaneo GitGuardian pasó. La cancelación de infraestructura no se presenta como resultado de la aplicación; el push de correcciones dispara una nueva corrida de CI.
+
+### Correcciones encontradas en CI del PR #5
+
+La corrida [37378600241](https://github.com/juanNH/obras-transparentes-front/actions/runs/37378600241), sobre `83cf84e`, completó 114 de 116 E2E y falló en dos casos de Chromium escritorio. Las diez pruebas de Firefox pasaron en Linux; la limitación de inicialización en Windows no se extiende a ese entorno. Typecheck, unitarias, proxy y build pasaron antes de los E2E.
+
+- Al confirmar un área del mapa, la navegación podía hacer que Chromium descartara el cuerpo de respuesta antes de que la prueba leyera `response.json()`. El E2E captura ahora el JSON de la respuesta real mediante `route.fetch()` antes de entregarla al navegador. Conserva las comprobaciones de ausencia de consultas durante movimiento/zoom, bbox y estado compartidos, cantidad de obras únicas en lista y persistencia tras recarga. El caso corregido pasó cinco repeticiones locales consecutivas.
+- Los nombres de las banderas eran elementos flex anónimos que no podían reducir su ancho. A 320 px y texto al 200 %, algunos encabezados medían 221 px dentro de tarjetas con 190 px de contenido. Se envuelve el texto en un span flexible y se permite su reflow, sin ocultar contenido ni overflow. La regresión espera la carga de fuentes y comprueba tanto el ancho interno de cada tarjeta como el del documento. La inspección local posterior registra 190 px en los cuatro encabezados y 320 px en el documento.
+
+Estas fallas se conservan como antecedente y no se contabilizan como pases de la corrección.
+
+Verificación local del cambio: typecheck, build de producción, 146 unitarias, contrato y `git diff --check` pasan. La suite completa soportada en Windows pasa 106/106 E2E en Chromium escritorio/móvil/tablet y WebKit móvil, con API/cartografía sintéticas aisladas y WebGL deshabilitado. Incluye las dos regresiones de CI sin reintentos; las cinco repeticiones enfocadas son adicionales a ese total. El nuevo push permite verificar Firefox y el reflow también en el runner Linux.

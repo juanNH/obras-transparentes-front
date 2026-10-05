@@ -11,6 +11,7 @@ import { limitMapFeatures, limitMapLayers, MAX_MAP_FEATURES } from "../lib/map-b
 import { detailMapFeatures } from "../lib/map-data";
 import { locationPresentation } from "../lib/presentation";
 import { LocationQuality } from "./location-quality";
+import { SourceBadge, SourceLegend } from "./source-origin";
 import "./explorer.css";
 
 const WorkMap = dynamic(() => import("./work-map"), { ssr: false, loading: () => <p className="notice" role="status">Cargando el mapa… La lista sigue disponible.</p> });
@@ -268,6 +269,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
       <span className="muted" role="status">{shareMessage}</span>
     </div>
     </div>
+    <SourceLegend />
     <div className="scope-note">
       <p><strong>{query.bbox ? "Consulta por área" : "Todo el catálogo"}</strong> · {query.bbox ? "Solo obras con ubicación aprobada que intersecta la zona consultada." : "Sin filtro de área. Incluye obras con y sin ubicación aprobada."}</p>
       {query.territorioEsquema && <p>Municipio PBA: código {query.municipioCodigo}. Este filtro territorial no equivale al área del mapa.</p>}
@@ -280,6 +282,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
         <div className="map-context"><h2>Ubicaciones de la consulta</h2>{representedFeatures.length > 0 && <span className="status-badge">{locatedWorks} {locatedWorks === 1 ? "obra ubicada" : "obras ubicadas"}</span>}<a href="#resultados">Ver resultados ↓</a></div>
         {selection && <div className="selection-strip" aria-live="polite">
           <div><p className="eyebrow">Obra seleccionada</p><h3>{selectedDetail?.nombre ?? selectedItem?.nombre ?? "Cargando obra…"}</h3>
+            {(selectedDetail ?? selectedItem) && <p><SourceBadge sources={(selectedDetail ?? selectedItem)!.fuentes} /></p>}
             <p>{detailError || (!selectedDetail ? "Consultando la revisión seleccionada…" : unavailableLocation ? "La ubicación elegida no está aceptada en esta revisión. No destacamos otro punto en su lugar." : selectedGeometry.truncated ? "Mapa parcial: parte de su geometría supera el límite. La ficha conserva todas las ubicaciones." : selectedGeometry.features.length ? "Ubicación aprobada destacada. La consulta conserva sus filtros." : "Sin ubicación aprobada. Esta obra sigue disponible en los resultados y en su ficha.")}</p>
             {selectedDetail && detailFeatures.length > 1 && <div className="location-picker">
               <label htmlFor="ubicacion-seleccionada">Ubicación para consultar</label>
@@ -320,7 +323,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
           <div className="work-card-identity"><span className="result-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><h3><a href={`/obras/${work.obraId}?revisionId=${work.revisionId}`}>{work.nombre}</a></h3></div>
           {selection?.id === work.obraId && <p className="selection-label">Obra seleccionada</p>}
           <p>{work.territorios.map(t => t.nombre ?? t.codigo).join(" · ") || "Territorio no informado"}</p>
-          <p className="muted">Fuente: {[...new Set(work.fuentes.map(f => SOURCES[f.codigo]))].join(" · ") || "No informada"}</p>
+          <p><SourceBadge sources={work.fuentes} /></p>
           <div className="card-actions">{work.tieneGeometria && <button type="button" className="button secondary" disabled={!hydrated} onClick={() => locateWork(work.obraId, work.revisionId)}>Ver en mapa<span className="sr-only">: {work.nombre}</span></button>}<button type="button" className="button secondary" disabled={!hydrated} onClick={() => select(work.obraId, work.revisionId, true, selection?.id === work.obraId && selection.revisionId === work.revisionId ? selectedLocationId : undefined)}>Ver resumen<span className="sr-only"> de {work.nombre}</span></button><a href={`/obras/${work.obraId}?revisionId=${work.revisionId}`}>Ver ficha<span className="sr-only"> de {work.nombre}</span> <span aria-hidden="true">↗</span></a></div>
         </li>)}</ul>
         {cursor && <div className="pagination">{items.length < 100 && <button type="button" className="button secondary" disabled={!hydrated || loading} onClick={() => void loadMore()}>{loading ? "Cargando obras…" : "Cargar más obras"}</button>}<a href={explorerHref({ ...query, cursor }, view)}>{items.length >= 100 ? "Ir a la página siguiente" : "Página siguiente sin JavaScript"}</a></div>}

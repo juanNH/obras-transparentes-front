@@ -61,3 +61,16 @@ export async function expectCanvasMap(page: Page) {
   }))).toBe(true);
   await expect(page.getByText(/No pudimos mostrar el mapa|No se pudo cargar una parte del mapa/)).toHaveCount(0);
 }
+
+export async function hasMapColor(page: Page, rgb: readonly [number, number, number]) {
+  return page.locator(".map-canvas canvas").evaluateAll((canvases, color) => canvases.some(element => {
+    const canvas = element as HTMLCanvasElement;
+    if (!canvas.width || !canvas.height) return false;
+    const pixels = canvas.getContext("2d")?.getImageData(0, 0, canvas.width, canvas.height).data;
+    if (!pixels) return false;
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      if (pixels[offset + 3]! > 240 && color.every((channel, index) => Math.abs(pixels[offset + index]! - channel) < 4)) return true;
+    }
+    return false;
+  }), rgb);
+}
