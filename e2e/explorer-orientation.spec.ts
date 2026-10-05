@@ -1,3 +1,4 @@
+/** @file Comprueba relación lista/mapa/selección, área explícita y navegación con API/cartografía aisladas. */
 import { expect, test, type Page } from "@playwright/test";
 import { disableWebGL, isolateMapNetwork, useSyntheticBasemap } from "./map-fixture";
 
@@ -41,7 +42,7 @@ test("la entrada conserva todo el catálogo y alternar vistas conserva páginas 
   await expect(page.getByRole("button", { name: "Mapa", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".scope-note")).toContainText("Todo el catálogo");
   await expect(page.getByRole("link", { name: /^Ver ficha/ })).toHaveCount(20);
-  await expect(page.locator(".results-footnote").filter({ hasText: "5 de las obras cargadas" })).toBeVisible();
+  await expect(page.locator(".unlocated-notice")).toContainText("5 obras cargadas no aparecen en el mapa.");
   expect(new URL(page.url()).searchParams.has("bbox")).toBe(false);
   expect(new URL(geoRequests[0]!).searchParams.get("bbox")).toBe("-180,-85.051129,180,85.051129");
   await expect.poll(() => hasWorkPixels(page)).toBe(true);

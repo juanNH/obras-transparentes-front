@@ -1,3 +1,4 @@
+/** @file E2E con procesos API/Next aislados y proyectos responsive y de compatibilidad de navegador. */
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({

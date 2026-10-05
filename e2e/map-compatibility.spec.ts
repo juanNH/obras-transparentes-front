@@ -1,3 +1,4 @@
+/** @file Comprueba Canvas sin WebGL, teclado, selección y reflow en navegadores/viewport configurados. */
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import type { WorkDetail, WorkGeoJSON } from "../src/api/client";

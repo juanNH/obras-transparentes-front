@@ -1,8 +1,14 @@
+/** @file Cliente exclusivo del servidor con timeout, presupuesto de bytes y respuestas de catálogo sin caché. */
 import "server-only";
 import { createPublicApi, PublicApiError } from "../api/client";
 
 // The existing contract validator stays on the server, outside the mobile bundle.
 const MAX_BYTES = 2 * 1024 * 1024;
+/**
+ * Crea el cliente público de servidor con 8 segundos por lectura y máximo de 2 MiB por respuesta.
+ * @returns Cliente con validación de contrato, cancelación combinada y política no-store.
+ * @throws PublicApiError Si una respuesta excede el presupuesto de bytes.
+ */
 export function publicApi() {
   return createPublicApi({
     baseUrl: process.env.PUBLIC_API_URL ?? "http://127.0.0.1:3000/api/v1",

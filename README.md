@@ -2,7 +2,15 @@
 
 Web mobile-first con landing, exploración como lista o mapa y fichas públicas con fuentes. La etapa 2 usa Next.js App Router sobre el contrato de NestJS/PostGIS. El backoffice permanece en su repositorio React/Vite.
 
+**Integración anterior comprobada el 5 de octubre de 2026:** el [PR #5](https://github.com/juanNH/obras-transparentes-front/pull/5) se fusionó mediante `8848de5`. Incorporó referencias de fuentes por color y forma, `/proyecto` y correcciones de selección, atribución y reflow. El [workflow Frontend 37380466432](https://github.com/juanNH/obras-transparentes-front/actions/runs/37380466432) pasó sobre `76590ca`, con 116/116 E2E en Linux, incluidas las diez pruebas de Firefox. Ese resultado corresponde a esa entrega; la verificación de JSDoc y publicaciones sin ubicación se registra aparte en [etapa 2](docs/etapa-2.md#jsdoc-y-publicaciones-sin-ubicación-en-el-mapa--2026-10-05).
+
+En la revisión local del 5 de octubre, el sitio activo en `localhost:3002` corre en desarrollo y consulta la API E7 de `127.0.0.1:3000`; el backoffice funciona en `127.0.0.1:5173`. Publicar obras en ese catálogo habilita su consulta anónima local. La puesta en producción requiere su destino y configuración de operación.
+
+La conciliación actual confirma catálogo **20**: **709 obras públicas**, **481 representadas mediante 483 geometrías** y **228 sin geometría**, todas consultables en lista y ficha. CABA tiene 489 publicaciones y 395 con ubicación; Vicente López tiene 12 publicaciones y ninguna geometría aceptada. Las fechas de actualización de fuente siguen sin informarse; la fecha de publicación no acredita frescura del dato ni la posición exacta de una obra.
+
 La interfaz aplica la [guía visual](docs/guia-visual.md): blanco y celeste, acciones azules, detalles dorados y Noto Sans del mismo origen. La guía reúne tokens, patrones y criterios de accesibilidad para mantener esa identidad en próximos cambios; las decisiones funcionales y validaciones siguen en [etapa 2](docs/etapa-2.md).
+
+El código propio sigue la [convención JSDoc](docs/documentacion-codigo.md): propósito de cada módulo y documentación de funciones, componentes, clases, tipos y contratos relevantes. Los cambios futuros deben mantener esos comentarios junto con el comportamiento que explican. `npm run docs:check` comprueba módulos nuevos y existentes y se ejecuta automáticamente antes del build.
 
 ## Ejecutar
 
@@ -24,7 +32,7 @@ npm run build
 npm start
 ```
 
-`build` y `dev` preparan las fuentes Noto Sans locales y su licencia desde la dependencia fijada. `public/map-fonts/` es salida generada e ignorada por Git; conservarla junto a `.next/` y `public/` en el despliegue. El mapa usa OpenLayers Canvas 2D + ol-mapbox-style y no requiere WebGL. Con cero obras, muestra la cartografía y el estado vacío de la consulta. Se usa Webpack con `extensionAlias` para conservar los imports `.js` del cliente TypeScript NodeNext independiente. `npm run build:api` sigue produciendo el cliente de diagnóstico en `dist/`.
+`build` verifica primero JSDoc mediante `docs:check`; una declaración propia sin documentación impide compilar. `build` y `dev` preparan las fuentes Noto Sans locales y su licencia desde la dependencia fijada. `public/map-fonts/` es salida generada e ignorada por Git; conservarla junto a `.next/` y `public/` en el despliegue. El mapa usa OpenLayers Canvas 2D + ol-mapbox-style y no requiere WebGL. Con cero obras, muestra la cartografía y el estado vacío de la consulta. Se usa Webpack con `extensionAlias` para conservar los imports `.js` del cliente TypeScript NodeNext independiente. `npm run build:api` sigue produciendo el cliente de diagnóstico en `dist/`.
 
 ## Configuración
 
@@ -49,6 +57,7 @@ Los assets con hash aprovechan la caché del framework. El mapa base sigue las c
 ## Rutas y comportamiento
 
 - `/`: proyecto, método y acceso al catálogo, con HTML inicial.
+- `/proyecto`: referencias de los colores de fuente, roles informados, cobertura y créditos cartográficos.
 - `/mapa`: mapa con encuadre de las geometrías cargadas y resultados de todo el catálogo, incluidos faltantes. Lista inicial de 20 obras, utilizable sin JavaScript; filtros y página siguiente nativos.
 - `/mapa?vista=lista`: alternativa textual sin cargar el motor ni el proveedor del mapa. Alternar vistas conserva consulta, páginas cargadas y selección.
 - `/mapa?vista=mapa&bbox=west,south,east,north`: mapa y lista de la misma área. «Buscar en esta zona» actualiza ambos; mover el mapa no consulta el catálogo.
@@ -58,11 +67,14 @@ Los assets con hash aprovechan la caché del framework. El mapa base sigue las c
 
 Sin área, la lista incluye obras sin geometría. Con área sólo aparecen ubicaciones aprobadas que la intersectan; se ofrece quitar el área y consultar obras sin ubicación. El número de obras cargadas no representa un total. Los clusters cuentan puntos, que pueden corresponder a una misma obra.
 
+Las publicaciones sin ubicación aprobada muestran **«Publicada · Sin ubicación en el mapa»** en la tarjeta, ficha y resumen, con icono y explicación legible. Siguen siendo obras publicadas y consultables. El aviso de lista cuenta únicamente las obras cargadas que no pueden dibujarse. «Ver solo obras sin ubicación en el mapa» conserva los demás filtros, quita área y cursor y abre la primera página en vista lista. Una consulta por área explica que no puede incluir esas publicaciones porque se desconoce si están dentro de la zona. Las revisiones históricas muestran «Revisión sin ubicación en el mapa»; la etiqueta no cambia el estado informado de la obra. Tener ubicación aprobada tampoco garantiza que esté visible en el encuadre actual o que un mapa parcial ya la haya cargado.
+
 La geolocalización sólo se activa mediante «Usar mi ubicación». Centrar no guarda coordenadas en el enlace; «Buscar en esta zona» es una acción posterior explícita que envía el área a la API y la incorpora a la URL. Rechazar el permiso conserva navegación manual y lista.
 
 ## Validar
 
 ```powershell
+npm run docs:check
 npm run typecheck
 npm test
 npm run test:proxy
@@ -78,7 +90,7 @@ Con `npm start` activo, `node tools/measure-mobile.mjs` genera capturas responsi
 
 `node tools/measure-map.mjs` usa el build existente y levanta sus propios servidores aislados en 4101/3103. Mide mapa vacío, 18 geometrías y el presupuesto de 500 MultiPoint/10.000 posiciones, con WebGL bloqueado, CPU ×4, red simulada y caché desactivada; incluye seis tamaños de pantalla y alternancia mapa/lista. Genera `artifacts/local-validation/map-lab/report.json` y capturas. No consulta la API activa ni descarga teselas reales. La cartografía sintética permite comparar regresiones, pero no representa el costo del proveedor ni un teléfono físico. `--visual-only` limita a layouts; `MAP_LAB_API_PORT` y `MAP_LAB_SITE_PORT` permiten otros puertos libres.
 
-El workflow `Frontend` valida tipo, unitarias, proxy, build y E2E en Chromium, Firefox y WebKit sobre Linux. `contract:check` se ejecuta localmente con el repositorio hermano de la API. En este equipo Firefox de Playwright no pudo iniciar por un error de ensamblado de Windows; se verificó en Linux aislado, sin omitir sus casos. Los resultados y límites de la aceptación están en `docs/etapa-2.md`.
+El workflow `Frontend` valida tipo, unitarias, proxy, build y E2E en Chromium, Firefox y WebKit sobre Linux; el build incluye `docs:check`. `contract:check` se ejecuta localmente con el repositorio hermano de la API. La entrega de JSDoc y avisos cartográficos pasó typecheck/build, 147 unitarias, 5 pruebas del proxy y 116 E2E distintos en los proyectos soportados localmente. Las diez pruebas de Firefox de esta entrega siguen pendientes de CI Linux: su pase en el PR #5 es evidencia histórica, y el problema previo de inicialización de Firefox en Windows permanece registrado. Los resultados y límites de la aceptación están en [etapa 2](docs/etapa-2.md#jsdoc-y-publicaciones-sin-ubicación-en-el-mapa--2026-10-05).
 
 Auditoría real, acotada y de sólo lectura:
 
@@ -103,7 +115,8 @@ La exportación compila el backend sin iniciarlo, cargar `.env` ni conectar su b
 
 - [Etapa 2: decisiones, límites y validación](docs/etapa-2.md).
 - [Etapa 1: contrato e integración](docs/etapa-1.md).
+- [Documentación del código: JSDoc y comprobación automática](docs/documentacion-codigo.md).
 - [Documentación original y fuentes primarias](docs/referencias.md).
 - [Skill local de contexto](.agents/skills/project-context/SKILL.md).
 
-No se publica el sitio al ejecutar estos comandos. Antes del lanzamiento faltan muestra real representativa, responsable/contacto del proyecto, destino de alojamiento y pruebas en dispositivos/lectores de pantalla reales.
+El catálogo local ya tiene publicaciones reales, documentadas en [etapa 2](docs/etapa-2.md). Para el lanzamiento de producción faltan responsable/contacto del proyecto, destino de alojamiento con dominio HTTPS y operación definida, y pruebas en dispositivos/lectores de pantalla reales. La cobertura y representatividad de los datos requieren su propia evaluación. La política actual de catálogo `no-store` permite seguir consultando el entorno local; cualquier cambio de caché debe conservar la coherencia de revisiones. `robots.txt` mantiene la indexación deshabilitada y el origen local configurado. No se comprobó un despliegue remoto durante esta revisión.

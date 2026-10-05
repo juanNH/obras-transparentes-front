@@ -1,3 +1,4 @@
+/** @file Comprueba lectura de calidad por ubicación y descarte de tooltip sin depender de color o hover exclusivo. */
 import { expect, test, type Page } from "@playwright/test";
 import { disableWebGL, isolateMapNetwork, useSyntheticBasemap } from "./map-fixture";
 

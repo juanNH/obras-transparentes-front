@@ -1,10 +1,13 @@
+/** @file Contenido compartido por ficha y resumen de una revisión pública, con datos faltantes y procedencia explícitos. */
 import type { ReactNode } from "react";
 import type { WorkDetail } from "../api/client.js";
 import { fieldLabel, formatExactDecimal, publicationDate, qualityLabel, reportedDate, safeSourceUrl, sourceLabel, stateLabel } from "../lib/presentation.js";
 import { LocationQuality } from "./location-quality";
 import { WorkResponsibility } from "./work-responsibility";
 import { SourceBadge } from "./source-origin";
+import { MapAvailability } from "./map-availability";
 
+/** Presenta sólo URLs HTTP(S) sin credenciales como enlace; una referencia inválida permanece como texto. */
 function SourceLink({ url, children }: { url: string; children: ReactNode }) {
   const href = safeSourceUrl(url);
   return href ? <a href={href} rel="noreferrer">{children}</a> : <span>{children} (enlace no disponible)</span>;
@@ -18,6 +21,7 @@ function ReportedFields({ value }: { value: unknown }) {
   return <dl className="detail-grid">{Object.entries(value).map(([key, item]) => <div key={key}><dt>{fieldLabel(key)}</dt><dd><ReportedFields value={item} /></dd></div>)}</dl>;
 }
 
+/** Describe evidencia de celda, catálogo o decisión y enlaza revisiones base sin exponer campos privados. */
 function Evidence({ evidence, obraId }: { evidence: WorkDetail["procedencia"][string]["evidencias"][number]; obraId: string }) {
   if (evidence.tipo === "SOURCE_CELL") {
     const location = evidence.localizador;
@@ -28,14 +32,22 @@ function Evidence({ evidence, obraId }: { evidence: WorkDetail["procedencia"][st
   return <p>Decisión de revisión sobre {fieldLabel(evidence.campo)}. Referencia: <span className="technical-id">{evidence.decisionId}</span>.</p>;
 }
 
+/**
+ * Renderiza datos públicos de una revisión para ficha y resumen con jerarquía de encabezados adaptada.
+ * @param props - Revisión validada y modo compacto del resumen.
+ * @returns Contenido con publicación, ausencia cartográfica, procedencia y desconocidos explícitos.
+ */
 export function WorkDetailContent({ work, compact = false }: { work: WorkDetail; compact?: boolean }) {
   const Title = compact ? "h2" : "h1";
   const Heading = compact ? "h3" : "h2";
+  const hasGeometry = work.ubicaciones.some(location => location.condicion === "ACCEPTED" && location.geometria !== null);
   return <article className={`work-detail${compact ? " work-detail-compact" : ""}`}>
     <header className="detail-heading">
       <p className="eyebrow">Ficha pública · revisión {work.numeroRevision}</p>
       <Title>{work.nombre}</Title>
       <p><span className="status-badge">{stateLabel(work.estado)}</span></p>
+      <p><MapAvailability hasGeometry={hasGeometry} publishedCurrently={work.publicadaActualmente} /></p>
+      {!hasGeometry && <p className="map-availability-note">{work.publicadaActualmente ? "La obra está publicada y su información se puede consultar aquí. No aparece en el mapa porque esta revisión no tiene una ubicación aprobada para dibujar." : "Esta revisión conserva su información, pero no tiene una ubicación aprobada para dibujar en el mapa."}</p>}
       <p><SourceBadge sources={work.fuentes} /> <a className="source-colors-link" href="/proyecto#colores">Qué significa el color</a></p>
       {!work.publicadaActualmente && <p className="notice">Esta es una revisión histórica. <a href={`/obras/${work.obraId}`}>Consultar la ficha actual</a>.</p>}
     </header>
@@ -61,7 +73,7 @@ export function WorkDetailContent({ work, compact = false }: { work: WorkDetail;
       {work.ubicaciones.length ? <ol className="location-list">{work.ubicaciones.map((location, index) => <li key={location.clave + index}>
         <LocationQuality location={location} />
         <p>Dirección reportada: {[location.direccionReportada?.calle, location.direccionReportada?.numero].filter((item) => item !== null && item !== undefined && item !== "").join(" ") || "No informada"}.</p>
-        <p>{location.geometria === null ? "Sin geometría aprobada para mostrar en el mapa." : `Representación disponible: ${{ Point: "punto", MultiPoint: "varios puntos", LineString: "tramo", MultiLineString: "varios tramos", Polygon: "área", MultiPolygon: "varias áreas" }[location.geometria.type]}.`}</p>
+        <p>{location.condicion !== "ACCEPTED" || location.geometria === null ? "Sin geometría aprobada para mostrar en el mapa." : `Representación disponible: ${{ Point: "punto", MultiPoint: "varios puntos", LineString: "tramo", MultiLineString: "varios tramos", Polygon: "área", MultiPolygon: "varias áreas" }[location.geometria.type]}.`}</p>
         {location.controles.length > 0 && <details><summary>Controles de esta ubicación</summary><ul>{location.controles.map((control, controlIndex) => <li key={controlIndex}>{control}</li>)}</ul></details>}
       </li>)}</ol> : <p>No hay ubicaciones informadas para esta revisión.</p>}
     </section>

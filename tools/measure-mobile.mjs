@@ -1,3 +1,4 @@
+/** @file Capturas y muestra de laboratorio móvil; la emulación no acredita teléfonos físicos ni rendimiento de campo. */
 import { chromium } from "@playwright/test";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -40,10 +41,12 @@ const report = {
   routes: [],
 };
 
+/** Define contexto de navegador móvil/táctil emulado para los tamaños solicitados. */
 function mobileOptions(width = 390) {
   return { viewport: { width, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true };
 }
 
+/** Instala observadores de LCP/CLS y marcas de contenido disponible para la muestra de laboratorio. */
 async function installObservers(context) {
   await context.addInitScript(() => {
     window.__lab = { lcpMs: null, cls: 0, lcpElement: null };
@@ -59,6 +62,7 @@ async function installObservers(context) {
   });
 }
 
+/** Configura caché deshabilitada, red y CPU simuladas mediante CDP en un contexto nuevo. */
 async function throttle(page) {
   const session = await page.context().newCDPSession(page);
   await session.send("Network.enable");
@@ -71,6 +75,7 @@ async function throttle(page) {
   return session;
 }
 
+/** Genera capturas de landing/lista/ficha y reporta desbordamiento y errores por viewport. */
 async function visual() {
   const routes = [
     { name: "landing", route: "/" },
@@ -101,6 +106,7 @@ async function visual() {
   }
 }
 
+/** Registra una carga fría de ruta con métricas de laboratorio y límites de interpretación explícitos. */
 async function measure(route) {
   const context = await browser.newContext(mobileOptions());
   await installObservers(context);
@@ -143,6 +149,7 @@ async function measure(route) {
   await context.close();
 }
 
+/** Comprueba que Copiar enlace responde tras hidratar usando portapapeles sintético aislado. */
 async function probeHydratedListAction() {
   const context = await browser.newContext(mobileOptions());
   await context.addInitScript(() => {

@@ -1,5 +1,7 @@
+/** @file Navegación complementaria y aviso de alcance del piloto público. */
 import Link from "next/link";
 
+/** Ofrece accesos al catálogo, proyecto y fuentes, con el alcance piloto explícito. */
 export function SiteFooter() {
   return (
     <footer className="site-footer">

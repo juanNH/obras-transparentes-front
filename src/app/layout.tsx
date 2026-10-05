@@ -1,3 +1,4 @@
+/** @file Estructura común del sitio, metadatos e idioma argentino con tipografías locales y navegación accesible. */
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { SiteHeader } from "../components/site-header";
@@ -6,6 +7,7 @@ import { siteUrl } from "../lib/config";
 import { MAP_FONT_STYLESHEET } from "../lib/map-style";
 import "./globals.css";
 
+/** Metadatos comunes e indexación habilitada únicamente mediante SITE_INDEXABLE. */
 export const metadata: Metadata = {
   metadataBase: siteUrl(),
   title: { default: "Obras Transparentes · La obra pública, a la vista", template: "%s | Obras Transparentes" },
@@ -20,6 +22,7 @@ export const metadata: Metadata = {
   },
 };
 
+/** Aplica idioma, enlaces de salto, cabecera/pie y tipografías locales a todas las rutas. */
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="es-AR">

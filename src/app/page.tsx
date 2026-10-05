@@ -1,15 +1,19 @@
+/** @file Presentación pública del proyecto, metodología y acceso al catálogo; la ilustración es conceptual. */
 import type { Metadata } from "next";
 import Link from "next/link";
 
+/** Título propio y canonical de la landing; la descripción se hereda del layout. */
 export const metadata: Metadata = {
   title: { absolute: "Obras Transparentes · La obra pública, a la vista" },
   alternates: { canonical: "/" },
 };
 
+/** Dibuja una flecha decorativa junto a acciones que ya tienen nombre textual. */
 function Arrow({ diagonal = false }: { diagonal?: boolean }) {
   return <span className="arrow" aria-hidden="true">{diagonal ? "↗" : "→"}</span>;
 }
 
+/** Dibuja territorio conceptual identificado; sus formas no representan ubicaciones ni cobertura del catálogo. */
 function TerritoryIllustration() {
   return (
     <div className="territory-illustration">
@@ -55,6 +59,7 @@ function TerritoryIllustration() {
   );
 }
 
+/** Presenta propósito, límites y método del piloto, con acceso explícito a explorar obras. */
 export default function HomePage() {
   return (
     <>

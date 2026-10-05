@@ -1,5 +1,7 @@
+/** @file Roles reportados de una obra, diferenciados de la fuente que publica sus datos. */
 import type { WorkDetail } from "../api/client.js";
 
+/** Presenta responsable, ejecutor, financiadores y contratistas sólo cuando constan en los campos reportados. */
 export function WorkResponsibility({ work, compact = false }: { work: WorkDetail; compact?: boolean }) {
   const Heading = compact ? "h3" : "h2";
   const area = work.municipal?.areaResponsableReportada?.trim();

@@ -1,3 +1,4 @@
+/** @file Comprueba geometrías aceptadas, partición real de puntos/figuras y selección exacta por revisión/ubicación. */
 import { describe, expect, it } from "vitest";
 import examples from "../contracts/examples.json" with { type: "json" };
 import { parsePublicResponse } from "../src/api/contract.js";

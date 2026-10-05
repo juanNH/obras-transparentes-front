@@ -1,5 +1,7 @@
+/** @file Leyenda y etiquetas accesibles del origen de los datos mediante texto, color y forma. */
 import { MAP_ORIGINS, mapOriginCategory, type MapOriginCategory } from "../lib/map-origin";
 
+/** Dibuja la forma decorativa asociada a una fuente; el nombre legible lo aporta la etiqueta/leyenda. */
 export function SourceSymbol({ category }: { category: MapOriginCategory }) {
   const origin = MAP_ORIGINS[category];
   const common = { fill: origin.color, stroke: "#ffffff", strokeWidth: 2 };
@@ -12,6 +14,7 @@ export function SourceSymbol({ category }: { category: MapOriginCategory }) {
   </svg>;
 }
 
+/** Identifica quién publica los datos, sin deducir el responsable ni el territorio de la obra. */
 export function SourceBadge({ sources }: { sources: Parameters<typeof mapOriginCategory>[0] }) {
   const category = mapOriginCategory(sources);
   const origin = MAP_ORIGINS[category];
@@ -20,6 +23,7 @@ export function SourceBadge({ sources }: { sources: Parameters<typeof mapOriginC
   </span>;
 }
 
+/** Explica todas las referencias visuales por fuente mediante forma y texto además del color. */
 export function SourceLegend() {
   return <div className="map-origin-key" role="group" aria-label="Referencia de fuente de datos">
     <p className="map-origin-title">Colores inspirados en las banderas</p>

@@ -1,3 +1,4 @@
+/** @file Comprueba decimales exactos, fechas civiles, enlaces seguros y etiquetas de datos desconocidos. */
 import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";

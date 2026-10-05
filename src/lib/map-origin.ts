@@ -1,5 +1,7 @@
+/** @file Correspondencia entre fuentes y referencias visuales por nivel; no deduce jurisdicción de una ubicación. */
 import type { WorkGeoJSON } from "../api/client.js";
 
+/** Paleta, figuras y trazos por nivel de fuente para que las diferencias no dependan sólo del color. */
 export const MAP_ORIGINS = {
   nation: {
     label: "Nación",
@@ -45,7 +47,9 @@ export const MAP_ORIGINS = {
   },
 } as const;
 
+/** Categoría de referencia de fuente, incluidas procedencias mixtas o desconocidas. */
 export type MapOriginCategory = keyof typeof MAP_ORIGINS;
+/** Recurso de origen del contrato público utilizado para clasificar el catálogo fuente. */
 type PublicSource = WorkGeoJSON["features"][number]["properties"]["fuentes"][number];
 
 const SOURCE_CATEGORY: Record<PublicSource["codigo"], Exclude<MapOriginCategory, "mixed" | "unknown">> = {

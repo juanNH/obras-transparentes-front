@@ -1,3 +1,4 @@
+/** @file Adaptador OpenLayers Canvas: cartografía 2D, interacción accesible y liberación de fuentes/eventos al desmontar. */
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
@@ -35,6 +36,7 @@ import { canvasMapStyle, MAP_FONT_STYLESHEET, withoutOptionalOpenFreeMapCredit }
 import { LocationQuality } from "./location-quality";
 import { SourceBadge } from "./source-origin";
 
+/** Datos cartográficos y callbacks de consulta/selección; mover la cámara nunca confirma por sí solo un filtro. */
 export interface WorkMapProps {
   features: WorkGeoJSON["features"];
   selectionFeatures: WorkGeoJSON["features"];
@@ -59,6 +61,7 @@ const MAP_PALETTE = {
   halo: "#ffffff",
 } as const;
 
+/** Crea el marcador de una categoría conservando color, forma y contorno distinguible. */
 function markerImage(category: MapOriginCategory, radius: number, outline: string, outlineWidth: number, color: string = MAP_ORIGINS[category].color) {
   const origin = MAP_ORIGINS[category];
   const fill = new Fill({ color });
@@ -72,6 +75,7 @@ function markerImage(category: MapOriginCategory, radius: number, outline: strin
   }
 }
 
+/** Prepara estilos de puntos, líneas y áreas por fuente con una variante destacada de selección. */
 function createOriginStyles(selected = false): Record<MapOriginCategory, Style[]> {
   return Object.fromEntries(Object.keys(MAP_ORIGINS).map((key) => {
     const category = key as MapOriginCategory;
@@ -95,11 +99,13 @@ function createOriginStyles(selected = false): Record<MapOriginCategory, Style[]
 const workStyles = createOriginStyles();
 const selectionStyles = createOriginStyles(true);
 
+/** Obtiene la categoría visual almacenada en la feature, con fallback neutral para datos ausentes. */
 function featureOrigin(feature: { get(key: string): unknown } | undefined): MapOriginCategory {
   const value = feature?.get("nivelFuente");
   return typeof value === "string" && Object.hasOwn(MAP_ORIGINS, value) ? value as MapOriginCategory : "unknown";
 }
 
+/** Construye capas propias de puntos/figuras/selección y clustering de posiciones reales. */
 function createWorkLayers() {
   const points = new VectorSource<Feature<Geometry>>({ wrapX: false });
   const shapes = new VectorSource<Feature<Geometry>>({ wrapX: false });
@@ -126,8 +132,10 @@ function createWorkLayers() {
   const selectedLayer = new VectorLayer({ source: selected, style: (feature) => selectionStyles[featureOrigin(feature)] });
   return { points, shapes, selected, clusters, pointLayer, layers: [shapeLayer, pointLayer, selectedLayer] };
 }
+/** Capas, fuentes y cachés propias que deben liberarse al desmontar el adaptador. */
 type WorkLayers = ReturnType<typeof createWorkLayers>;
 
+/** Sustituye la capa destacada por la obra/revisión/ubicación exacta elegida y devuelve su identidad cartográfica. */
 function updateSelection(work: WorkLayers, features: WorkGeoJSON["features"], selectedId: string | null, ubicacionId?: string | null, revisionId?: string | null): string | null {
   const collection = selectedMapFeatures(partitionMapFeatures(features).all, selectedId, ubicacionId, revisionId);
   const seen = new Set<string | number | undefined>();
@@ -143,6 +151,7 @@ function updateSelection(work: WorkLayers, features: WorkGeoJSON["features"], se
     : null;
 }
 
+/** Lee identidad y calidad de una feature seleccionable; rechaza propiedades incompletas. */
 function featureLocation(feature: Feature<Geometry>): MapProperties | null {
   const properties = feature.getProperties() as Partial<MapProperties>;
   if (typeof properties.obraId !== "string" || typeof properties.revisionId !== "string" ||
@@ -150,11 +159,13 @@ function featureLocation(feature: Feature<Geometry>): MapProperties | null {
     properties.calidad?.condicion !== "ACCEPTED" || !properties.fuentes || !properties.nivelFuente) return null;
   return { obraId: properties.obraId, revisionId: properties.revisionId, ubicacionId: properties.ubicacionId, nombre: properties.nombre, calidad: properties.calidad, fuentes: properties.fuentes, nivelFuente: properties.nivelFuente };
 }
+/** Sustituye fuentes de la consulta con puntos y figuras reales, sin generar centroides de líneas o áreas. */
 function updateWorks(work: WorkLayers, features: WorkGeoJSON["features"]) {
   const data = partitionMapFeatures(features);
   work.points.clear(true); work.points.addFeatures(geojson.readFeatures(data.points) as Feature<Point>[]);
   work.shapes.clear(true); work.shapes.addFeatures(geojson.readFeatures(data.shapes));
 }
+/** Encuadra un bbox WGS84 en Mercator, preservando la cámara cuando la presentación así lo solicita. */
 function fit(map: Map, bbox: BoundingBox, restoreCamera = false) {
   const bounds = clampMapBBox(bbox);
   if (bounds) map.getView().fit(transformExtent([...bounds], "EPSG:4326", "EPSG:3857"), {
@@ -177,11 +188,16 @@ function fitSources(map: Map, sources: readonly VectorSource<Feature<Geometry>>[
 
 // The adapter caches request options. Bind a shared prototype method rather
 // than a closure factory that production minification can inline in the effect.
+/** Conserva la señal cancelable de los recursos del estilo sin retener el efecto React en callbacks cacheados. */
 class StyleRequests {
+  /** Asocia las solicitudes cartográficas con la cancelación del ciclo de vida del mapa. */
   constructor(private signal: AbortSignal | null) {}
+  /** Crea una solicitud del proveedor sin credenciales y con señal cancelable al desmontar. */
   request(url: string) { return new Request(url, { credentials: "omit", signal: this.signal ?? AbortSignal.abort("Map disposed") }); }
+  /** Retira la referencia de cancelación; toda solicitud posterior queda abortada y no retiene el montaje. */
   dispose() { this.signal = null; }
 }
+/** Desvincula capas, clustering, fuentes y cachés de estilos para evitar retener el contexto de React. */
 function disposeWorkLayers(works: WorkLayers) {
   for (const layer of works.layers) layer.dispose();
   works.clusters.setSource(null);
@@ -193,6 +209,11 @@ function disposeWorkLayers(works: WorkLayers) {
   }
 }
 
+/**
+ * Gestiona mapa Canvas 2D, selección exacta, fallas recuperables del proveedor y limpieza al desmontar.
+ * @param props - Features presupuestadas y acciones explícitas proporcionadas por Explorer.
+ * @returns Mapa con controles de teclado/táctiles y atribución visible.
+ */
 export default function WorkMap(props: WorkMapProps) {
   const container = useRef<HTMLDivElement>(null);
   const attribution = useRef<HTMLDivElement>(null);
@@ -210,6 +231,7 @@ export default function WorkMap(props: WorkMapProps) {
   const [hoveredLocation, setHoveredLocation] = useState<MapProperties | null>(null);
   useEffect(() => {
     if (!hoveredLocation) return;
+    /** Descarta ayuda contextual con Escape desde cualquier foco de la página. */
     const dismiss = (event: KeyboardEvent) => { if (event.key === "Escape") setHoveredLocation(null); };
     window.addEventListener("keydown", dismiss);
     return () => window.removeEventListener("keydown", dismiss);
@@ -230,6 +252,7 @@ export default function WorkMap(props: WorkMapProps) {
     let map: Map;
     let observer: ResizeObserver | undefined;
     setStatus("loading"); setBaseLoading(true); setWarning(null);
+    /** Marca fallas del proveedor como recuperables sin retirar la lista pública ni reiniciar la cámara. */
     const warn = () => {
       if (!active) return;
       providerFailed = true; setBaseLoading(false);
@@ -242,6 +265,7 @@ export default function WorkMap(props: WorkMapProps) {
     }, 20000);
 
     // Cancel a pending data fit as soon as the visitor starts navigating the map.
+    /** Cancela el autoencuadre pendiente cuando el usuario empieza a mover o ampliar el mapa. */
     const onUserInput = (event: Event) => {
       if (event.type === "wheel" && !(event as WheelEvent).ctrlKey && !(event as WheelEvent).metaKey) return;
       if (event.type === "keydown" && !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "+", "-", "="].includes((event as KeyboardEvent).key)) return;
@@ -250,6 +274,7 @@ export default function WorkMap(props: WorkMapProps) {
     target.addEventListener("pointerdown", onUserInput);
     target.addEventListener("wheel", onUserInput, { passive: true });
     target.addEventListener("keydown", onUserInput);
+    /** Retira listeners de interacción registrados para este montaje del mapa. */
     const removeUserInput = () => {
       target.removeEventListener("pointerdown", onUserInput);
       target.removeEventListener("wheel", onUserInput);
@@ -278,6 +303,7 @@ export default function WorkMap(props: WorkMapProps) {
       } else if (autoFitPending.current && fitSources(map, [works.points, works.shapes])) {
         autoFitPending.current = false;
       }
+      /** Publica el bbox candidato de una cámara válida sin consultar la API automáticamente. */
       const publishViewport = () => {
         if (!active) return;
         setHoveredLocation(null);
@@ -286,6 +312,7 @@ export default function WorkMap(props: WorkMapProps) {
         if (bbox) current.current.onViewport(bbox);
       };
       subscriptions.push(map.on("moveend", publishViewport));
+      /** Usa puntos individuales al acercar y clustering a menor zoom; las figuras permanecen intactas. */
       const updateClustering = () => works.pointLayer.setSource((map.getView().getZoom() ?? 0) > 14 ? works.points : works.clusters);
       subscriptions.push(map.getView().on("change:resolution", updateClustering));
       updateClustering();
@@ -342,6 +369,7 @@ export default function WorkMap(props: WorkMapProps) {
     subscriptions.push(base.getLayers().on("add", ({ element: layer }) => {
       if (!(layer instanceof Layer)) return;
       if (layer instanceof VectorTileLayer) layer.setPreload(0);
+      /** Suscribe errores de una fuente nueva una sola vez, incluso antes de resolver la carga del estilo. */
       const watchSource = () => {
         const source = layer.getSource();
         if (!source || watched.has(source)) return;
@@ -411,7 +439,9 @@ export default function WorkMap(props: WorkMapProps) {
     }
   }, [props.focusBBox]);
 
+  /** Amplía/reduce mediante control explícito y desactiva el autoencuadre pendiente. */
   const zoom = (delta: number) => { autoFitPending.current = false; const view = mapRef.current?.getView(); if (view) view.setZoom((view.getZoom() ?? 0) + delta); };
+  /** Desplaza cámara en píxeles de pantalla usando su resolución y evita modificar filtros de consulta. */
   const pan = (x: number, y: number) => {
     autoFitPending.current = false;
     const view = mapRef.current?.getView(); const center = view?.getCenter(); const resolution = view?.getResolution();

@@ -1,3 +1,4 @@
+/** @file Comprueba adaptación Canvas y conservación de créditos obligatorios del proveedor cartográfico. */
 import { describe, expect, it, vi } from "vitest";
 import type { Attribution } from "ol/source/Source.js";
 import TileJSON from "ol/source/TileJSON.js";

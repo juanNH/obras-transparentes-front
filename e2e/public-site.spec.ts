@@ -1,3 +1,4 @@
+/** @file Comprueba recorridos públicos, accesibilidad, filtros y navegación con API sintética aislada. */
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { expectCanvasMap, isolateMapNetwork, useSyntheticBasemap } from "./map-fixture";

@@ -1,3 +1,4 @@
+/** @file Comprueba presupuestos cartográficos y prioridad de selección sin cortar geometrías ni duplicar identidades. */
 import { describe, expect, it } from "vitest";
 import examples from "../contracts/examples.json" with { type: "json" };
 import type { WorkGeoJSON } from "../src/api/client.js";

@@ -1,3 +1,4 @@
+/** @file Entrada del explorador con lista HTML consultada en servidor y filtros compartibles validados. */
 import type { Metadata } from "next";
 import { Explorer } from "../../components/explorer";
 import { publicApi } from "../../lib/public-api";
@@ -6,8 +7,11 @@ import { explorerHref, parseExplorerQuery, searchParamsOf } from "../../lib/expl
 import { PublicApiError } from "../../api/client";
 import type { WorkList } from "../../api/client";
 
+/** Fuerza lectura de catálogo en cada solicitud para evitar mezclar publicaciones almacenadas. */
 export const dynamic = "force-dynamic";
+/** Canonical de exploración sin indexar combinaciones de filtros y selecciones. */
 export const metadata: Metadata = { title: "Explorar obras", description: "Consultá las obras publicadas como lista accesible o mapa, con sus fuentes y revisiones.", robots: { index: false, follow: true }, alternates: { canonical: "/mapa" } };
+/** Valida la URL y entrega lista HTML inicial con error recuperable; el explorador se reinicia al cambiar consulta/versión. */
 export default async function MapPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   let state;
   try { state = parseExplorerQuery(searchParamsOf(await searchParams)); }

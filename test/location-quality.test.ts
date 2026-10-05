@@ -1,3 +1,4 @@
+/** @file Comprueba etiquetas de aceptación, geocodificación y supuestos sin acreditar precisión no documentada. */
 import { describe, expect, it } from "vitest";
 import examples from "../contracts/examples.json" with { type: "json" };
 import { parsePublicResponse } from "../src/api/contract.js";

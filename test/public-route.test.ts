@@ -1,3 +1,4 @@
+/** @file Comprueba validación de rutas BFF y errores públicos sin URLs internas ni parámetros ajenos. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import examples from "../contracts/examples.json" with { type: "json" };
 import { PublicApiError } from "../src/api/client.js";

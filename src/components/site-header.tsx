@@ -1,5 +1,7 @@
+/** @file Identidad del proyecto y navegación principal del sitio público. */
 import Link from "next/link";
 
+/** Presenta la identidad del proyecto y los accesos principales con navegación semántica. */
 export function SiteHeader() {
   return (
     <header className="site-header">

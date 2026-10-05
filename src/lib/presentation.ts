@@ -1,5 +1,7 @@
+/** @file Etiquetas públicas y formatos que conservan desconocidos, precisión decimal y semántica de fechas. */
 import type { WorkDetail, WorkSummary } from "../api/client.js";
 
+/** Explica el estado como reportado por la fuente y conserva el desconocido como no informado. */
 export function stateLabel(state: WorkSummary["estado"]): string {
   return state === null ? "Estado no informado" : {
     COMPLETED: "Finalizada según la fuente",
@@ -8,6 +10,7 @@ export function stateLabel(state: WorkSummary["estado"]): string {
   }[state];
 }
 
+/** Traduce códigos de catálogos a sus nombres de referencia sin atribuir responsabilidad a la fuente. */
 export function sourceLabel(source: WorkSummary["fuentes"][number]["codigo"]): string {
   return {
     "pba-edificios": "Edificios escolares de Buenos Aires",
@@ -26,6 +29,7 @@ export function formatExactDecimal(value: string | null | undefined): string {
   return `${match[1]}${integer}${match[3] === undefined ? "" : `,${match[3]}`}`;
 }
 
+/** Admite sólo enlaces HTTP(S) sin usuario/contraseña; las referencias inválidas no se vuelven clickeables. */
 export function safeSourceUrl(value: string): string | null {
   try {
     const url = new URL(value);
@@ -40,16 +44,19 @@ export function civilDate(value: string): string {
   return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
 }
 
+/** Formatea un instante explícitamente en UTC, preservando la diferencia con la fecha del dato fuente. */
 export function publicationDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Fecha no disponible";
   return `${new Intl.DateTimeFormat("es-AR", { dateStyle: "long", timeStyle: "short", timeZone: "UTC" }).format(date)} UTC`;
 }
 
+/** Distingue año conocido de día civil y evita desplazar este último por zona horaria. */
 export function reportedDate(value: WorkDetail["fechasInformadas"][number]): string {
   return "anio" in value ? `${value.anio} (solo se conoce el año)` : civilDate(value.diaCivil);
 }
 
+/** Explica el alcance de la precisión informada; un establecimiento no acredita la extensión de la obra. */
 export function locationPrecision(value: WorkDetail["ubicaciones"][number]["precision"]): string {
   return {
     ubicacion_establecimiento_reportada: "Ubicación reportada del establecimiento; no indica el alcance de la obra.",
@@ -58,6 +65,7 @@ export function locationPrecision(value: WorkDetail["ubicaciones"][number]["prec
   }[value];
 }
 
+/** Aspectos de calidad necesarios para explicar ubicación sin copiar la geometría. */
 export type LocationQuality = Pick<WorkDetail["ubicaciones"][number], "condicion" | "crs" | "precision" | "origenGeometria">;
 
 /** Acceptance, precision and a reviewed CRS assumption are separate facts. */
@@ -114,10 +122,12 @@ const fields: Record<string, string> = {
   periodo: "Período", regionEducativa: "Región educativa", tipoIntervencion: "Intervención", inicio: "Inicio", fin: "Fin",
 };
 
+/** Traduce cada segmento de un campo de procedencia y conserva las claves desconocidas como referencia. */
 export function fieldLabel(value: string): string {
   return value.split(".").map((part) => fields[part] ?? part).join(" · ");
 }
 
+/** Traduce estados de calidad sin confundir dato desconocido, no aplicable, inválido o pendiente. */
 export function qualityLabel(value: WorkDetail["calidadCampos"][string]["estado"]): string {
   return { KNOWN: "Informado", NOT_REPORTED: "No informado", NOT_APPLICABLE: "No corresponde", INVALID: "Dato inválido", PENDING_REVIEW: "Pendiente de revisión" }[value];
 }
