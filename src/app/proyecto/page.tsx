@@ -27,7 +27,7 @@ export default function ProjectPage() {
       <p>La referencia toma colores de las banderas de los organismos que publican los datos. Adaptamos los tonos para que se distingan sobre el mapa y el fondo blanco de la interfaz.</p>
       <SourceLegend />
       <ul className="project-color-list">{flagReferences.map(({ category, description, href, reference }) => <li key={category}>
-        <strong><SourceSymbol category={category} /> {MAP_ORIGINS[category].label}</strong>
+        <strong><SourceSymbol category={category} /><span>{MAP_ORIGINS[category].label}</span></strong>
         <p>{description} <a href={href} rel="noreferrer">{reference}</a>.</p>
       </li>)}</ul>
       <p>El sol amarillo oro de Vicente López está descripto en la <a href="https://legislacion.vicentelopez.gov.ar/digesto-digital/resultados/39487" rel="noreferrer">Ordenanza 22820 sobre su escudo</a>.</p>

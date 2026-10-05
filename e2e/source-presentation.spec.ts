@@ -17,6 +17,15 @@ test("explica las banderas y los créditos en la página del proyecto", async ({
   await expect(page.locator("#mapa")).toContainText("permanecen visibles junto al mapa");
   await page.setViewportSize({ width: 320, height: 900 });
   await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  await page.evaluate(() => document.fonts.ready);
+  // Each heading must also reflow inside its card, including its symbol.
+  const headingOverflow = await page.locator(".project-color-list strong").evaluateAll(headings => headings.some(heading => {
+    const card = heading.parentElement!;
+    const style = getComputedStyle(card);
+    const contentWidth = card.getBoundingClientRect().width - [style.paddingLeft, style.paddingRight, style.borderLeftWidth, style.borderRightWidth].reduce((sum, value) => sum + Number.parseFloat(value), 0);
+    return heading.scrollWidth > heading.clientWidth || heading.getBoundingClientRect().width > contentWidth;
+  }));
+  expect(headingOverflow).toBe(false);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   const report = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   expect(report.violations).toEqual([]);

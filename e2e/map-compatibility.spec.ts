@@ -161,6 +161,14 @@ test("mover el mapa no consulta hasta confirmar el área y la lista usa esa mism
   await page.getByRole("button", { name: "Acercar mapa", exact: true }).click();
   expect(page.url()).toBe(initialUrl);
   expect(geoRequests).toHaveLength(initialRequests);
+  const geoResponses = new Map<string, WorkGeoJSON>();
+  await page.route("**/api/public/geojson?*", async route => {
+    // Read the payload before serving it: confirming the area navigates the page,
+    // so Chromium can discard its response body before the assertion reads it.
+    const response = await route.fetch();
+    geoResponses.set(route.request().url(), await response.json());
+    await route.fulfill({ response });
+  });
   const responsePromise = page.waitForResponse(response => response.url().includes("/api/public/geojson?") && response.status() === 200);
   await page.getByRole("button", { name: "Buscar en esta zona", exact: true }).click();
   const response = await responsePromise;
@@ -168,12 +176,13 @@ test("mover el mapa no consulta hasta confirmar el área y la lista usa esa mism
   expect(committedArea).not.toBe(pointArea);
   expect(new URL(response.url()).searchParams.get("bbox")).toBe(committedArea);
   expect(new URL(response.url()).searchParams.get("estado")).toBe("IN_PROGRESS");
-  const geo = await response.json();
+  const geo = geoResponses.get(response.url());
+  expect(geo).toBeDefined();
   await page.getByRole("button", { name: "Lista", exact: true }).click();
   await expect(page.getByRole("button", { name: "Lista", exact: true })).toHaveAttribute("aria-pressed", "true");
   expect(new URL(page.url()).searchParams.get("bbox")).toBe(committedArea);
   expect(new URL(page.url()).searchParams.get("estado")).toBe("IN_PROGRESS");
-  await expect(page.getByRole("link", { name: /^Ver ficha/ })).toHaveCount(new Set(geo.features.map((feature: { properties: { obraId: string } }) => feature.properties.obraId)).size);
+  await expect(page.getByRole("link", { name: /^Ver ficha/ })).toHaveCount(new Set(geo!.features.map(feature => feature.properties.obraId)).size);
   await page.reload();
   expect(new URL(page.url()).searchParams.get("bbox")).toBe(committedArea);
 });

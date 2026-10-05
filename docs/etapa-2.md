@@ -322,3 +322,14 @@ Antes de las correcciones se reprodujeron dos fallas de color de selección en E
 Verificación final: `npm run typecheck`, `npm run build`, `npm run contract:check` y `git diff --check` pasan; 146 pruebas unitarias pasan y la regresión de atribución completa pasa 17/17 tras adaptar el fixture al tipo Config instalado. Los 106 E2E aislados pasan en Chromium escritorio/móvil/tablet y WebKit móvil, con WebGL deshabilitado. Firefox conserva la limitación local de inicialización registrada arriba. El ciclo de vida del mapa y los archivos generados del contrato permanecen sin cambios.
 
 El check `verify` del primer commit fue cancelado por GitHub porque no pudo obtener un runner hosted, antes de ejecutar verificaciones. El escaneo GitGuardian pasó. La cancelación de infraestructura no se presenta como resultado de la aplicación; el push de correcciones dispara una nueva corrida de CI.
+
+### Correcciones encontradas en CI del PR #5
+
+La corrida [37378600241](https://github.com/juanNH/obras-transparentes-front/actions/runs/37378600241), sobre `83cf84e`, completó 114 de 116 E2E y falló en dos casos de Chromium escritorio. Las diez pruebas de Firefox pasaron en Linux; la limitación de inicialización en Windows no se extiende a ese entorno. Typecheck, unitarias, proxy y build pasaron antes de los E2E.
+
+- Al confirmar un área del mapa, la navegación podía hacer que Chromium descartara el cuerpo de respuesta antes de que la prueba leyera `response.json()`. El E2E captura ahora el JSON de la respuesta real mediante `route.fetch()` antes de entregarla al navegador. Conserva las comprobaciones de ausencia de consultas durante movimiento/zoom, bbox y estado compartidos, cantidad de obras únicas en lista y persistencia tras recarga. El caso corregido pasó cinco repeticiones locales consecutivas.
+- Los nombres de las banderas eran elementos flex anónimos que no podían reducir su ancho. A 320 px y texto al 200 %, algunos encabezados medían 221 px dentro de tarjetas con 190 px de contenido. Se envuelve el texto en un span flexible y se permite su reflow, sin ocultar contenido ni overflow. La regresión espera la carga de fuentes y comprueba tanto el ancho interno de cada tarjeta como el del documento. La inspección local posterior registra 190 px en los cuatro encabezados y 320 px en el documento.
+
+Estas fallas se conservan como antecedente y no se contabilizan como pases de la corrección.
+
+Verificación local del cambio: typecheck, build de producción, 146 unitarias, contrato y `git diff --check` pasan. La suite completa soportada en Windows pasa 106/106 E2E en Chromium escritorio/móvil/tablet y WebKit móvil, con API/cartografía sintéticas aisladas y WebGL deshabilitado. Incluye las dos regresiones de CI sin reintentos; las cinco repeticiones enfocadas son adicionales a ese total. El nuevo push permite verificar Firefox y el reflow también en el runner Linux.
