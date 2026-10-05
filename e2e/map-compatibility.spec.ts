@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { disableWebGL, expectCanvasMap, isolateMapNetwork, useSyntheticBasemap } from "./map-fixture";
+import type { WorkDetail, WorkGeoJSON } from "../src/api/client";
+import { disableWebGL, expectCanvasMap, hasMapColor, isolateMapNetwork, useSyntheticBasemap } from "./map-fixture";
 
 const pointArea = "-58.451,-34.551,-58.449,-34.549";
 
@@ -86,10 +87,10 @@ test("un fallo del proveedor conserva las obras y permite reintentar la cartogra
 });
 
 for (const fixture of [
-  { geometry: "punto", number: "01", area: pointArea },
-  { geometry: "línea", number: "02", area: "-58.447,-34.549,-58.445,-34.547" },
-  { geometry: "polígono", number: "03", area: "-58.443,-34.547,-58.441,-34.545" },
-]) {
+  { geometry: "punto", number: "01", area: pointArea, color: [0, 119, 168] },
+  { geometry: "línea", number: "02", area: "-58.447,-34.549,-58.445,-34.547", color: [0, 119, 168] },
+  { geometry: "polígono", number: "03", area: "-58.443,-34.547,-58.441,-34.545", color: [180, 35, 50] },
+] as const) {
   test(`selecciona ${fixture.geometry} y conserva obra y revisión en el enlace`, async ({ page }) => {
     await page.goto(`/mapa?bbox=${fixture.area}&vista=mapa`);
     await expectCanvasMap(page);
@@ -109,11 +110,44 @@ for (const fixture of [
     await expect(page.getByRole("link", { name: "Abrir ficha completa", exact: true })).toHaveAttribute("href", `/obras/${id}?revisionId=${revisionId}`);
     await page.getByRole("button", { name: "Cerrar resumen", exact: true }).click();
     await expect(page.locator(".selection-strip")).toBeVisible();
+    await expect.poll(() => hasMapColor(page, fixture.color)).toBe(true);
+    await expect.poll(() => hasMapColor(page, [10, 76, 120])).toBe(true);
     await expect(page).toHaveURL(new RegExp(`obra=${id}&revisionId=${revisionId}`));
     await page.getByRole("button", { name: "Lista", exact: true }).click();
     await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
   });
 }
+
+test("un tramo de CABA seleccionado conserva el rojo y el contorno de selección", async ({ page }) => {
+  const id = "10000000-0000-4000-8000-000000000003";
+  const geometry: WorkGeoJSON["features"][number]["geometry"] = {
+    type: "MultiLineString", coordinates: [[[-58.4424, -34.546], [-58.4416, -34.546]]],
+  };
+  await page.route("**/api/public/geojson?*", async route => {
+    const response = await route.fetch();
+    const data: WorkGeoJSON = await response.json();
+    for (const feature of data.features) if (feature.properties.obraId === id) feature.geometry = geometry;
+    await route.fulfill({ response, json: data });
+  });
+  await page.route(`**/api/public/obras/${id}?*`, async route => {
+    const response = await route.fetch();
+    const work: WorkDetail = await response.json();
+    work.ubicaciones[0]!.geometria = geometry;
+    await route.fulfill({ response, json: work });
+  });
+  await page.goto("/mapa?bbox=-58.443,-34.547,-58.441,-34.545");
+  await expectCanvasMap(page);
+  await expect.poll(() => hasMapColor(page, [180, 35, 50])).toBe(true);
+  await expect(async () => {
+    await page.locator(".map-canvas").click();
+    await expect(page.locator(".selection-strip")).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: 10000 });
+  await page.locator(".selection-strip").getByRole("button", { name: "Ver resumen", exact: true }).click();
+  await expect(page.getByRole("dialog").getByRole("heading", { name: "EJEMPLO SINTÉTICO — Obra 03", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Cerrar resumen", exact: true }).click();
+  await expect.poll(() => hasMapColor(page, [180, 35, 50])).toBe(true);
+  await expect.poll(() => hasMapColor(page, [10, 76, 120])).toBe(true);
+});
 
 test("mover el mapa no consulta hasta confirmar el área y la lista usa esa misma zona", async ({ page }) => {
   const geoRequests: string[] = [];

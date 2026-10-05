@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Attribution } from "ol/source/Source.js";
+import TileJSON from "ol/source/TileJSON.js";
 import { canvasMapStyle, MAP_FONT_STYLESHEET, withoutOptionalOpenFreeMapCredit } from "../src/lib/map-style";
 
 describe("Canvas basemap style", () => {
@@ -53,6 +54,32 @@ describe("Optional OpenFreeMap attribution", () => {
     expect(original).toHaveBeenCalledTimes(2);
     expect(original).toHaveBeenNthCalledWith(1, frame);
     expect(original).toHaveBeenNthCalledWith(2, frame);
+  });
+
+  it("keeps TileJSON credits inside their bounds and handles its null outside them", () => {
+    const source = new TileJSON({ tileJSON: {
+      tiles: ["https://example.invalid/{z}/{x}/{y}.png"],
+      bounds: [-1, -1, 1, 1], attribution: optionalCredit + dataCredits,
+    } });
+    const original = source.getAttributions();
+    if (!original) throw new Error("Missing TileJSON attribution callback");
+    const adapted = withoutOptionalOpenFreeMapCredit(original);
+    if (typeof adapted !== "function") throw new Error("Missing attribution callback");
+    const inside = { extent: [-10000, -10000, 10000, 10000] } as Parameters<Attribution>[0];
+    const outside = { extent: [1000000, 1000000, 2000000, 2000000] } as Parameters<Attribution>[0];
+    expect(original(outside)).toBeNull();
+    expect(adapted(outside)).toEqual([]);
+    expect(original(inside)).toEqual([optionalCredit + dataCredits]);
+    expect(adapted(inside)).toEqual([dataCredits]);
+    source.dispose();
+  });
+
+  it("handles a callback returning undefined without changing nonempty credits", () => {
+    // OpenLayers runtime callbacks can omit credits even though its type excludes it.
+    const original = (() => undefined) as unknown as Attribution;
+    const adapted = withoutOptionalOpenFreeMapCredit(original);
+    if (typeof adapted !== "function") throw new Error("Missing attribution callback");
+    expect(adapted({ extent: [0, 0, 1, 1] } as Parameters<Attribution>[0])).toEqual([]);
   });
 
   it.each([

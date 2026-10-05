@@ -43,6 +43,7 @@ test("el resumen muestra ejecutor y financiadores con sus roles reportados", asy
   await expect(roles).toContainText("Financiadores reportados");
   await expect(roles).toContainText("EJEMPLO SINTÉTICO — Entidad financiadora");
   await expect(roles).not.toContainText("Área responsable reportada");
+  await expect(roles).not.toContainText("Responsable no informado por la fuente.");
 });
 
 test("el área municipal conserva su rol sin convertir la jurisdicción en responsable", async ({ page }) => {
@@ -54,6 +55,19 @@ test("el área municipal conserva su rol sin convertir la jurisdicción en respo
   await expect(roles).not.toContainText("EJEMPLO SINTÉTICO — Localidad");
   await expect(roles).not.toContainText("Ejecutor reportado");
   await expect(roles).not.toContainText("Financiadores reportados");
+  await expect(roles).not.toContainText("Responsable no informado por la fuente.");
+});
+
+test("un financiador informado no oculta el responsable desconocido", async ({ page }) => {
+  const roles = await openSyntheticSummary(page, work => {
+    work.nacional = nationalParticipants(null, ["EJEMPLO SINTÉTICO — Entidad financiadora"]);
+    work.municipal = { areaResponsableReportada: " \t ", jurisdiccionReportada: null, estadoFuente: null, lugarReportado: null, tipoFuente: null };
+  });
+  await expect(roles).toContainText("Financiadores reportados");
+  await expect(roles).toContainText("EJEMPLO SINTÉTICO — Entidad financiadora");
+  await expect(roles).toContainText("Responsable no informado por la fuente.");
+  await expect(roles).not.toContainText("Ejecutor reportado");
+  await expect(roles).not.toContainText("Área responsable reportada");
 });
 
 test("el resumen informa el faltante sin deducir responsable de fuente o razón social", async ({ page }) => {

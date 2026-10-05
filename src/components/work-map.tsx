@@ -76,15 +76,16 @@ function createOriginStyles(selected = false): Record<MapOriginCategory, Style[]
   return Object.fromEntries(Object.keys(MAP_ORIGINS).map((key) => {
     const category = key as MapOriginCategory;
     const origin = MAP_ORIGINS[category];
-    const line = selected ? MAP_PALETTE.selected : origin.color;
     return [category, [
       new Style({
         stroke: new Stroke({ color: MAP_PALETTE.halo, width: selected ? 12 : 8 }),
         ...(selected ? { image: markerImage(category, 19, MAP_PALETTE.halo, 5, MAP_PALETTE.halo) } : {}),
       }),
+      // The focus outline sits underneath the source color, including linear works.
+      ...(selected ? [new Style({ stroke: new Stroke({ color: MAP_PALETTE.selected, width: 8 }) })] : []),
       new Style({
         fill: new Fill({ color: origin.fill }),
-        stroke: new Stroke({ color: line, width: selected ? 7 : 4, ...(origin.lineDash ? { lineDash: [...origin.lineDash] } : {}) }),
+        stroke: new Stroke({ color: origin.color, width: 4, ...(origin.lineDash ? { lineDash: [...origin.lineDash] } : {}) }),
         image: markerImage(category, selected ? 16 : 12, selected ? MAP_PALETTE.selected : MAP_PALETTE.halo, selected ? 4 : 2),
       }),
     ]];

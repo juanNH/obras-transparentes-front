@@ -26,6 +26,8 @@ export function withoutOptionalOpenFreeMapCredit(attributions: AttributionLike |
   if (typeof attributions === "function") {
     return frameState => {
       const credits = attributions(frameState);
+      // TileJSON's runtime callback returns null outside its bounds.
+      if (credits == null) return [];
       return typeof credits === "string" ? removeOptionalOpenFreeMapLink(credits) : credits.map(removeOptionalOpenFreeMapLink);
     };
   }

@@ -308,3 +308,17 @@ La discrepancia local provenía de dos servidores en 3002: producción antigua e
 | `git diff --check` | Pasa. |
 
 Playwright Firefox no pudo iniciar en este Windows (`spawn UNKNOWN`); no se contabiliza como pase. La revisión de laboratorio no representa cobertura de datos reales ni certifica WCAG AA sobre cada estilo de cartografía. Sin publicación del sitio.
+
+### Revisión y correcciones del PR #5 · 2026-10-05
+
+La revisión del commit `c00c679` encontró tres defectos concretos:
+
+- La selección reemplazaba por azul el trazo de fuente de líneas y bordes de polígonos. Se conserva ahora el trazo interior de categoría de 4 px y se dibuja el contorno azul de 8 px debajo, con halo blanco exterior de 12 px. Los puntos conservan su núcleo y forma. Las regresiones verifican píxeles de fuente y foco en punto, línea y polígono seleccionados, más un MultiLineString CABA rojo sintético.
+- Un financiador informado hacía desaparecer el aviso de responsable desconocido aunque no hubiera área responsable ni ejecutor. Se separan ambos criterios: los financiadores siguen visibles y el faltante se muestra mientras falten área y ejecutor, incluidos valores compuestos sólo por espacios.
+- El callback de atribución de OpenLayers TileJSON puede devolver `null` fuera de sus límites, aunque sus tipos no lo reflejen. El adaptador normaliza `null` y `undefined` a una lista vacía; dentro del área sigue conservando OpenMapTiles/OSM y omitiendo sólo OpenFreeMap. La regresión usa la clase TileJSON real con metadatos y límites sintéticos, sin solicitudes remotas.
+
+Antes de las correcciones se reprodujeron dos fallas de color de selección en E2E (línea y polígono; el punto pasaba) y dos excepciones unitarias por callbacks `null`/`undefined`. Esos fallos previos no se contabilizan como pases.
+
+Verificación final: `npm run typecheck`, `npm run build`, `npm run contract:check` y `git diff --check` pasan; 146 pruebas unitarias pasan y la regresión de atribución completa pasa 17/17 tras adaptar el fixture al tipo Config instalado. Los 106 E2E aislados pasan en Chromium escritorio/móvil/tablet y WebKit móvil, con WebGL deshabilitado. Firefox conserva la limitación local de inicialización registrada arriba. El ciclo de vida del mapa y los archivos generados del contrato permanecen sin cambios.
+
+El check `verify` del primer commit fue cancelado por GitHub porque no pudo obtener un runner hosted, antes de ejecutar verificaciones. El escaneo GitGuardian pasó. La cancelación de infraestructura no se presenta como resultado de la aplicación; el push de correcciones dispara una nueva corrida de CI.
