@@ -58,15 +58,23 @@ export function locationPrecision(value: WorkDetail["ubicaciones"][number]["prec
   }[value];
 }
 
-type LocationQuality = Pick<WorkDetail["ubicaciones"][number], "condicion" | "crs" | "precision">;
+export type LocationQuality = Pick<WorkDetail["ubicaciones"][number], "condicion" | "crs" | "precision" | "origenGeometria">;
 
 /** Acceptance, precision and a reviewed CRS assumption are separate facts. */
 export function locationPresentation(location: LocationQuality): { label: string; explanation: string; reference: string | null } {
   const assumed = location.crs?.fundamento === "REVIEW_DECISION" && location.crs.condicion === "APPROVED_ASSUMPTION";
+  const serviceReference = location.crs?.fundamento === "OFFICIAL_SERVICE" && location.crs.condicion === "SERVICE_REFERENCE";
   const undocumentedPrecision = location.precision !== "ubicacion_establecimiento_reportada";
   const reference = location.crs
-    ? `Referencia geográfica ${location.crs.codigo}: ${assumed ? "supuesto aprobado mediante revisión" : "informada por el catálogo de origen"}.`
+    ? `Referencia geográfica ${location.crs.codigo}: ${assumed ? "supuesto aprobado mediante revisión" : serviceReference ? "salida del servicio oficial; no declara el sistema de coordenadas de la fuente" : "informada por el catálogo de origen"}.`
     : null;
+  if (location.condicion === "ACCEPTED" && location.origenGeometria === "ADDRESS_GEOCODE") {
+    return {
+      label: "Domicilio geocodificado · ubicación orientativa",
+      explanation: "La fuente no informó coordenadas. El servicio oficial Georef obtuvo un punto a partir de la dirección. Su precisión no está verificada. El punto no acredita el sitio exacto ni el alcance de la obra.",
+      reference,
+    };
+  }
   if (location.condicion === "ACCEPTED" && assumed && undocumentedPrecision) {
     return {
       label: "Ubicación orientativa · precisión no informada",

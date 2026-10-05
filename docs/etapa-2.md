@@ -247,3 +247,40 @@ La integración de ubicaciones detectó pérdida de foco del selector y pérdida
 Reportes y capturas locales: `artifacts/local-validation/orientation/`, runner `orientation-preview.mjs`, y `map-lab/report.json`, ignorados por Git. Los runners usan API sintética, comprueban/cierran sus propios procesos y no publican datos ni modifican la API activa. Se preservan los cambios previos de `AGENTS.md`/`next-env.d.ts`. No se hizo commit, push ni publicación del sitio.
 
 Estos 88 E2E y el laboratorio no certifican WCAG AA, memoria nativa/Canvas, ausencia de toda fuga ni percentiles de campo. La entrada con mapa agrega su descarga/proveedor automáticamente; `vista=lista` conserva la alternativa diferida. Siguen pendientes lectores de pantalla y dispositivos físicos, rendimiento con cartografía/datos representativos y aceptación de cobertura/datos reales con los límites ya documentados.
+
+## Ubicaciones derivadas de un domicilio · 2026-10-05
+
+Rama `feature/ampliar-datasets` desde `origin/main` en `df3aadc`. Se sincronizó el contrato público mediante `contract:sync`, sin editar tipos o esquemas generados a mano ni acceder a la base de datos. El contrato admite `origenGeometria: ADDRESS_GEOCODE` en la ubicación de la ficha y en la calidad de la Feature, junto con CRS de fundamento `OFFICIAL_SERVICE` y condición `SERVICE_REFERENCE`. El informe administrativo `geocodificacionDireccion` y la corroboración privada de CRS quedan fuera de la respuesta pública.
+
+La presentación compartida de ficha, tooltip y selección muestra «Domicilio geocodificado · ubicación orientativa». Explica que la fuente no informó coordenadas, Georef obtuvo el punto desde la dirección y su precisión no está verificada; no acredita el sitio exacto ni el alcance de la obra. EPSG:4326 representa la salida del servicio, no una declaración de CRS del dataset original. El consumidor conserva el enum de precisión sin usarlo para llamar «coordenada reportada» al dato derivado. `detailMapFeatures` lleva el origen a la calidad cartográfica y la partición conserva obra, revisión y ubicación junto a otras ubicaciones reportadas. Las ubicaciones anteriores sin este campo opcional conservan su presentación.
+
+Se mantiene el presupuesto de **500 geometrías completas, cinco páginas, 10.000 posiciones, 2 MiB y 15 segundos**. Explorer reutiliza la constante existente de límite de geometrías. No se modifican el ciclo de vida de OpenLayers, sus capas, proveedor, estilos o tratamiento de la cámara. La ampliación a otro presupuesto requiere validación propia antes de incorporar más geometrías; esta entrega no aumenta el límite ni recorta partes de una geometría para hacerla caber.
+
+### Verificación de este cambio
+
+Build de producción `ZXyvSF89z0rImwE7aic8R`, Windows, Node 24.21.0/npm 11.19.0.
+
+| Verificación | Resultado |
+| --- | --- |
+| `npm run typecheck`, `npm run build` | Pasan. |
+| `npm run contract:sync`, `npm run contract:check` | Pasan; exportación oficial sin BD y tipos/esquemas sincronizados con el backend. |
+| `npm test`, `npm run test:proxy` | 128/128 y 5/5 pasan. Incluyen origen opcional, precisión conservada, múltiples ubicaciones, selección exacta, ficha SSR y rechazo de informes administrativos por el esquema público. |
+| E2E de calidad Chromium escritorio y móvil | 12/12 pasan sin reintentos, con API/cartografía sintéticas aisladas y WebGL deshabilitado. Verifican teclado/foco, toque, tooltip, resumen, HTML de ficha, BFF, historial y ausencia de overflow horizontal. |
+| Capturas | Se revisaron selección derivada en escritorio y móvil: etiqueta completa visible fuera del select, explicación y referencia legibles, controles utilizables y geometría conservada. |
+| Diff | `git diff --check` pasa. |
+
+La Obra 05 del servidor de pruebas representa un domicilio geocodificado **sintético**, para verificar la ficha SSR y el BFF desde el mismo contrato; no se agrega una publicación a la API activa. Los fixtures de interacción comprueban además varias ubicaciones de la misma revisión con calidades diferentes. Capturas y salidas: `artifacts/local-validation/address-geocode-e2e/`, ignoradas por Git. Los servidores del runner se cierran al finalizar.
+
+Estas pruebas acotadas no sustituyen la conciliación de datos reales, la revisión manual de lectores de pantalla ni la aceptación en dispositivos físicos. La medición de memoria anterior se conserva como antecedente de su build: no se repite ni se atribuye como medición del cambio de textos y contrato, que mantiene el ciclo de vida del mapa. Sin commit, push o despliegue externo en esta entrega.
+
+### Aceptación de las cuatro sucesoras reales · catálogo 20
+
+Sobre el mismo build `ZXyvSF89z0rImwE7aic8R`, se verificaron por lectura anónima las cuatro obras CABA efectivamente publicadas con domicilio derivado: Ramsay 2250, Camargo 725, 2 de Abril de 1982 6950 y Curapaligüe 1150. Las fichas API/BFF coinciden en obra, revisión y ubicación vigentes; los cuatro puntos aparecen en el GeoJSON con el mismo origen `ADDRESS_GEOCODE`, geometría, referencia de servicio y precisión conservada. Las respuestas pasan el contrato oficial y excluyen `candidata`, `geocodificacionDireccion` y `corroboracionCrs` administrativos.
+
+El GeoJSON API/BFF coincide página por página: **cinco páginas completas, 483 geometrías y 481 obras representadas**, catálogo 20 y sin cursor pendiente. La reconciliación del entorno registra 709 obras públicas y 228 sin geometría; siguen disponibles en lista y ficha. El presupuesto de 500 geometrías/cinco páginas conserva capacidad para este corte y no se amplió.
+
+Ocho recorridos en Chrome local —las cuatro obras a 1440×1000 y 390×844 con toque emulado— pasaron sin mocks de API ni cartografía: marcador y mapa base real cargados, tag orientativo, explicación/referencia, ficha textual, selección exacta por obra/revisión/ubicación, ausencia de lectura parcial, errores de página y overflow horizontal. Se revisaron las capturas representativas de escritorio y móvil. La espera final comprueba que «Cargando mapa base…» desaparezca antes de capturar; una primera captura tomada durante la carga no se utiliza como prueba de cartografía completa.
+
+La primera consulta del harness enviaba `limit=500` al BFF; éste lo rechaza porque controla el tamaño de página. Se corrigió el harness para recorrer la paginación normal API/BFF, conservando las restricciones de la aplicación. La corrida final pasa y ese rechazo inicial no se presenta como defecto ni como pase.
+
+Reporte, runner reproducible y ocho capturas reales: `artifacts/local-validation/address-geocode-live/`, ignorados por Git. Estas comprobaciones no mutan publicaciones ni reinician servidores, no solicitan geolocalización y no equivalen a dispositivos físicos, lectores de pantalla, mediciones de campo o precisión topográfica. Las cinco consultas adicionales de domicilios sólo en títulos CABA/descripción Nación resultaron ambiguas y no agregaron puntos; esa revisión de fuentes se registra en la API y documentación central. Sin commit, push ni despliegue externo.

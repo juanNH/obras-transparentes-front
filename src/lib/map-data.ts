@@ -28,6 +28,7 @@ export function detailMapFeatures(work: WorkDetail): WorkGeoJSON["features"] {
           controles: location.controles,
           crs: location.crs,
           precision: location.precision,
+          ...(location.origenGeometria ? { origenGeometria: location.origenGeometria } : {}),
         },
       },
     });

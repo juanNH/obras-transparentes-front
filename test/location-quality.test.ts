@@ -14,6 +14,20 @@ const assumption: typeof seed.properties.calidad = {
 };
 
 describe("calidad de la ubicación representada", () => {
+  it.each(["coordenada_reportada_sin_precision", "geometria_reportada_sin_precision", "ubicacion_establecimiento_reportada"] as const)("un domicilio geocodificado distingue su origen aunque conserve precision=%s", precision => {
+    const derived: typeof assumption = {
+      ...assumption, origenGeometria: "ADDRESS_GEOCODE", precision,
+      crs: { codigo: "EPSG:4326", fundamento: "OFFICIAL_SERVICE", condicion: "SERVICE_REFERENCE" },
+    };
+    expect(locationPresentation(derived)).toEqual({
+      label: "Domicilio geocodificado · ubicación orientativa",
+      explanation: "La fuente no informó coordenadas. El servicio oficial Georef obtuvo un punto a partir de la dirección. Su precisión no está verificada. El punto no acredita el sitio exacto ni el alcance de la obra.",
+      reference: "Referencia geográfica EPSG:4326: salida del servicio oficial; no declara el sistema de coordenadas de la fuente.",
+    });
+    expect(JSON.stringify(locationPresentation(derived))).not.toMatch(/coordenada reportada|geometría reportada|supuesto aprobado|catálogo de origen/i);
+    expect(derived.precision).toBe(precision);
+  });
+
   it("explica el supuesto aprobado sin inventar exactitud ni una distancia de error", () => {
     expect(locationPresentation(assumption)).toEqual({
       label: "Ubicación orientativa · precisión no informada",
@@ -46,6 +60,17 @@ describe("calidad de la ubicación representada", () => {
     }
     expect(maps.shapes.features[0]!.properties.calidad).toEqual(other.properties.calidad);
     expect(input).toEqual([point, other]);
+  });
+
+  it("el origen derivado se conserva al particionar y seleccionar junto a otra ubicación reportada", () => {
+    const quality: typeof assumption = { ...assumption, origenGeometria: "ADDRESS_GEOCODE", crs: { codigo: "EPSG:4326", fundamento: "OFFICIAL_SERVICE", condicion: "SERVICE_REFERENCE" } };
+    const derived = { ...seed, id: "40000000-0000-4000-8000-000000000088", properties: { ...seed.properties, ubicacionId: "40000000-0000-4000-8000-000000000088", calidad: quality } };
+    const input = structuredClone([seed, derived]);
+    const maps = partitionMapFeatures(input);
+    expect(maps.points.features[1]!.properties.calidad.origenGeometria).toBe("ADDRESS_GEOCODE");
+    expect(selectedMapFeatures(maps.all, seed.properties.obraId, derived.properties.ubicacionId, seed.properties.revisionId).features[0]!.properties.calidad).toEqual(quality);
+    expect(maps.points.features[0]!.properties.calidad.origenGeometria).toBeUndefined();
+    expect(input).toEqual([seed, derived]);
   });
 
   it("selecciona la ubicación y revisión exactas, sin sustituirlas por otro punto de la misma obra", () => {

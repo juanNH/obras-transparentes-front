@@ -40,8 +40,12 @@ const items = Array.from({ length: 24 }, (_, index) => {
         ? { type: "Polygon", coordinates: [[[longitude - 0.0004, latitude - 0.0004], [longitude + 0.0004, latitude - 0.0004], [longitude + 0.0004, latitude + 0.0004], [longitude - 0.0004, latitude + 0.0004], [longitude - 0.0004, latitude - 0.0004]]] }
         : { type: "Point", coordinates: [longitude, latitude] };
     feature.properties = { ...feature.properties, obraId, revisionId, nombre, estado, fuentes, ubicacionId: feature.id };
+    if (number === 5) {
+      // One address-derived synthetic observation exercises SSR and the public BFF.
+      feature.properties.calidad = { ...feature.properties.calidad, origenGeometria: "ADDRESS_GEOCODE", crs: { codigo: "EPSG:4326", fundamento: "OFFICIAL_SERVICE", condicion: "SERVICE_REFERENCE" } };
+    }
     features.push(feature);
-    detail.ubicaciones = [{ ...detail.ubicaciones[0], geometria: feature.geometry, ubicacionId: feature.id }];
+    detail.ubicaciones = [{ ...detail.ubicaciones[0], geometria: feature.geometry, ubicacionId: feature.id, ...feature.properties.calidad }];
   }
   details.set(obraId, validate("PublicWorkDetail", detail));
   return item;

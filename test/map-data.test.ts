@@ -61,6 +61,25 @@ describe("ubicaciones de la revisión pública seleccionada", () => {
     expect(detailMapFeatures(work).map(item => item.id)).toEqual([approved.ubicacionId, other.ubicacionId]);
     expect(work.ubicaciones).toHaveLength(3);
   });
+
+  it("lleva el origen de domicilio geocodificado desde la ficha hasta la calidad del mapa", () => {
+    const derived: ApprovedLocation = {
+      ...approved, clave: "domicilio", origenGeometria: "ADDRESS_GEOCODE",
+      ubicacionId: "40000000-0000-4000-8000-000000000088",
+      crs: { codigo: "EPSG:4326", fundamento: "OFFICIAL_SERVICE", condicion: "SERVICE_REFERENCE" },
+      precision: "coordenada_reportada_sin_precision",
+    };
+    const work: WorkDetail = { ...detailSeed, ubicaciones: [approved, derived] };
+    const input = structuredClone(work);
+    const features = detailMapFeatures(work);
+    expect(features[1]!.properties.calidad).toEqual({
+      condicion: "ACCEPTED", controles: derived.controles, crs: derived.crs,
+      precision: derived.precision, origenGeometria: "ADDRESS_GEOCODE",
+    });
+    expect(features[0]!.properties.calidad.origenGeometria).toBeUndefined();
+    expect(parsePublicResponse("PublicGeoFeatureCollection", { type: "FeatureCollection", features, nextCursor: null, catalogoVersion: work.catalogoVersion })).toMatchObject({ features });
+    expect(work).toEqual(input);
+  });
 });
 
 describe("datos del mapa móvil", () => {

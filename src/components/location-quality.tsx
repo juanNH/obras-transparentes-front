@@ -1,7 +1,6 @@
-import type { WorkDetail } from "../api/client";
-import { locationPresentation } from "../lib/presentation";
+import { locationPresentation, type LocationQuality as LocationQualityData } from "../lib/presentation";
 
-export function LocationQuality({ location }: { location: Pick<WorkDetail["ubicaciones"][number], "condicion" | "crs" | "precision"> }) {
+export function LocationQuality({ location }: { location: LocationQualityData }) {
   const presentation = locationPresentation(location);
   return <div className="location-quality">
     <p><strong>{presentation.label}.</strong></p>
