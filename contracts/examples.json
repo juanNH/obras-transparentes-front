@@ -34,6 +34,8 @@
           }
         ],
         "tieneGeometria": true,
+        "asociacionesEspaciales": [],
+        "rolesInstitucionales": [],
         "metadata": {
           "publicadoEn": "2026-01-15T12:00:00.000Z",
           "fechaActualizacionFuente": null
@@ -52,6 +54,8 @@
   },
   "detailPopulated": {
     "schemaVersion": "obra@1",
+    "asociacionesEspaciales": [],
+    "rolesInstitucionales": [],
     "nombre": "EJEMPLO SINTÉTICO — Ampliación de escuela y acceso",
     "estado": "IN_PROGRESS",
     "clasificaciones": [
@@ -171,6 +175,8 @@
   },
   "detailPartial": {
     "schemaVersion": "obra@1",
+    "asociacionesEspaciales": [],
+    "rolesInstitucionales": [],
     "nombre": "EJEMPLO SINTÉTICO — Obra sin ubicación aprobada",
     "estado": null,
     "clasificaciones": [],
@@ -255,6 +261,8 @@
               "urlCatalogo": "https://example.org/datos-sinteticos"
             }
           ],
+          "asociacionesEspaciales": [],
+          "rolesInstitucionales": [],
           "calidad": {
             "condicion": "ACCEPTED",
             "crs": {
@@ -306,6 +314,8 @@
               "urlCatalogo": "https://example.org/datos-sinteticos"
             }
           ],
+          "asociacionesEspaciales": [],
+          "rolesInstitucionales": [],
           "calidad": {
             "condicion": "ACCEPTED",
             "crs": {

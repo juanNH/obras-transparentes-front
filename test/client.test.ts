@@ -119,6 +119,19 @@ describe("Contrato público del consumidor", () => {
 });
 
 describe("Cliente público", () => {
+  it("serializa asociaciones y vigencia del rol iguales para lista y mapa sin parámetros de UI", async () => {
+    const request = mockedFetch(examples.listEmpty);
+    const api = createPublicApi({ fetch: request });
+    const filters = { partidoVerificadoId: "AAAAAAAA-0000-4000-8000-000000000001", gestionMunicipalId: "bbbbbbbb-0000-4000-8000-000000000001", organizacionId: "cccccccc-0000-4000-8000-000000000001", rolInstitucional: "FINANCIADOR", periodoDesde: "2020-01-01", periodoHasta: "2026-12-31" } as const;
+    await api.list(filters);
+    const list = new URL(String(request.mock.calls[0]![0]), "http://127.0.0.1").searchParams;
+    request.mockResolvedValue(json(examples.geojsonEmpty));
+    await api.geojson({ ...filters, bbox: [-59, -35, -58, -34] });
+    const map = new URL(String(request.mock.calls[1]![0]), "http://127.0.0.1").searchParams;
+    for (const key of Object.keys(filters)) expect(map.get(key)).toBe(list.get(key));
+    expect(list.get("partidoVerificadoId")).toBe(filters.partidoVerificadoId.toLowerCase());
+    expect(map.get("bbox")).toBe("-59,-35,-58,-34");
+  });
   it("conserva cancelaciones y fallas de lectura después de recibir cabeceras", async () => {
     for (const error of [
       new DOMException("Cancelado", "AbortError"),

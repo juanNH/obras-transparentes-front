@@ -46,7 +46,7 @@ function observeBrowser(page: Page): BrowserRequest[] {
   return records;
 }
 
-/** Resume lecturas upstream del fixture separando obras y la nómina territorial independiente. */
+/** Resume lecturas upstream del fixture separando obras, nómina territorial y catálogo institucional independientes. */
 function counts(records: readonly FixtureRequest[]) {
   return {
     list: records.filter(record => record.path === "/api/v1/obras").length,
@@ -54,6 +54,8 @@ function counts(records: readonly FixtureRequest[]) {
     detail: records.filter(record => /^\/api\/v1\/obras\/[a-f0-9-]+$/.test(record.path)).length,
     parties: records.filter(record => record.path === "/api/v1/territorios/pba/partidos").length,
     partyJSONBytes: records.filter(record => record.path === "/api/v1/territorios/pba/partidos").reduce((sum, record) => sum + record.responseBytes, 0),
+    organizations: records.filter(record => record.path === "/api/v1/organizaciones-institucionales").length,
+    organizationJSONBytes: records.filter(record => record.path === "/api/v1/organizaciones-institucionales").reduce((sum, record) => sum + record.responseBytes, 0),
     decodedJSONBytes: records.reduce((sum, record) => sum + record.responseBytes, 0),
   };
 }
@@ -96,6 +98,7 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   await expect(page.getByRole("link", { name: /^Ver ficha/ })).toHaveCount(20);
   await checkpoint("entrada en lista", { list: 1, geojson: 0, detail: 0 });
   expect(counts((await fixtureRequests(request)).slice(baseline)).parties).toBe(1);
+  expect(counts((await fixtureRequests(request)).slice(baseline)).organizations).toBe(1);
   expect(browser).toHaveLength(0);
 
   await page.getByRole("button", { name: "Cargar más obras", exact: true }).click();
@@ -145,7 +148,8 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   const filtered = await checkpoint("aplicar fuente conservando área", { list: 4, geojson: 3, detail: 1 });
   expect(filtered.filter(record => record.path.startsWith("/api/v1/obras"))).toHaveLength(8);
   expect(counts(filtered).parties).toBe(3);
-  expect(filtered).toHaveLength(11);
+  expect(counts(filtered).organizations).toBe(3);
+  expect(filtered).toHaveLength(14);
   expect(filtered.at(-1)!.query.fuente).toBe("nacion-obras");
   expect(browser.filter(record => record.path === "/api/public/geojson")).toHaveLength(3);
   expect(browser.filter(record => record.path === `/api/public/obras/${firstId}`)).toHaveLength(1);

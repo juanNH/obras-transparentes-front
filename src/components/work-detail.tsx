@@ -1,11 +1,13 @@
 /** @file Contenido compartido por ficha y resumen de una revisión pública, con datos faltantes y procedencia explícitos. */
 import type { ReactNode } from "react";
-import type { WorkDetail } from "../api/client.js";
+import type { PartyCatalog, WorkDetail } from "../api/client.js";
 import { fieldLabel, formatExactDecimal, publicationDate, qualityLabel, reportedDate, safeSourceUrl, sourceLabel, stateLabel } from "../lib/presentation.js";
 import { LocationQuality } from "./location-quality";
 import { WorkResponsibility } from "./work-responsibility";
 import { SourceBadge } from "./source-origin";
 import { MapAvailability } from "./map-availability";
+import { WorkAssociations } from "./work-associations";
+import { Evidence } from "./work-evidence";
 
 /** Presenta sólo URLs HTTP(S) sin credenciales como enlace; una referencia inválida permanece como texto. */
 function SourceLink({ url, children }: { url: string; children: ReactNode }) {
@@ -21,23 +23,12 @@ function ReportedFields({ value }: { value: unknown }) {
   return <dl className="detail-grid">{Object.entries(value).map(([key, item]) => <div key={key}><dt>{fieldLabel(key)}</dt><dd><ReportedFields value={item} /></dd></div>)}</dl>;
 }
 
-/** Describe evidencia de celda, catálogo o decisión y enlaza revisiones base sin exponer campos privados. */
-function Evidence({ evidence, obraId }: { evidence: WorkDetail["procedencia"][string]["evidencias"][number]; obraId: string }) {
-  if (evidence.tipo === "SOURCE_CELL") {
-    const location = evidence.localizador;
-    return <><p>Dato del archivo fuente · columna {evidence.columna}.</p><p>{location.format === "CSV" ? `CSV · líneas ${location.lineStart} a ${location.lineEnd}.` : `Hoja ${location.worksheet} · fila ${location.row} · celdas ${location.cells.join(", ")}.`}</p><p className="muted">Recurso: <span className="technical-id">{evidence.recursoId}</span></p></>;
-  }
-  if (evidence.tipo === "CATALOG_METADATA") return <><p>Metadato del catálogo: {evidence.clave} · {evidence.valor}</p><p><SourceLink url={evidence.referencia.url}>Consultar referencia de origen</SourceLink> · versión {evidence.referencia.version}.</p><p>Referencia consultada el {publicationDate(evidence.referencia.consultadoEn)}.</p></>;
-  if (evidence.tipo === "BASE_REVISION") return <p>Dato conservado de una <a href={`/obras/${evidence.obraId || obraId}?revisionId=${evidence.revisionId}`}>revisión anterior</a>: {fieldLabel(evidence.campo)}.</p>;
-  return <p>Decisión de revisión sobre {fieldLabel(evidence.campo)}. Referencia: <span className="technical-id">{evidence.decisionId}</span>.</p>;
-}
-
 /**
  * Renderiza datos públicos de una revisión para ficha y resumen con jerarquía de encabezados adaptada.
  * @param props - Revisión validada y modo compacto del resumen.
  * @returns Contenido con publicación, ausencia cartográfica, procedencia y desconocidos explícitos.
  */
-export function WorkDetailContent({ work, compact = false }: { work: WorkDetail; compact?: boolean }) {
+export function WorkDetailContent({ work, compact = false, partyCatalog = null }: { work: WorkDetail; compact?: boolean; partyCatalog?: PartyCatalog | null }) {
   const Title = compact ? "h2" : "h1";
   const Heading = compact ? "h3" : "h2";
   const hasGeometry = work.ubicaciones.some(location => location.condicion === "ACCEPTED" && location.geometria !== null);
@@ -53,6 +44,7 @@ export function WorkDetailContent({ work, compact = false }: { work: WorkDetail;
     </header>
 
     <WorkResponsibility work={work} compact={compact} />
+    <WorkAssociations work={work} compact={compact} partyCatalog={partyCatalog} />
 
     <section className="detail-section">
       <Heading>Qué se conoce de esta obra</Heading>

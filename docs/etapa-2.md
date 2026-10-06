@@ -33,6 +33,8 @@ React/Vite con SSR requeriría resolver servidor de rutas, metadatos, datos y ge
 
 ## Datos, filtros y sincronización
 
+La entrega local del 2026-10-06 agrega asociaciones espaciales y roles institucionales publicados con evidencia, filtros aditivos y un catálogo institucional de lectura independiente. La semántica exacta, los presupuestos y los resultados de verificación están en [asociaciones-obras.md](asociaciones-obras.md). `partidoId` conserva el territorio reportado y los límites `DISPLAY_ONLY` mantienen exclusivamente su uso visual.
+
 Filtros visibles: fuente, estado informado, educación y presencia de ubicación. El valor vacío conserva obras con información faltante. El contrato no permite filtrar específicamente estado desconocido. Fuente no se etiqueta como organismo; no se agregan búsqueda textual, tipo de obra ni conteos/facets inexistentes.
 
 Los filtros se abren con un control nativo «Filtrar obras» y muestran cuántos están activos. Esto evita empujar los resultados debajo de un formulario alto en la primera pantalla móvil; sigue funcionando sin JavaScript.

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import examples from "../contracts/examples.json" with { type: "json" };
 import { PublicApiError } from "../src/api/client.js";
 
-const api = vi.hoisted(() => ({ list: vi.fn(), detail: vi.fn(), geojson: vi.fn() }));
+const api = vi.hoisted(() => ({ list: vi.fn(), detail: vi.fn(), geojson: vi.fn(), organizations: vi.fn() }));
 const seo = vi.hoisted(() => ({ origin: new URL("https://obras.example.org") as URL | null }));
 vi.mock("../src/lib/public-api", () => ({ publicApi: () => api }));
 vi.mock("../src/lib/config", () => ({ indexableSiteUrl: () => seo.origin }));
@@ -18,6 +18,29 @@ const context = (...path: string[]) => ({ params: Promise.resolve({ path }) });
 beforeEach(() => { vi.resetAllMocks(); seo.origin = new URL("https://obras.example.org"); });
 
 describe("BFF de lectura pública", () => {
+  it("lee el catálogo institucional sin parámetros ni credenciales de visitante", async () => {
+    api.organizations.mockResolvedValue({ items: [] });
+    const input = request("organizaciones-institucionales", "", { headers: { Cookie: "private-session=secret", Authorization: "Bearer secret" } });
+    const response = await GET(input, context("organizaciones-institucionales"));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ items: [] });
+    expect(api.organizations).toHaveBeenCalledWith({ signal: input.signal });
+    const rejected = await GET(request("organizaciones-institucionales", "?organizacionId=unknown"), context("organizaciones-institucionales"));
+    expect(rejected.status).toBe(400);
+    expect(api.organizations).toHaveBeenCalledTimes(1);
+  });
+  it("reenvía relaciones verificadas y vigencia del rol iguales a lista y GeoJSON", async () => {
+    api.list.mockResolvedValue(examples.listEmpty);
+    api.geojson.mockResolvedValue(examples.geojsonEmpty);
+    const associationFilters = { partidoVerificadoId: "aaaaaaaa-0000-4000-8000-000000000001", gestionMunicipalId: "bbbbbbbb-0000-4000-8000-000000000001", organizacionId: "cccccccc-0000-4000-8000-000000000001", rolInstitucional: "FINANCIADOR", periodoDesde: "2020-01-01", periodoHasta: "2026-12-31" };
+    const query = "?" + new URLSearchParams(associationFilters);
+    const listInput = request("obras", query);
+    expect((await GET(listInput, context("obras"))).status).toBe(200);
+    expect(api.list).toHaveBeenCalledWith({ ...associationFilters, limit: 20 }, { signal: listInput.signal });
+    const mapInput = request("geojson", query + "&bbox=-59,-35,-58,-34");
+    expect((await GET(mapInput, context("geojson"))).status).toBe(200);
+    expect(api.geojson).toHaveBeenCalledWith({ ...associationFilters, bbox: [-59, -35, -58, -34], limit: 100 }, { signal: mapInput.signal });
+  });
   it("clasifica la caída de red como 503 sin exponer el diagnóstico interno", async () => {
     api.list.mockRejectedValue(new TypeError("fetch failed: http://private.internal/api secret-private-diagnostic"));
     const response = await GET(request("obras"), context("obras"));
@@ -36,6 +59,11 @@ describe("BFF de lectura pública", () => {
     ["obras", "?estado=IN_PROGRESS&estado=COMPLETED"],
     ["geojson", ""],
     ["geojson", "?bbox=-59,-35,-58,-34&tieneGeometria=false"],
+    ["obras", "?periodoDesde=2026-02-30"],
+    ["obras", "?periodoDesde=2026-01-01"],
+    ["obras", "?periodoHasta=2026-12-31"],
+    ["obras", "?organizacionId=no-es-identidad"],
+    ["geojson", "?bbox=-59,-35,-58,-34&rolInstitucional=RESPONSABLE"],
   ])("rechaza parámetros no admitidos antes de consultar %s%s", async (path, query) => {
     const response = await GET(request(path, query), context(path));
     expect(response.status).toBe(400);

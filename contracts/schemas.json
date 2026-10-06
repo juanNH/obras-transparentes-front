@@ -1,4 +1,61 @@
 {
+  "PublicInstitutionalOrganizationCatalogResponse": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "items": {
+        "maxItems": 1000,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "nombre": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "nivel": {
+              "type": "string",
+              "enum": [
+                "MUNICIPAL",
+                "PROVINCIAL",
+                "NACIONAL",
+                "OTRO"
+              ]
+            },
+            "partidoId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "nombre",
+            "nivel",
+            "partidoId"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "items"
+    ],
+    "additionalProperties": false
+  },
   "PublicPartyBoundaryFeatureCollection": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
@@ -739,6 +796,536 @@
       "tieneGeometria": {
         "type": "boolean"
       },
+      "asociacionesEspaciales": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "ubicacionClave": {
+              "type": "string",
+              "minLength": 1
+            },
+            "partidoId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "condicion": {
+              "type": "string",
+              "const": "VERIFIED"
+            },
+            "relacion": {
+              "type": "string",
+              "enum": [
+                "INTERIOR",
+                "CROSSING"
+              ]
+            },
+            "evidencia": {
+              "type": "object",
+              "properties": {
+                "geometriaSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "limitesVersion": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "limitesSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "metodo": {
+                  "type": "string",
+                  "const": "POSTGIS_INTERSECTION"
+                },
+                "metodoVersion": {
+                  "type": "string",
+                  "const": "pba-spatial@1"
+                },
+                "decisionId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              },
+              "required": [
+                "geometriaSha256",
+                "limitesVersion",
+                "limitesSha256",
+                "metodo",
+                "metodoVersion",
+                "decisionId"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ubicacionClave",
+            "partidoId",
+            "condicion",
+            "relacion",
+            "evidencia"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "rolesInstitucionales": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "organizacion": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "nombre": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "nivel": {
+                  "type": "string",
+                  "enum": [
+                    "MUNICIPAL",
+                    "PROVINCIAL",
+                    "NACIONAL",
+                    "OTRO"
+                  ]
+                },
+                "partidoId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "nombre",
+                "nivel",
+                "partidoId"
+              ],
+              "additionalProperties": false
+            },
+            "rol": {
+              "type": "string",
+              "enum": [
+                "PROMOTOR",
+                "CONTRATANTE",
+                "EJECUTOR",
+                "FINANCIADOR",
+                "CONTRATISTA"
+              ]
+            },
+            "condicion": {
+              "type": "string",
+              "const": "VERIFIED"
+            },
+            "vigencia": {
+              "type": "object",
+              "properties": {
+                "inicio": {
+                  "anyOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "valor": {
+                              "type": "string",
+                              "allOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^(?!0000)"
+                                }
+                              ]
+                            },
+                            "precision": {
+                              "type": "string",
+                              "const": "DAY"
+                            }
+                          },
+                          "required": [
+                            "valor",
+                            "precision"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "valor": {
+                              "type": "string",
+                              "pattern": "^(?!0000)\\d{4}$"
+                            },
+                            "precision": {
+                              "type": "string",
+                              "const": "YEAR"
+                            }
+                          },
+                          "required": [
+                            "valor",
+                            "precision"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "fin": {
+                  "anyOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "valor": {
+                              "type": "string",
+                              "allOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^(?!0000)"
+                                }
+                              ]
+                            },
+                            "precision": {
+                              "type": "string",
+                              "const": "DAY"
+                            }
+                          },
+                          "required": [
+                            "valor",
+                            "precision"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "valor": {
+                              "type": "string",
+                              "pattern": "^(?!0000)\\d{4}$"
+                            },
+                            "precision": {
+                              "type": "string",
+                              "const": "YEAR"
+                            }
+                          },
+                          "required": [
+                            "valor",
+                            "precision"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "inicio",
+                "fin"
+              ],
+              "additionalProperties": false
+            },
+            "evidencias": {
+              "minItems": 1,
+              "maxItems": 1000,
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tipo": {
+                        "type": "string",
+                        "const": "SOURCE_CELL"
+                      },
+                      "registroOrigenId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "resultadoRegistroId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "recursoId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "columna": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "posicion": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "localizador": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "format": {
+                                "type": "string",
+                                "const": "CSV"
+                              },
+                              "byteStart": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "byteEndExclusive": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "lineStart": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "lineEnd": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "dataOrdinal": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "format",
+                              "byteStart",
+                              "byteEndExclusive",
+                              "lineStart",
+                              "lineEnd",
+                              "dataOrdinal"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "format": {
+                                "type": "string",
+                                "const": "XLSX"
+                              },
+                              "part": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "worksheet": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "row": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "date1904": {
+                                "type": "boolean"
+                              },
+                              "cells": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              }
+                            },
+                            "required": [
+                              "format",
+                              "part",
+                              "worksheet",
+                              "row",
+                              "date1904",
+                              "cells"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tipo",
+                      "registroOrigenId",
+                      "resultadoRegistroId",
+                      "recursoId",
+                      "columna",
+                      "posicion",
+                      "localizador"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tipo": {
+                        "type": "string",
+                        "const": "CATALOG_METADATA"
+                      },
+                      "recursoId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "clave": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "valor": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "referencia": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "consultadoEn": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[a-f0-9]{64}$"
+                          }
+                        },
+                        "required": [
+                          "url",
+                          "consultadoEn",
+                          "version",
+                          "sha256"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "tipo",
+                      "recursoId",
+                      "clave",
+                      "valor",
+                      "referencia"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tipo": {
+                        "type": "string",
+                        "const": "BASE_REVISION"
+                      },
+                      "obraId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "revisionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "campo": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "tipo",
+                      "obraId",
+                      "revisionId",
+                      "campo"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tipo": {
+                        "type": "string",
+                        "const": "REVIEW_DECISION"
+                      },
+                      "decisionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "campo": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
+                    },
+                    "required": [
+                      "tipo",
+                      "decisionId",
+                      "campo"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "decisionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": [
+            "organizacion",
+            "rol",
+            "condicion",
+            "vigencia",
+            "evidencias",
+            "decisionId"
+          ],
+          "additionalProperties": false
+        }
+      },
       "metadata": {
         "type": "object",
         "properties": {
@@ -780,6 +1367,8 @@
       "territorios",
       "fuentes",
       "tieneGeometria",
+      "asociacionesEspaciales",
+      "rolesInstitucionales",
       "metadata"
     ],
     "additionalProperties": false
@@ -834,8 +1423,539 @@
         "type": "string",
         "enum": [
           "obra@1",
-          "obra@2"
+          "obra@2",
+          "obra@3"
         ]
+      },
+      "asociacionesEspaciales": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "ubicacionClave": {
+              "type": "string",
+              "minLength": 1
+            },
+            "partidoId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "condicion": {
+              "type": "string",
+              "const": "VERIFIED"
+            },
+            "relacion": {
+              "type": "string",
+              "enum": [
+                "INTERIOR",
+                "CROSSING"
+              ]
+            },
+            "evidencia": {
+              "type": "object",
+              "properties": {
+                "geometriaSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "limitesVersion": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "limitesSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "metodo": {
+                  "type": "string",
+                  "const": "POSTGIS_INTERSECTION"
+                },
+                "metodoVersion": {
+                  "type": "string",
+                  "const": "pba-spatial@1"
+                },
+                "decisionId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              },
+              "required": [
+                "geometriaSha256",
+                "limitesVersion",
+                "limitesSha256",
+                "metodo",
+                "metodoVersion",
+                "decisionId"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ubicacionClave",
+            "partidoId",
+            "condicion",
+            "relacion",
+            "evidencia"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "rolesInstitucionales": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "organizacion": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "nombre": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "nivel": {
+                  "type": "string",
+                  "enum": [
+                    "MUNICIPAL",
+                    "PROVINCIAL",
+                    "NACIONAL",
+                    "OTRO"
+                  ]
+                },
+                "partidoId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "nombre",
+                "nivel",
+                "partidoId"
+              ],
+              "additionalProperties": false
+            },
+            "rol": {
+              "type": "string",
+              "enum": [
+                "PROMOTOR",
+                "CONTRATANTE",
+                "EJECUTOR",
+                "FINANCIADOR",
+                "CONTRATISTA"
+              ]
+            },
+            "condicion": {
+              "type": "string",
+              "const": "VERIFIED"
+            },
+            "vigencia": {
+              "type": "object",
+              "properties": {
+                "inicio": {
+                  "anyOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "valor": {
+                              "type": "string",
+                              "allOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^(?!0000)"
+                                }
+                              ]
+                            },
+                            "precision": {
+                              "type": "string",
+                              "const": "DAY"
+                            }
+                          },
+                          "required": [
+                            "valor",
+                            "precision"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "valor": {
+                              "type": "string",
+                              "pattern": "^(?!0000)\\d{4}$"
+                            },
+                            "precision": {
+                              "type": "string",
+                              "const": "YEAR"
+                            }
+                          },
+                          "required": [
+                            "valor",
+                            "precision"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "fin": {
+                  "anyOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "valor": {
+                              "type": "string",
+                              "allOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^(?!0000)"
+                                }
+                              ]
+                            },
+                            "precision": {
+                              "type": "string",
+                              "const": "DAY"
+                            }
+                          },
+                          "required": [
+                            "valor",
+                            "precision"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "valor": {
+                              "type": "string",
+                              "pattern": "^(?!0000)\\d{4}$"
+                            },
+                            "precision": {
+                              "type": "string",
+                              "const": "YEAR"
+                            }
+                          },
+                          "required": [
+                            "valor",
+                            "precision"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "inicio",
+                "fin"
+              ],
+              "additionalProperties": false
+            },
+            "evidencias": {
+              "minItems": 1,
+              "maxItems": 1000,
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tipo": {
+                        "type": "string",
+                        "const": "SOURCE_CELL"
+                      },
+                      "registroOrigenId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "resultadoRegistroId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "recursoId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "columna": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "posicion": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "localizador": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "format": {
+                                "type": "string",
+                                "const": "CSV"
+                              },
+                              "byteStart": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "byteEndExclusive": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "lineStart": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "lineEnd": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "dataOrdinal": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "format",
+                              "byteStart",
+                              "byteEndExclusive",
+                              "lineStart",
+                              "lineEnd",
+                              "dataOrdinal"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "format": {
+                                "type": "string",
+                                "const": "XLSX"
+                              },
+                              "part": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "worksheet": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "row": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "date1904": {
+                                "type": "boolean"
+                              },
+                              "cells": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              }
+                            },
+                            "required": [
+                              "format",
+                              "part",
+                              "worksheet",
+                              "row",
+                              "date1904",
+                              "cells"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tipo",
+                      "registroOrigenId",
+                      "resultadoRegistroId",
+                      "recursoId",
+                      "columna",
+                      "posicion",
+                      "localizador"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tipo": {
+                        "type": "string",
+                        "const": "CATALOG_METADATA"
+                      },
+                      "recursoId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "clave": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "valor": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "referencia": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "consultadoEn": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[a-f0-9]{64}$"
+                          }
+                        },
+                        "required": [
+                          "url",
+                          "consultadoEn",
+                          "version",
+                          "sha256"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "tipo",
+                      "recursoId",
+                      "clave",
+                      "valor",
+                      "referencia"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tipo": {
+                        "type": "string",
+                        "const": "BASE_REVISION"
+                      },
+                      "obraId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "revisionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "campo": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "tipo",
+                      "obraId",
+                      "revisionId",
+                      "campo"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tipo": {
+                        "type": "string",
+                        "const": "REVIEW_DECISION"
+                      },
+                      "decisionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "campo": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
+                    },
+                    "required": [
+                      "tipo",
+                      "decisionId",
+                      "campo"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "decisionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": [
+            "organizacion",
+            "rol",
+            "condicion",
+            "vigencia",
+            "evidencias",
+            "decisionId"
+          ],
+          "additionalProperties": false
+        }
       },
       "nombre": {
         "type": "string",
@@ -2552,6 +3672,8 @@
     },
     "required": [
       "schemaVersion",
+      "asociacionesEspaciales",
+      "rolesInstitucionales",
       "nombre",
       "estado",
       "clasificaciones",
@@ -2939,6 +4061,536 @@
                     "additionalProperties": false
                   }
                 },
+                "asociacionesEspaciales": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "ubicacionClave": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "partidoId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "condicion": {
+                        "type": "string",
+                        "const": "VERIFIED"
+                      },
+                      "relacion": {
+                        "type": "string",
+                        "enum": [
+                          "INTERIOR",
+                          "CROSSING"
+                        ]
+                      },
+                      "evidencia": {
+                        "type": "object",
+                        "properties": {
+                          "geometriaSha256": {
+                            "type": "string",
+                            "pattern": "^[a-f0-9]{64}$"
+                          },
+                          "limitesVersion": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "limitesSha256": {
+                            "type": "string",
+                            "pattern": "^[a-f0-9]{64}$"
+                          },
+                          "metodo": {
+                            "type": "string",
+                            "const": "POSTGIS_INTERSECTION"
+                          },
+                          "metodoVersion": {
+                            "type": "string",
+                            "const": "pba-spatial@1"
+                          },
+                          "decisionId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          }
+                        },
+                        "required": [
+                          "geometriaSha256",
+                          "limitesVersion",
+                          "limitesSha256",
+                          "metodo",
+                          "metodoVersion",
+                          "decisionId"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "ubicacionClave",
+                      "partidoId",
+                      "condicion",
+                      "relacion",
+                      "evidencia"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "rolesInstitucionales": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "organizacion": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "nombre": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 200
+                          },
+                          "nivel": {
+                            "type": "string",
+                            "enum": [
+                              "MUNICIPAL",
+                              "PROVINCIAL",
+                              "NACIONAL",
+                              "OTRO"
+                            ]
+                          },
+                          "partidoId": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "nombre",
+                          "nivel",
+                          "partidoId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "rol": {
+                        "type": "string",
+                        "enum": [
+                          "PROMOTOR",
+                          "CONTRATANTE",
+                          "EJECUTOR",
+                          "FINANCIADOR",
+                          "CONTRATISTA"
+                        ]
+                      },
+                      "condicion": {
+                        "type": "string",
+                        "const": "VERIFIED"
+                      },
+                      "vigencia": {
+                        "type": "object",
+                        "properties": {
+                          "inicio": {
+                            "anyOf": [
+                              {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "valor": {
+                                        "type": "string",
+                                        "allOf": [
+                                          {
+                                            "type": "string",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^(?!0000)"
+                                          }
+                                        ]
+                                      },
+                                      "precision": {
+                                        "type": "string",
+                                        "const": "DAY"
+                                      }
+                                    },
+                                    "required": [
+                                      "valor",
+                                      "precision"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "valor": {
+                                        "type": "string",
+                                        "pattern": "^(?!0000)\\d{4}$"
+                                      },
+                                      "precision": {
+                                        "type": "string",
+                                        "const": "YEAR"
+                                      }
+                                    },
+                                    "required": [
+                                      "valor",
+                                      "precision"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "fin": {
+                            "anyOf": [
+                              {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "valor": {
+                                        "type": "string",
+                                        "allOf": [
+                                          {
+                                            "type": "string",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^(?!0000)"
+                                          }
+                                        ]
+                                      },
+                                      "precision": {
+                                        "type": "string",
+                                        "const": "DAY"
+                                      }
+                                    },
+                                    "required": [
+                                      "valor",
+                                      "precision"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "valor": {
+                                        "type": "string",
+                                        "pattern": "^(?!0000)\\d{4}$"
+                                      },
+                                      "precision": {
+                                        "type": "string",
+                                        "const": "YEAR"
+                                      }
+                                    },
+                                    "required": [
+                                      "valor",
+                                      "precision"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "inicio",
+                          "fin"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "evidencias": {
+                        "minItems": 1,
+                        "maxItems": 1000,
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "tipo": {
+                                  "type": "string",
+                                  "const": "SOURCE_CELL"
+                                },
+                                "registroOrigenId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "resultadoRegistroId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "recursoId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "columna": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "posicion": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "localizador": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "format": {
+                                          "type": "string",
+                                          "const": "CSV"
+                                        },
+                                        "byteStart": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "byteEndExclusive": {
+                                          "type": "integer",
+                                          "exclusiveMinimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "lineStart": {
+                                          "type": "integer",
+                                          "exclusiveMinimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "lineEnd": {
+                                          "type": "integer",
+                                          "exclusiveMinimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "dataOrdinal": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 9007199254740991
+                                        }
+                                      },
+                                      "required": [
+                                        "format",
+                                        "byteStart",
+                                        "byteEndExclusive",
+                                        "lineStart",
+                                        "lineEnd",
+                                        "dataOrdinal"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "format": {
+                                          "type": "string",
+                                          "const": "XLSX"
+                                        },
+                                        "part": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "worksheet": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "row": {
+                                          "type": "integer",
+                                          "exclusiveMinimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "date1904": {
+                                          "type": "boolean"
+                                        },
+                                        "cells": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string",
+                                            "minLength": 1
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "format",
+                                        "part",
+                                        "worksheet",
+                                        "row",
+                                        "date1904",
+                                        "cells"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "tipo",
+                                "registroOrigenId",
+                                "resultadoRegistroId",
+                                "recursoId",
+                                "columna",
+                                "posicion",
+                                "localizador"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "tipo": {
+                                  "type": "string",
+                                  "const": "CATALOG_METADATA"
+                                },
+                                "recursoId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "clave": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "valor": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "referencia": {
+                                  "type": "object",
+                                  "properties": {
+                                    "url": {
+                                      "type": "string",
+                                      "format": "uri"
+                                    },
+                                    "consultadoEn": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                    },
+                                    "version": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "sha256": {
+                                      "type": "string",
+                                      "pattern": "^[a-f0-9]{64}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "url",
+                                    "consultadoEn",
+                                    "version",
+                                    "sha256"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "tipo",
+                                "recursoId",
+                                "clave",
+                                "valor",
+                                "referencia"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "tipo": {
+                                  "type": "string",
+                                  "const": "BASE_REVISION"
+                                },
+                                "obraId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "revisionId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "campo": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "required": [
+                                "tipo",
+                                "obraId",
+                                "revisionId",
+                                "campo"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "tipo": {
+                                  "type": "string",
+                                  "const": "REVIEW_DECISION"
+                                },
+                                "decisionId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "campo": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 200
+                                }
+                              },
+                              "required": [
+                                "tipo",
+                                "decisionId",
+                                "campo"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      },
+                      "decisionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      }
+                    },
+                    "required": [
+                      "organizacion",
+                      "rol",
+                      "condicion",
+                      "vigencia",
+                      "evidencias",
+                      "decisionId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
                 "calidad": {
                   "type": "object",
                   "properties": {
@@ -3055,6 +4707,8 @@
                 "estado",
                 "clasificaciones",
                 "fuentes",
+                "asociacionesEspaciales",
+                "rolesInstitucionales",
                 "calidad"
               ],
               "additionalProperties": false

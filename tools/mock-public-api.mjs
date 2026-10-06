@@ -29,6 +29,9 @@ const catalogoVersion = "7";
 const requests = [];
 const details = new Map();
 const features = [];
+const institutionalParty = partyCatalog.items.find(party => party.codigos.indecDepartamento === "06861");
+const institutionalOrganization = { id: id("5", 1), nombre: "EJEMPLO SINTÉTICO — Organización municipal revisada", nivel: "MUNICIPAL", partidoId: institutionalParty.partidoId };
+const institutionalCatalog = { items: [institutionalOrganization] };
 const items = Array.from({ length: 24 }, (_, index) => {
   const number = index + 1;
   const located = number % 4 !== 0;
@@ -39,6 +42,8 @@ const items = Array.from({ length: 24 }, (_, index) => {
   const fuentes = [{ ...examples.listPopulated.items[0].fuentes[0], codigo: number % 3 === 0 ? "caba-actualizado" : "nacion-obras" }];
   const item = { ...structuredClone(examples.listPopulated.items[0]), obraId, revisionId, nombre, estado, fuentes, tieneGeometria: located };
   const detail = { ...structuredClone(located ? examples.detailPopulated : examples.detailPartial), obraId, revisionId, nombre, estado, fuentes, publicadaActualmente: true, catalogoVersion };
+  item.asociacionesEspaciales = []; item.rolesInstitucionales = [];
+  detail.asociacionesEspaciales = []; detail.rolesInstitucionales = [];
   const party = partyCatalog.items.find(party => party.codigos.indecDepartamento === (number <= 12 ? "06854" : "06861"));
   const reported = { esquema: "indec.departamento", codigo: party.codigos.indecDepartamento, nombre: party.nombre, condicion: "REPORTED" };
   item.territorios = [...item.territorios, reported];
@@ -53,7 +58,7 @@ const items = Array.from({ length: 24 }, (_, index) => {
       : number === 3
         ? { type: "Polygon", coordinates: [[[longitude - 0.0004, latitude - 0.0004], [longitude + 0.0004, latitude - 0.0004], [longitude + 0.0004, latitude + 0.0004], [longitude - 0.0004, latitude + 0.0004], [longitude - 0.0004, latitude - 0.0004]]] }
         : { type: "Point", coordinates: [longitude, latitude] };
-    feature.properties = { ...feature.properties, obraId, revisionId, nombre, estado, fuentes, ubicacionId: feature.id };
+    feature.properties = { ...feature.properties, obraId, revisionId, nombre, estado, fuentes, ubicacionId: feature.id, asociacionesEspaciales: [], rolesInstitucionales: [] };
     if (number === 5) {
       // One address-derived synthetic observation exercises SSR and the public BFF.
       feature.properties.calidad = { ...feature.properties.calidad, origenGeometria: "ADDRESS_GEOCODE", crs: { codigo: "EPSG:4326", fundamento: "OFFICIAL_SERVICE", condicion: "SERVICE_REFERENCE" } };
@@ -61,11 +66,27 @@ const items = Array.from({ length: 24 }, (_, index) => {
     features.push(feature);
     detail.ubicaciones = [{ ...detail.ubicaciones[0], geometria: feature.geometry, ubicacionId: feature.id, ...feature.properties.calidad }];
   }
+  if (number === 3 || number === 4) {
+    // These relationships are deliberately synthetic public review outcomes.
+    // Their party differs from the reported party; no GeoRef visual boundary is used to infer them.
+    detail.schemaVersion = "obra@3";
+    const decisionId = id("6", number);
+    detail.rolesInstitucionales = [{ organizacion: institutionalOrganization, rol: "FINANCIADOR", condicion: "VERIFIED", vigencia: { inicio: { valor: "2020", precision: "YEAR" }, fin: { valor: "2026-12-31", precision: "DAY" } }, evidencias: [{ tipo: "REVIEW_DECISION", campo: "rolesInstitucionales", decisionId }], decisionId }];
+    if (located) detail.asociacionesEspaciales = [{ ubicacionClave: detail.ubicaciones[0].clave, partidoId: institutionalParty.partidoId, condicion: "VERIFIED", relacion: "CROSSING", evidencia: { geometriaSha256: "a".repeat(64), limitesVersion: "limites-sinteticos-verificacion@1", limitesSha256: "b".repeat(64), metodo: "POSTGIS_INTERSECTION", metodoVersion: "pba-spatial@1", decisionId } }];
+    item.asociacionesEspaciales = structuredClone(detail.asociacionesEspaciales);
+    item.rolesInstitucionales = structuredClone(detail.rolesInstitucionales);
+    const represented = features.find(feature => feature.properties.obraId === obraId);
+    if (represented) {
+      represented.properties.asociacionesEspaciales = structuredClone(detail.asociacionesEspaciales);
+      represented.properties.rolesInstitucionales = structuredClone(detail.rolesInstitucionales);
+    }
+  }
   details.set(obraId, validate("PublicWorkDetail", detail));
   return item;
 });
 validate("PublicWorkListResponse", { items, nextCursor: null, limit: 24, catalogoVersion });
 validate("PublicGeoFeatureCollection", { type: "FeatureCollection", features, nextCursor: null, catalogoVersion });
+validate("PublicInstitutionalOrganizationCatalogResponse", institutionalCatalog);
 
 /** Aplica intersección por extensión de figuras sintéticas; no simula ni acredita las reglas topológicas PostGIS. */
 function inArea(item, area) {
@@ -97,6 +118,16 @@ function filtered(params) {
     (!params.has("tieneGeometria") || item.tieneGeometria === (params.get("tieneGeometria") === "true")) &&
     (!params.has("municipioCodigo") || item.territorios.some(territory => territory.esquema === params.get("territorioEsquema") && territory.codigo === params.get("municipioCodigo"))) &&
     (!params.has("partidoId") || (party && item.territorios.some(territory => territory.esquema === "indec.departamento" && territory.codigo === party.codigos.indecDepartamento && territory.condicion === "REPORTED"))) &&
+    (!params.has("partidoVerificadoId") || item.asociacionesEspaciales.some(association => association.partidoId === params.get("partidoVerificadoId"))) &&
+    (["gestionMunicipalId", "organizacionId", "rolInstitucional", "periodoDesde", "periodoHasta"].every(key => !params.has(key)) || item.rolesInstitucionales.some(role => {
+      const start = role.vigencia.inicio?.precision === "YEAR" ? role.vigencia.inicio.valor + "-01-01" : role.vigencia.inicio?.valor;
+      const end = role.vigencia.fin?.precision === "YEAR" ? role.vigencia.fin.valor + "-12-31" : role.vigencia.fin?.valor;
+      return (!params.has("gestionMunicipalId") || (role.organizacion.nivel === "MUNICIPAL" && role.organizacion.partidoId === params.get("gestionMunicipalId") && role.rol !== "CONTRATISTA")) &&
+        (!params.has("organizacionId") || role.organizacion.id === params.get("organizacionId")) &&
+        (!params.has("rolInstitucional") || role.rol === params.get("rolInstitucional")) &&
+        (!params.has("periodoDesde") || (end && end >= params.get("periodoDesde"))) &&
+        (!params.has("periodoHasta") || (start && start <= params.get("periodoHasta")));
+    })) &&
     inArea(item, area),
   );
 }
@@ -124,6 +155,10 @@ const server = createServer((request, response) => {
   if (request.method !== "GET") return send(405, { error: { code: "METHOD_NOT_ALLOWED", message: "Read-only fixture server", requestId: null } });
   if (url.pathname === "/__health") return send(200, { fixture: "synthetic-e2e-only" });
   if (url.pathname === "/__requests") return send(200, { fixture: "synthetic-e2e-only", requests });
+  if (url.pathname === "/api/v1/organizaciones-institucionales") {
+    if (url.searchParams.size) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic institutional catalog has no query parameters", requestId: null } });
+    return send(200, institutionalCatalog);
+  }
   if (url.pathname === "/api/v1/territorios/pba/partidos") {
     if (url.searchParams.size) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic party catalog has no query parameters", requestId: null } });
     return send(200, partyCatalog);

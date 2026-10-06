@@ -1,9 +1,35 @@
 /** @file Comprueba URLs compartibles, filtros incompatibles y conservación de consulta entre presentaciones. */
 import { describe, expect, it } from "vitest";
-import { explorerHref, parseExplorerQuery, queryParams, unlocatedListHref } from "../src/lib/explorer-query";
+import { explorerHref, isCivilDate, parseExplorerQuery, queryParams, unlocatedListHref } from "../src/lib/explorer-query";
 
 const parse = (query: string) => parseExplorerQuery(new URLSearchParams(query));
 describe("consultas públicas compartibles", () => {
+  it("combina reporte, asociación espacial y gestión institucional sin sustituir identidades", () => {
+    const reported = "aaaaaaaa-0000-4000-8000-000000000001";
+    const verified = "bbbbbbbb-0000-4000-8000-000000000001";
+    const municipal = "cccccccc-0000-4000-8000-000000000001";
+    const organization = "dddddddd-0000-4000-8000-000000000001";
+    const state = parse(`partidoId=${reported}&partidoVerificadoId=${verified.toUpperCase()}&gestionMunicipalId=${municipal}&organizacionId=${organization}&rolInstitucional=FINANCIADOR&periodoDesde=2020-02-29&periodoHasta=2026-12-31&vista=lista`);
+    expect(state.query).toEqual({ limit: 20, partidoId: reported, partidoVerificadoId: verified, gestionMunicipalId: municipal, organizacionId: organization, rolInstitucional: "FINANCIADOR", periodoDesde: "2020-02-29", periodoHasta: "2026-12-31" });
+    expect(parse(explorerHref(state.query, "mapa").split("?")[1]!).query).toEqual(state.query);
+    const unlocated = parse(unlocatedListHref({ ...state.query, cursor: "synthetic-page", bbox: [-59, -35, -58, -34] }).split("?")[1]!);
+    expect(unlocated.query).toEqual({ ...state.query, tieneGeometria: false });
+    expect(unlocated.view).toBe("lista");
+  });
+  it("conserva el filtro territorial histórico combinado con asociaciones explícitas", () => {
+    const result = parse("territorioEsquema=pba.municipio&municipioCodigo=001&partidoVerificadoId=bbbbbbbb-0000-4000-8000-000000000001");
+    expect(result.query.municipioCodigo).toBe("001");
+    expect(result.query.partidoVerificadoId).toBe("bbbbbbbb-0000-4000-8000-000000000001");
+  });
+  it.each(["partidoVerificadoId=no-es-uuid", "gestionMunicipalId=constructor", "organizacionId=secret", "rolInstitucional=RESPONSABLE", "rolInstitucional=constructor", "periodoDesde=2025-02-29", "periodoHasta=2026-04-31", "periodoDesde=2026-01-02&periodoHasta=2026-01-01", "periodoDesde=2026", "periodoHasta=2026-10-06T12%3A00%3A00Z", "periodoDesde=2026-01-01", "periodoHasta=2026-12-31", "partidoVerificadoId=aaaaaaaa-0000-4000-8000-000000000001&partidoVerificadoId=bbbbbbbb-0000-4000-8000-000000000001"]) ("rechaza asociaciones o períodos ambiguos: %s", input => {
+    expect(() => parse(input)).toThrow(TypeError);
+  });
+  it("valida días reales sin cambiar su zona horaria", () => {
+    expect(isCivilDate("2000-02-29")).toBe(true);
+    expect(isCivilDate("2026-10-06")).toBe(true);
+    expect(isCivilDate("0001-01-01")).toBe(true);
+    for (const input of ["0000-01-01", "1900-02-29", "2026-13-01", "2026-01-00", "2026-2-01", "2026-01-01T00:00:00Z"]) expect(isCivilDate(input)).toBe(false);
+  });
   it("abre publicaciones sin ubicación quitando área y cursor, conservando fuente y municipio", () => {
     const query = { fuente: "nacion-obras", bbox: [-58.5, -34.6, -58.2, -34.4], cursor: "pagina-anterior", territorioEsquema: "pba.municipio", municipioCodigo: "0861", tieneGeometria: true } as const;
     const href = unlocatedListHref(query);

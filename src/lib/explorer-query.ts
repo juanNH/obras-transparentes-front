@@ -11,10 +11,18 @@ export const MAP_READ_BBOX: BoundingBox = [-180, -85.051129, 180, 85.051129];
 export const SOURCES = { "pba-edificios": "PBA · edificios escolares", "caba-actualizado": "CABA · obras", "nacion-obras": "Nación · obras", "vl-obras": "Vicente López · obras" } as const;
 /** Traducciones de estados informados; no se infieren del avance ni de la ausencia de datos. */
 export const STATES = { COMPLETED: "Finalizada", IN_PROGRESS: "En ejecución", OTHER_REPORTED: "Otro estado informado" } as const;
+/** Roles institucionales publicados tras revisión; la fuente de datos no determina ninguno de estos roles. */
+export const INSTITUTIONAL_ROLES = { PROMOTOR: "Promotor", CONTRATANTE: "Contratante", EJECUTOR: "Ejecutor", FINANCIADOR: "Financiador", CONTRATISTA: "Contratista" } as const;
 /** Consulta de API separada de presentación y selección compartible del explorador. */
 export type ExplorerQuery = { query: ListQuery; view: "lista" | "mapa"; showBoundaries?: boolean; obra?: string; revisionId?: string; ubicacionId?: string };
 /** Comprueba el formato UUID antes de incorporar una selección a ruta/consulta pública. */
 export const isUUID = (value: string) => /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
+/** Comprueba una fecha civil ISO completa, incluidos días de cada mes y años bisiestos, sin convertirla a hora local. */
+export function isCivilDate(value: string): boolean {
+  if (!/^(?!0000)\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(value + "T00:00:00.000Z");
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
 
 /**
  * Valida filtros, área y selección, rechazando parámetros repetidos y combinaciones incompatibles.
@@ -46,6 +54,27 @@ export function parseExplorerQuery(params: URLSearchParams): ExplorerQuery {
     if (scheme !== "pba.municipio" || !code || !/^\d{1,32}$/.test(code)) throw new TypeError("El municipio requiere un código y esquema PBA válidos.");
     query.territorioEsquema = scheme; query.municipioCodigo = code;
   }
+  for (const key of ["partidoVerificadoId", "gestionMunicipalId", "organizacionId"] as const) {
+    const value = params.get(key);
+    if (value) {
+      if (!isUUID(value)) throw new TypeError("La asociación requiere una identidad válida.");
+      query[key] = value.toLowerCase();
+    }
+  }
+  const role = params.get("rolInstitucional");
+  if (role) {
+    if (!Object.hasOwn(INSTITUTIONAL_ROLES, role)) throw new TypeError("Rol institucional desconocido.");
+    query.rolInstitucional = role as keyof typeof INSTITUTIONAL_ROLES;
+  }
+  for (const key of ["periodoDesde", "periodoHasta"] as const) {
+    const value = params.get(key);
+    if (value) {
+      if (!isCivilDate(value)) throw new TypeError("La vigencia del rol requiere una fecha válida.");
+      query[key] = value;
+    }
+  }
+  if (Boolean(query.periodoDesde) !== Boolean(query.periodoHasta)) throw new TypeError("El período de vigencia requiere ambas fechas.");
+  if (query.periodoDesde && query.periodoHasta && query.periodoDesde > query.periodoHasta) throw new TypeError("El período de vigencia no puede terminar antes de comenzar.");
   const area = params.get("bbox");
   if (area) {
     const pieces = area.split(",");

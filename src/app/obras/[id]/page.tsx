@@ -62,13 +62,15 @@ export default async function WorkPage(props: PageProps) {
   const { id, revisionId } = selection;
   const work = await readWork(id, revisionId);
   if (!work) notFound();
+  const needsPartyNames = work.asociacionesEspaciales.length > 0 || work.rolesInstitucionales.some(role => role.organizacion.partidoId !== null);
+  const partyCatalog = needsPartyNames ? await publicApi().parties().catch(() => null) : null;
   const email = reportEmail();
   const path = `/obras/${id}`;
   const origin = indexableSiteUrl();
   const canonical = origin ? new URL(path, origin).href : path;
   return <div className="container detail-page">
     <nav className="detail-breadcrumb" aria-label="Ruta de navegación"><Link href="/mapa">← Explorar obras</Link></nav>
-    <WorkDetailContent work={work} />
+    <WorkDetailContent work={work} partyCatalog={partyCatalog} />
     <aside className="detail-section detail-actions" aria-label="Enlaces de la ficha">
       <h2>Compartir y revisar la información</h2>
       <p><a href={canonical}>Enlace permanente a la ficha actual</a>. Podés copiarlo desde la barra de direcciones de tu navegador.</p>

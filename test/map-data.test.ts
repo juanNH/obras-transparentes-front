@@ -15,6 +15,15 @@ function feature(geometry: WorkGeoJSON["features"][number]["geometry"]): WorkGeo
 }
 
 describe("ubicaciones de la revisión pública seleccionada", () => {
+  it("conserva únicamente asociaciones explícitas de la ubicación elegida y todos los roles de la revisión", () => {
+    const evidence = { geometriaSha256: "a".repeat(64), limitesSha256: "b".repeat(64), limitesVersion: "limites-sinteticos-verificacion@1", metodo: "POSTGIS_INTERSECTION", metodoVersion: "pba-spatial@1", decisionId: "60000000-0000-4000-8000-000000000001" } as const;
+    const association = { ubicacionClave: approved.clave, partidoId: "aaaaaaaa-0000-4000-8000-000000000001", condicion: "VERIFIED", relacion: "INTERIOR", evidencia: evidence } as const;
+    const work: WorkDetail = { ...detailSeed, asociacionesEspaciales: [association, { ...association, ubicacionClave: "otra-ubicacion" }] };
+    const feature = detailMapFeatures(work)[0]!;
+    expect(feature.properties.asociacionesEspaciales).toEqual([association]);
+    expect(feature.properties.rolesInstitucionales).toEqual(work.rolesInstitucionales);
+    expect(work.asociacionesEspaciales).toHaveLength(2);
+  });
   const geometries: WorkGeoJSON["features"][number]["geometry"][] = [
     { type: "Point", coordinates: [-58, -34] },
     { type: "MultiPoint", coordinates: [[-58, -34], [-59, -35]] },
