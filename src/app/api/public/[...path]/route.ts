@@ -6,9 +6,9 @@ import { publicApi } from "../../../../lib/public-api";
 /** Evita caché de rutas BFF para consultar la versión vigente del catálogo. */
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store" };
-const allowed = new Set(["fuente", "estado", "sector", "territorioEsquema", "municipioCodigo", "tieneGeometria", "bbox", "cursor"]);
+const allowed = new Set(["fuente", "estado", "sector", "territorioEsquema", "municipioCodigo", "partidoId", "tieneGeometria", "bbox", "cursor"]);
 /**
- * Acepta sólo lista, GeoJSON y ficha pública, validando filtros antes de leer la API.
+ * Acepta lista, GeoJSON, ficha y nómina de partidos; la nómina no admite parámetros y usa su presupuesto independiente.
  * @param request - GET de mismo origen; su señal cancela la lectura upstream.
  * @param params - Segmentos de la ruta pública resueltos por App Router.
  * @returns JSON validado sin caché o un error público que no revela URLs internas.
@@ -20,7 +20,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
   try {
     const api = publicApi();
     let result: unknown;
-    if (path.length === 2 && path[0] === "obras" && path[1] && isUUID(path[1])) {
+    if (path.length === 4 && path.join("/") === "territorios/pba/partidos/limites") {
+      const version = url.searchParams.get("version");
+      if ([...url.searchParams.keys()].some(key => key !== "version") || url.searchParams.getAll("version").length !== 1 || !version || !/^[a-z0-9][a-z0-9@._-]{0,127}$/.test(version))
+        throw new TypeError("Los límites requieren una versión y no reciben filtros de obras.");
+      validated = true;
+      const boundaries = await api.boundaries(version, { signal: request.signal });
+      if (boundaries.metadata.version !== version) throw new TypeError("La versión territorial recibida no coincide.");
+      result = boundaries;
+    } else if (path.length === 3 && path.join("/") === "territorios/pba/partidos") {
+      if (url.searchParams.size) throw new TypeError("La nómina no recibe filtros de obras.");
+      validated = true;
+      result = await api.parties({ signal: request.signal });
+    } else if (path.length === 2 && path[0] === "obras" && path[1] && isUUID(path[1])) {
       if ([...url.searchParams.keys()].some(key => key !== "revisionId") || url.searchParams.getAll("revisionId").length > 1) throw new TypeError("Parámetro de ficha inválido.");
       const revision = url.searchParams.get("revisionId") || undefined;
       if (revision && !isUUID(revision)) throw new TypeError("Revisión inválida.");

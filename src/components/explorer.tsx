@@ -2,18 +2,20 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { BoundingBox, ListQuery, WorkDetail, WorkGeoJSON, WorkList } from "../api/client";
+import type { BoundingBox, ListQuery, PartyBoundaries, PartyCatalog, WorkDetail, WorkGeoJSON, WorkList } from "../api/client";
 import { BrowserApiError, readPublic } from "../lib/browser-api";
 import { DEFAULT_BBOX, MAP_READ_BBOX, SOURCES, STATES, explorerHref, queryParams, unlocatedListHref } from "../lib/explorer-query";
 import type { ExplorerQuery } from "../lib/explorer-query";
 import { limitMapFeatures, limitMapLayers, MAX_MAP_FEATURES } from "../lib/map-budget";
 import { detailMapFeatures } from "../lib/map-data";
+import { readPartyBoundaries } from "../lib/party-boundaries";
 import { locationPresentation } from "../lib/presentation";
 import { LocationQuality } from "./location-quality";
 import { SourceBadge, SourceLegend } from "./source-origin";
 import { MapAvailability } from "./map-availability";
+import { PartyFilter } from "./party-filter";
 import "./explorer.css";
 
 const WorkMap = dynamic(() => import("./work-map"), { ssr: false, loading: () => <p className="notice" role="status">Cargando el mapa… La lista sigue disponible.</p> });
@@ -26,7 +28,7 @@ type Selection = { id: string; revisionId?: string; locationId?: string };
  * @param props - Página inicial, estado validado de URL y estilo cartográfico configurado.
  * @returns Explorador que conserva filtros al alternar presentación y confirma área sólo por acción explícita.
  */
-export function Explorer({ initial, initialError, state, styleUrl }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string }) {
+export function Explorer({ initial, initialError, state, styleUrl, partyCatalog = null }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string; partyCatalog?: PartyCatalog | null }) {
   const router = useRouter();
   const { query } = state;
   const [view, setView] = useState(state.view);
@@ -38,6 +40,11 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
   const [features, setFeatures] = useState<WorkGeoJSON["features"]>([]);
   const [mapMessage, setMapMessage] = useState("");
   const [mapLoading, setMapLoading] = useState(false);
+  const [showBoundaries, setShowBoundaries] = useState(state.showBoundaries ?? false);
+  const [boundaries, setBoundaries] = useState<PartyBoundaries | null>(null);
+  const [boundaryLoading, setBoundaryLoading] = useState(false);
+  const [boundaryError, setBoundaryError] = useState(false);
+  const [boundaryAttempt, setBoundaryAttempt] = useState(0);
   const [candidate, setCandidate] = useState<BoundingBox>(query.bbox ?? DEFAULT_BBOX);
   const [focusBBox, setFocusBBox] = useState<BoundingBox | null>(null);
   const [locationMessage, setLocationMessage] = useState("");
@@ -60,7 +67,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
   const version = initial?.catalogoVersion;
   const mismatch = listError === "CATALOG_CHANGED";
   const { cursor: _cursor, ...firstQuery } = query;
-  const firstHref = explorerHref(firstQuery, view);
+  const firstHref = explorerHref(firstQuery, view, showBoundaries);
   const selectedDetail = detail?.obraId === selection?.id && (!selection?.revisionId || detail?.revisionId === selection.revisionId) ? detail : null;
   const detailFeatures = useMemo(() => selectedDetail ? detailMapFeatures(selectedDetail) : [], [selectedDetail]);
   const selectedLocationId = selection?.locationId;
@@ -83,6 +90,20 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
     setItems([]); setCursor(null); setFeatures([]); setListError("CATALOG_CHANGED"); setSelection(null);
   }, []);
   useEffect(() => { setHydrated(true); alive.current = true; return () => { alive.current = false; listRequest.current?.abort(); }; }, []);
+
+  useEffect(() => {
+    if (!showBoundaries || view !== "mapa" || boundaries || partyCatalog?.limites.estado !== "VALIDATED_FOR_DISPLAY") return;
+    const controller = new AbortController();
+    let active = true;
+    const catalog = partyCatalog;
+    setBoundaryLoading(true); setBoundaryError(false);
+    void readPartyBoundaries(catalog, AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]))
+      .then(data => {
+        if (active) { setBoundaries(data); setBoundaryLoading(false); }
+      })
+      .catch(() => { if (active) { setBoundaryError(true); setBoundaryLoading(false); } });
+    return () => { active = false; controller.abort(); };
+  }, [showBoundaries, view, boundaries, partyCatalog, boundaryAttempt]);
 
   useEffect(() => {
     if (view !== "mapa" || !initial || mismatch || mapLoaded.current) return;
@@ -239,7 +260,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
   function searchArea() {
     const nextQuery = { ...firstQuery, bbox: candidate };
     delete nextQuery.tieneGeometria;
-    router.push(explorerHref(nextQuery, "mapa"), { scroll: false });
+    router.push(explorerHref(nextQuery, "mapa", showBoundaries), { scroll: false });
   }
   /** Solicita permiso sólo al pulsar el control y centra cámara; no envía un área al catálogo hasta confirmarla. */
   function useLocation() {
@@ -261,19 +282,47 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
     catch { setShareMessage("Podés copiar el enlace desde la barra de direcciones del navegador."); }
   }
   const clearArea = { ...firstQuery }; delete clearArea.bbox;
+  const clearLegacy = { ...firstQuery }; delete clearLegacy.territorioEsquema; delete clearLegacy.municipioCodigo;
   const hasData = Boolean(initial);
-  const activeFilters = [query.fuente, query.estado, query.sector, query.tieneGeometria, query.territorioEsquema].filter(value => value !== undefined).length;
+  const activeFilters = [query.fuente, query.estado, query.sector, query.tieneGeometria, query.territorioEsquema, query.partidoId].filter(value => value !== undefined).length;
+  const selectedParty = partyCatalog?.items.find(party => party.partidoId === query.partidoId);
   const locatedWorks = new Set(representedFeatures.map(feature => feature.properties.obraId)).size;
   const unlocatedLoaded = items.filter(work => !work.tieneGeometria).length;
   const selectedItem = items.find(work => work.obraId === selection?.id);
 
+  /** Omite opciones vacías en la URL de filtros; el formulario GET nativo conserva la alternativa sin JavaScript. */
+  function applyFilters(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const params = new URLSearchParams();
+    new FormData(event.currentTarget).forEach((value, key) => {
+      if (typeof value === "string" && value) params.set(key, value);
+    });
+    window.location.assign("/mapa" + (params.size ? "?" + params : ""));
+  }
+
+  /** Selecciona un UUID del padrón desde el mapa como filtro declarado; no utiliza inclusión espacial de obras. */
+  function chooseParty(partidoId: string) {
+    if (query.partidoId === partidoId || !partyCatalog?.items.some(party => party.partidoId === partidoId)) return;
+    router.push(explorerHref({ ...clearLegacy, partidoId }, view, showBoundaries), { scroll: false });
+  }
+
+  /** Comparte la presentación de límites sin aplicar otro filtro ni consultar ubicaciones de obras. */
+  function toggleBoundaries(visible: boolean) {
+    setShowBoundaries(visible);
+    const url = new URL(window.location.href);
+    if (visible) url.searchParams.set("limites", "mostrar"); else url.searchParams.delete("limites");
+    window.history.replaceState(null, "", url);
+  }
+
   return <div className="explorer">
     <div className="consultation-header">
     <details className="filter-group"><summary>Filtrar obras{activeFilters > 0 && <span className="muted"> · {activeFilters} {activeFilters === 1 ? "filtro activo" : "filtros activos"}</span>}</summary>
-    <form action="/mapa" method="get" className="filters" aria-label="Filtrar obras">
+    <form action="/mapa" method="get" className="filters" aria-label="Filtrar obras" onSubmit={applyFilters}>
       {query.bbox && <input type="hidden" name="bbox" value={query.bbox.join(",")} />}
       {view === "lista" && <input type="hidden" name="vista" value="lista" />}
+      {showBoundaries && <input type="hidden" name="limites" value="mostrar" />}
       {query.territorioEsquema && <><input type="hidden" name="territorioEsquema" value={query.territorioEsquema} /><input type="hidden" name="municipioCodigo" value={query.municipioCodigo} /></>}
+      {!query.territorioEsquema && <PartyFilter catalog={partyCatalog} partidoId={query.partidoId} />}
       <label>Fuente<select name="fuente" defaultValue={query.fuente ?? ""}><option value="">Todas las fuentes</option>{Object.entries(SOURCES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label>Estado informado<select name="estado" defaultValue={query.estado ?? ""}><option value="">Todos los estados</option>{Object.entries(STATES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label>Sector<select name="sector" defaultValue={query.sector ?? ""}><option value="">Todos los sectores</option><option value="educacion">Educación</option></select></label>
@@ -293,14 +342,22 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
     <SourceLegend />
     <div className="scope-note">
       <p><strong>{query.bbox ? "Consulta por área" : "Todo el catálogo"}</strong> · {query.bbox ? "Solo obras con ubicación aprobada que intersecta la zona consultada." : "Sin filtro de área. Incluye obras con y sin ubicación aprobada."}</p>
-      {query.territorioEsquema && <p>Municipio PBA: código {query.municipioCodigo}. Este filtro territorial no equivale al área del mapa.</p>}
-      {query.bbox && <><p>Las obras publicadas sin ubicación no aparecen en una consulta por área porque no se puede determinar si están dentro de esta zona.</p><p><a href={explorerHref(clearArea, view)}>Quitar área y ver todo el catálogo</a> · <a href={unlocatedListHref(query)}>Ver obras sin ubicación en el mapa</a></p></>}
+      {query.territorioEsquema && <p>Municipio PBA: código {query.municipioCodigo}. Este filtro territorial no equivale al área del mapa. <a href={explorerHref(clearLegacy, view, showBoundaries)}>Quitar este filtro y elegir entre los 135 partidos</a>.</p>}
+      {query.partidoId && <p><strong>Partido informado por la fuente: {selectedParty?.nombre ?? "identidad territorial seleccionada"}.</strong> La asociación reportada por la fuente no acredita ubicación espacial verificada ni gestión municipal.</p>}
+      {partyCatalog?.limites.estado === "PENDING_LICENSE_AND_VALIDATION" && <p>Límites de partidos pendientes de licencia y validación. La selección territorial está disponible; el mapa conserva las ubicaciones aprobadas de obras.</p>}
+      {query.bbox && <><p>Las obras publicadas sin ubicación no aparecen en una consulta por área porque no se puede determinar si están dentro de esta zona.</p><p><a href={explorerHref(clearArea, view, showBoundaries)}>Quitar área y ver todo el catálogo</a> · <a href={unlocatedListHref(query)}>Ver obras sin ubicación en el mapa</a></p></>}
     </div>
     {mismatch && <div className="notice error" role="alert"><h2>El catálogo cambió</h2><p>Retiramos los resultados anteriores para evitar mezclar publicaciones. Conservamos tus filtros.</p><a className="button" href={firstHref}>Reiniciar consulta</a></div>}
     {listError && !mismatch && <div className="notice error" role="alert"><h2>No pudimos completar la consulta</h2><p>El catálogo puede estar temporalmente fuera de servicio. Los resultados que ya ves corresponden a la última consulta completada.</p><a className="button secondary" href={firstHref}>Reintentar consulta</a></div>}
     <div className={view === "mapa" ? "explorer-body with-map" : "explorer-body"}>
       {view === "mapa" && <section id="ubicaciones" ref={mapRegion} tabIndex={-1} className="map-region" aria-label="Mapa de obras">
         <div className="map-context"><h2>Ubicaciones de la consulta</h2>{representedFeatures.length > 0 && <span className="status-badge">{locatedWorks} {locatedWorks === 1 ? "obra ubicada" : "obras ubicadas"}</span>}<a href="#resultados">Ver resultados ↓</a></div>
+        <div className="territory-controls">
+          <label><input type="checkbox" checked={showBoundaries} disabled={!hydrated || partyCatalog?.limites.estado !== "VALIDATED_FOR_DISPLAY"} onChange={event => toggleBoundaries(event.target.checked)} />Mostrar límites de partidos</label>
+          {showBoundaries && <p role="status">{boundaryLoading ? "Cargando límites de partidos…" : boundaryError ? "No pudimos cargar los límites. Las obras y sus resultados siguen disponibles." : boundaries ? `${boundaries.features.length} límites de partidos cargados para representar el territorio. Elegir un límite filtra el partido informado por la fuente; no verifica ubicación espacial ni gestión municipal.` : "Preparando límites de partidos…"}</p>}
+          {showBoundaries && boundaryError && <button type="button" className="button secondary" onClick={() => setBoundaryAttempt(value => value + 1)}>Reintentar límites de partidos</button>}
+          {showBoundaries && boundaries && <p className="map-help">Límites: <a href={boundaries.metadata.fuente.url} target="_blank" rel="noreferrer">{boundaries.metadata.fuente.nombre}</a> · <a href={boundaries.metadata.fuente.licencia.url} target="_blank" rel="noreferrer">{boundaries.metadata.fuente.licencia.nombre}</a>. Versión {boundaries.metadata.version}; consulta {boundaries.metadata.consultadoEn}. La geometría simplificada se usa para representación.</p>}
+        </div>
         {selection && <div className="selection-strip" aria-live="polite">
           <div><p className="eyebrow">Obra seleccionada</p><h3>{selectedDetail?.nombre ?? selectedItem?.nombre ?? "Cargando obra…"}</h3>
             {(selectedDetail ?? selectedItem) && <p><SourceBadge sources={(selectedDetail ?? selectedItem)!.fuentes} /></p>}
@@ -317,7 +374,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
           </div>
           <div className="card-actions"><button className="button secondary" type="button" onClick={() => setSummaryOpen(true)}>Ver resumen</button><button className="button secondary" type="button" onClick={clearSelection}>Quitar selección</button></div>
         </div>}
-        <div className="map-stage"><WorkMap features={mapLayers.catalog} selectionFeatures={mapLayers.selection} selectionFocus={selectionFocus} autoFit={!query.bbox && !camera.current} preserveCamera={Boolean(camera.current)} initialBBox={camera.current ?? query.bbox ?? DEFAULT_BBOX} selectedId={selection?.id ?? null} selectedLocationId={selectedLocationId ?? null} selectedRevisionId={selectedDetail?.revisionId ?? selection?.revisionId ?? null} focusBBox={focusBBox} onViewport={box => { camera.current = box; setCandidate(box); }} onSelect={(id, revision, location) => select(id, revision, false, location)} styleUrl={styleUrl} /></div>
+        <div className="map-stage"><WorkMap features={mapLayers.catalog} selectionFeatures={mapLayers.selection} partyFeatures={showBoundaries ? boundaries?.features ?? [] : []} selectedPartidoId={query.partidoId ?? null} onPartySelect={chooseParty} selectionFocus={selectionFocus} autoFit={!query.bbox && !camera.current} preserveCamera={Boolean(camera.current)} initialBBox={camera.current ?? query.bbox ?? DEFAULT_BBOX} selectedId={selection?.id ?? null} selectedLocationId={selectedLocationId ?? null} selectedRevisionId={selectedDetail?.revisionId ?? selection?.revisionId ?? null} focusBBox={focusBBox} onViewport={box => { camera.current = box; setCandidate(box); }} onSelect={(id, revision, location) => select(id, revision, false, location)} styleUrl={styleUrl} /></div>
         <div className="map-actions"><button type="button" className="button" disabled={!hydrated} onClick={searchArea}>Buscar en esta zona</button><button type="button" className="button secondary" disabled={!hydrated || locating} onClick={useLocation}>{locating ? "Buscando ubicación…" : "Usar mi ubicación"}</button></div>
         {selectedLocations.length > 0 && <details className="location-details" key={`${selection?.id}:${selection?.revisionId}:${selectedLocationId ?? "all"}`} open={selectedLocations.length === 1}>
           <summary>Cómo interpretar {selectedLocations.length === 1 ? "esta ubicación" : `las ${selectedLocations.length} ubicaciones seleccionadas`}</summary>
@@ -352,7 +409,7 @@ export function Explorer({ initial, initialError, state, styleUrl }: { initial: 
           {!work.tieneGeometria && <p className="map-availability-note">Esta publicación no tiene una ubicación aprobada para dibujar. Podés consultar su resumen y su ficha.</p>}
           <div className="card-actions">{work.tieneGeometria && <button type="button" className="button secondary" disabled={!hydrated} onClick={() => locateWork(work.obraId, work.revisionId)}>Ver en mapa<span className="sr-only">: {work.nombre}</span></button>}<button type="button" className="button secondary" disabled={!hydrated} onClick={() => select(work.obraId, work.revisionId, true, selection?.id === work.obraId && selection.revisionId === work.revisionId ? selectedLocationId : undefined)}>Ver resumen<span className="sr-only"> de {work.nombre}</span></button><a href={`/obras/${work.obraId}?revisionId=${work.revisionId}`}>Ver ficha<span className="sr-only"> de {work.nombre}</span> <span aria-hidden="true">↗</span></a></div>
         </li>)}</ul>
-        {cursor && <div className="pagination">{items.length < 100 && <button type="button" className="button secondary" disabled={!hydrated || loading} onClick={() => void loadMore()}>{loading ? "Cargando obras…" : "Cargar más obras"}</button>}<a href={explorerHref({ ...query, cursor }, view)}>{items.length >= 100 ? "Ir a la página siguiente" : "Página siguiente sin JavaScript"}</a></div>}
+        {cursor && <div className="pagination">{items.length < 100 && <button type="button" className="button secondary" disabled={!hydrated || loading} onClick={() => void loadMore()}>{loading ? "Cargando obras…" : "Cargar más obras"}</button>}<a href={explorerHref({ ...query, cursor }, view, showBoundaries)}>{items.length >= 100 ? "Ir a la página siguiente" : "Página siguiente sin JavaScript"}</a></div>}
         {query.cursor && <p><a href={firstHref}>Volver a la primera página</a></p>}
       </section>
     </div>

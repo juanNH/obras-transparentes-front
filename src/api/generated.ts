@@ -60,6 +60,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/territorios/pba/partidos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el padrón de los 135 partidos de Buenos Aires
+         * @description Lectura anónima e independiente del catálogo de obras. Devuelve los 135 partidos y sus UUID propios fijados en pba-partidos@1, códigos INDEC de departamento de cinco dígitos y GeoRef de municipio de seis dígitos con ceros conservados, procedencia, atribución y fecha de consulta. equivalenciasPbaMunicipio conserva pares exactos código/nombre comprobados en 95 partidos del CSV escolar auditado; los otros 40 conservan arrays vacíos. equivalenciasNacion conserva solamente el par histórico provincia/departamento de Vicente López. Las equivalencias no acreditan gestión municipal ni ubicación espacial. No incluye geometrías, conteos de obras ni frescura de fuentes de obras; limites indica disponibilidad y versión de una capa visual independiente. No admite parámetros de consulta ni requiere sesión, permisos administrativos, Origin o CSRF.
+         */
+        get: operations["TerritoriesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/territorios/pba/partidos/limites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar la capa visual de límites de los 135 partidos PBA
+         * @description Lectura anónima del derivado GeoRef simplificado conjuntamente para visualización. FeatureCollection de 135 MultiPolygon WGS84 [longitud,latitud], vinculados explícitamente a UUID del padrón. DISPLAY_ONLY: no usar para asignar obras, medir áreas, resolver límites jurídicos o verificar ubicaciones. Conserva fuente, licencia CC BY 4.0, corte abril de 2026, modificaciones y límites de la validación topológica. Presupuesto independiente de 1,5 MiB y 100.000 posiciones; no modifica las consultas o presupuestos de obras. version fija una distribución inmutable; sin ella consulta la actual con caché corta. If-None-Match concordante responde 304 sin cuerpo. Una ausencia o falla de integridad responde 503 recuperable sin afectar la consulta de obras. No requiere sesión, Origin o CSRF.
+         */
+        get: operations["TerritoriesController_limits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -170,6 +210,144 @@ export interface components {
             nextCursor: string | null;
             /** @enum {string} */
             type: "FeatureCollection";
+        };
+        PublicPartyBoundaryFeatureCollection: {
+            features: {
+                geometry: {
+                    coordinates: (number)[][][][];
+                    /** @enum {string} */
+                    type: "MultiPolygon";
+                };
+                /** Format: uuid */
+                id: string;
+                properties: {
+                    indecDepartamento: string;
+                    nombre: string;
+                    /** Format: uuid */
+                    partidoId: string;
+                };
+                /** @enum {string} */
+                type: "Feature";
+            }[];
+            metadata: {
+                atribucion: string;
+                bbox: (number)[];
+                /** Format: date */
+                consultadoEn: string;
+                fuente: {
+                    /** Format: date-time */
+                    generadoEn: string;
+                    licencia: {
+                        nombre: string;
+                        /** Format: uri */
+                        url: string;
+                    };
+                    nombre: string;
+                    sha256: string;
+                    /** Format: uri */
+                    url: string;
+                    version: string;
+                };
+                transformacion: {
+                    advertencia: string;
+                    metodo: string;
+                    precisionDecimales: number;
+                    toleranciaMetros: number;
+                };
+                /** @enum {string} */
+                uso: "DISPLAY_ONLY";
+                validacion: {
+                    advertencia: string;
+                    /** @enum {boolean} */
+                    coberturaValida: true;
+                    /** @enum {number} */
+                    features: 135;
+                    /** @enum {number} */
+                    geometriasValidas: 135;
+                    posiciones: number;
+                };
+                /** @enum {string} */
+                version: "pba-partidos-limites@1";
+            };
+            /** @enum {string} */
+            type: "FeatureCollection";
+        };
+        PublicPartyCatalogResponse: {
+            /** Format: date */
+            consultadoEn: string;
+            equivalencias: {
+                /** Format: date */
+                consultadoEn: string;
+                licencia: {
+                    nombre: string;
+                    /** Format: uri */
+                    url: string;
+                };
+                nombre: string;
+                /** @enum {number} */
+                partidos: 95;
+                /** @enum {number} */
+                registros: 324;
+                sha256: string;
+                /** Format: uri */
+                url: string;
+                /** @enum {string} */
+                version: "pba-edificios-partidos@1";
+            };
+            fuentes: {
+                licencia: {
+                    nombre: string;
+                    /** Format: uri */
+                    url: string;
+                };
+                nombre: string;
+                /** Format: uri */
+                url: string;
+            }[];
+            items: {
+                codigos: {
+                    georefMunicipio: string;
+                    indecDepartamento: string;
+                };
+                equivalenciasNacion: {
+                    /** @enum {string} */
+                    departamentoCodigo: "VICENTE_LOPEZ";
+                    /** @enum {string} */
+                    provinciaCodigo: "BUENOS_AIRES";
+                }[];
+                equivalenciasPbaMunicipio: {
+                    codigo: string;
+                    nombre: string;
+                }[];
+                nombre: string;
+                /** Format: uuid */
+                partidoId: string;
+            }[];
+            limites: {
+                /** @enum {string} */
+                estado: "PENDING_LICENSE_AND_VALIDATION";
+                /** @enum {string|null} */
+                version: null;
+            } | {
+                bytes: number;
+                /** @enum {string} */
+                estado: "VALIDATED_FOR_DISPLAY";
+                posiciones: number;
+                sha256: string;
+                url: string;
+                /** @enum {string} */
+                uso: "DISPLAY_ONLY";
+                /** @enum {string} */
+                version: "pba-partidos-limites@1";
+            };
+            provincia: {
+                /** @enum {string} */
+                codigo: "06";
+                /** @enum {string} */
+                nombre: "Buenos Aires";
+            };
+            /** @enum {string} */
+            version: "pba-partidos@1";
         };
         PublicWorkDetail: {
             atributosFuente?: {
@@ -422,7 +600,7 @@ export interface components {
                 /** @enum {string} */
                 condicion: "REPORTED";
                 /** @enum {string} */
-                esquema: "pba.municipio" | "nacion.provincia" | "nacion.departamento";
+                esquema: "pba.municipio" | "indec.departamento" | "nacion.provincia" | "nacion.departamento";
                 nombre: string;
             }[];
             ubicaciones: ({
@@ -576,10 +754,19 @@ export interface components {
                 /** @enum {string} */
                 condicion: "REPORTED";
                 /** @enum {string} */
-                esquema: "pba.municipio" | "nacion.provincia" | "nacion.departamento";
+                esquema: "pba.municipio" | "indec.departamento" | "nacion.provincia" | "nacion.departamento";
                 nombre: string;
             }[];
             tieneGeometria: boolean;
+        };
+        RateLimitedError: {
+            error: {
+                /** @enum {string} */
+                code: "RATE_LIMITED";
+                message: string;
+                /** Format: uuid */
+                requestId: string | null;
+            };
         };
     };
     responses: never;
@@ -602,6 +789,8 @@ export interface operations {
                 limit?: number;
                 /** @description Texto con ceros conservados, acompañado por territorioEsquema=pba.municipio. */
                 municipioCodigo?: string;
+                /** @description UUID del padrón GET /api/v1/territorios/pba/partidos. Selecciona el territorio canónico indec.departamento REPORTED de la revisión publicada, una equivalencia pba.municipio REPORTED documentada por su par exacto código/nombre en 95 partidos del CSV escolar auditado, o el par nacional histórico REPORTED nacion.provincia=BUENOS_AIRES y nacion.departamento=VICENTE_LOPEZ únicamente para Vicente López. Los otros 40 partidos no reciben equivalencias PBA legacy inferidas y no hay equivalencias nacionales históricas para otros partidos. No acredita gestión municipal ni pertenencia espacial; no infiere por fuente o coordenadas. Incompatible con territorioEsquema y municipioCodigo. El cursor incorpora la versión del padrón cuando se usa este filtro. */
+                partidoId?: string;
                 sector?: "educacion";
                 /** @description Requerido junto con municipioCodigo. Código reportado por PBA; no implica equivalencia nacional. */
                 territorioEsquema?: "pba.municipio";
@@ -639,6 +828,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
                 };
             };
             /** @description Error interno sin detalles privados. */
@@ -692,6 +903,28 @@ export interface operations {
                     "application/json": components["schemas"]["PublicApiError"];
                 };
             };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
             /** @description Error interno sin detalles privados. */
             500: {
                 headers: {
@@ -715,6 +948,8 @@ export interface operations {
                 limit?: number;
                 /** @description Texto con ceros conservados, acompañado por territorioEsquema=pba.municipio. */
                 municipioCodigo?: string;
+                /** @description UUID del padrón GET /api/v1/territorios/pba/partidos. Selecciona el territorio canónico indec.departamento REPORTED de la revisión publicada, una equivalencia pba.municipio REPORTED documentada por su par exacto código/nombre en 95 partidos del CSV escolar auditado, o el par nacional histórico REPORTED nacion.provincia=BUENOS_AIRES y nacion.departamento=VICENTE_LOPEZ únicamente para Vicente López. Los otros 40 partidos no reciben equivalencias PBA legacy inferidas y no hay equivalencias nacionales históricas para otros partidos. No acredita gestión municipal ni pertenencia espacial; no infiere por fuente o coordenadas. Incompatible con territorioEsquema y municipioCodigo. El cursor incorpora la versión del padrón cuando se usa este filtro. */
+                partidoId?: string;
                 sector?: "educacion";
                 /** @description Requerido junto con municipioCodigo. Código reportado por PBA; no implica equivalencia nacional. */
                 territorioEsquema?: "pba.municipio";
@@ -758,9 +993,189 @@ export interface operations {
                     "application/json": components["schemas"]["PublicApiError"];
                 };
             };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
             /** @description Error interno sin detalles privados. */
             500: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
+    };
+    TerritoriesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Padrón completo de 135 partidos sin paginación; versión nominal independiente de catalogoVersion de obras. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicPartyCatalogResponse"];
+                };
+            };
+            /** @description Parámetros de consulta no admitidos. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+            /** @description Error interno sin detalles privados. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
+    };
+    TerritoriesController_limits: {
+        parameters: {
+            query?: {
+                /** @description Versión exacta publicada en limites.version del padrón. Una versión no instalada responde 404; el nombre nunca controla una ruta de archivo. */
+                version?: string;
+            };
+            header?: {
+                /** @description ETag de una respuesta anterior; permite revalidación y 304 sin cuerpo. */
+                "If-None-Match"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description FeatureCollection completa sin paginación, con bytes exactos verificados frente al manifiesto. */
+            200: {
+                headers: {
+                    /** @description public,max-age=31536000,immutable con versión explícita; public,max-age=3600,must-revalidate para la distribución actual. */
+                    "Cache-Control"?: string;
+                    /** @description SHA-256 de los bytes exactos de la distribución. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicPartyBoundaryFeatureCollection"];
+                };
+            };
+            /** @description La distribución coincide con If-None-Match; respuesta sin cuerpo. */
+            304: {
+                headers: {
+                    "Cache-Control"?: string;
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description BOUNDARY_VERSION_NOT_FOUND: versión no instalada. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description Parámetros de consulta no admitidos o versión mal formada. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+            /** @description Error interno sin detalles privados. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description BOUNDARIES_UNAVAILABLE: asset ausente o integridad/presupuesto no válido; reintentar sin perder la consulta de obras. */
+            503: {
+                headers: {
+                    "Cache-Control"?: "no-store";
                     [name: string]: unknown;
                 };
                 content: {

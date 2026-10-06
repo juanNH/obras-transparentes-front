@@ -29,7 +29,7 @@ import { listen } from "ol/events.js";
 import { Circle, Fill, RegularShape, Stroke, Style, Text } from "ol/style.js";
 import { apply } from "ol-mapbox-style";
 import "ol/ol.css";
-import type { BoundingBox, WorkGeoJSON } from "../api/client.js";
+import type { BoundingBox, PartyBoundaries, WorkGeoJSON } from "../api/client.js";
 import { clampMapBBox, partitionMapFeatures, selectedMapFeatures, type MapProperties } from "../lib/map-data.js";
 import { MAP_ORIGINS, type MapOriginCategory } from "../lib/map-origin.js";
 import { canvasMapStyle, MAP_FONT_STYLESHEET, withoutOptionalOpenFreeMapCredit } from "../lib/map-style.js";
@@ -40,6 +40,10 @@ import { SourceBadge } from "./source-origin";
 export interface WorkMapProps {
   features: WorkGeoJSON["features"];
   selectionFeatures: WorkGeoJSON["features"];
+  /** Capa administrativa independiente; sus posiciones no pertenecen al presupuesto de obras. */
+  partyFeatures?: PartyBoundaries["features"];
+  selectedPartidoId?: string | null;
+  onPartySelect?: (partidoId: string) => void;
   /** Initial permission for this mount; remembered or explicit areas disable it. */
   autoFit: boolean;
   preserveCamera: boolean;
@@ -135,6 +139,42 @@ function createWorkLayers() {
 /** Capas, fuentes y cachés propias que deben liberarse al desmontar el adaptador. */
 type WorkLayers = ReturnType<typeof createWorkLayers>;
 
+const partyStyle = new Style({ fill: new Fill({ color: "rgba(116,182,232,0.05)" }), stroke: new Stroke({ color: "#6b859b", width: 1.5, lineDash: [6, 4] }) });
+const selectedPartyStyle = new Style({ fill: new Fill({ color: "rgba(116,182,232,0.16)" }), stroke: new Stroke({ color: "#0a4c78", width: 3, lineDash: [6, 4] }) });
+
+/** Mantiene sólo la identidad seleccionada en el callback de estilo, sin retener el contexto del efecto React. */
+class PartyLayerStyles {
+  selectedId: string | null = null;
+  /** Distingue el partido seleccionado sin reutilizar estilos de obras ni atribuirle gestión. */
+  style(feature: { get(key: string): unknown }) {
+    return feature.get("partidoId") === this.selectedId ? selectedPartyStyle : partyStyle;
+  }
+}
+
+/** Crea fuente y capa administrativa sin mezclarla con clustering, selección ni conteos de obras. */
+function createPartyLayer() {
+  const source = new VectorSource<Feature<Geometry>>({ wrapX: false });
+  const styles = new PartyLayerStyles();
+  const layer = new VectorLayer({ source, style: styles.style.bind(styles) });
+  return { source, styles, layer };
+}
+/** Capa nominal y su fuente liberables al desmontar el motor Canvas. */
+type PartyLayer = ReturnType<typeof createPartyLayer>;
+
+/** Sustituye límites completos ya conciliados con el padrón; no calcula relaciones espaciales de obras. */
+function updatePartyLayer(parties: PartyLayer, features: PartyBoundaries["features"] | undefined, selectedId: string | null | undefined) {
+  parties.styles.selectedId = selectedId ?? null;
+  parties.source.clear(true);
+  if (features?.length) parties.source.addFeatures(geojson.readFeatures({ type: "FeatureCollection", features }));
+  parties.layer.changed();
+}
+
+/** Libera la geometría administrativa y el estilo independiente del motor de obras. */
+function disposePartyLayer(parties: PartyLayer) {
+  parties.styles.selectedId = null;
+  parties.source.clear(true); parties.source.dispose(); parties.layer.dispose();
+}
+
 /** Sustituye la capa destacada por la obra/revisión/ubicación exacta elegida y devuelve su identidad cartográfica. */
 function updateSelection(work: WorkLayers, features: WorkGeoJSON["features"], selectedId: string | null, ubicacionId?: string | null, revisionId?: string | null): string | null {
   const collection = selectedMapFeatures(partitionMapFeatures(features).all, selectedId, ubicacionId, revisionId);
@@ -219,6 +259,7 @@ export default function WorkMap(props: WorkMapProps) {
   const attribution = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const worksRef = useRef<WorkLayers | null>(null);
+  const partiesRef = useRef<PartyLayer | null>(null);
   const current = useRef(props);
   const autoFitPending = useRef(props.autoFit);
   const selectionFitKey = useRef<string | null>(null);
@@ -249,6 +290,7 @@ export default function WorkMap(props: WorkMapProps) {
     const subscriptions: EventsKey[] = [];
     const base = new LayerGroup();
     const works = createWorkLayers();
+    const parties = createPartyLayer();
     let map: Map;
     let observer: ResizeObserver | undefined;
     setStatus("loading"); setBaseLoading(true); setWarning(null);
@@ -286,14 +328,15 @@ export default function WorkMap(props: WorkMapProps) {
       const dragPan = new DragPan({ condition: (event) => noModifierKeys(event) &&
         (!("pointerType" in event.originalEvent) || event.originalEvent.pointerType !== "touch" || (event.activePointers?.length ?? 0) >= 2) });
       map = new Map({
-        target: container.current, layers: [base, ...works.layers],
+        target: container.current, layers: [base, parties.layer, ...works.layers],
         controls: [new Attribution({ target: attribution.current, collapsed: false, collapsible: false })],
         interactions: defaultInteractions({ altShiftDragRotate: false, pinchRotate: false, dragPan: false, mouseWheelZoom: false, keyboard: false, zoomDuration: 0 })
           .extend([dragPan, new MouseWheelZoom({ condition: platformModifierKeyOnly, duration: 0 }), new KeyboardPan({ duration: 0 }), new KeyboardZoom({ duration: 0 })]),
         pixelRatio: Math.min(window.devicePixelRatio || 1, 2), maxTilesLoading: 8,
         view: new View({ center: [0, 0], zoom: 2, minZoom: 1, maxZoom: 19, enableRotation: false, multiWorld: false }),
       });
-      mapRef.current = map; worksRef.current = works;
+      mapRef.current = map; worksRef.current = works; partiesRef.current = parties;
+      updatePartyLayer(parties, current.current.partyFeatures, current.current.selectedPartidoId);
       updateWorks(works, current.current.features);
       const selectedKey = updateSelection(works, current.current.selectionFeatures, current.current.selectedId, current.current.selectedLocationId, current.current.selectedRevisionId);
       fit(map, current.current.focusBBox ?? current.current.initialBBox, current.current.preserveCamera && !current.current.focusBBox);
@@ -324,7 +367,12 @@ export default function WorkMap(props: WorkMapProps) {
         const feature = map.forEachFeatureAtPixel(event.pixel, (item) => item, {
           hitTolerance: 10, layerFilter: (layer) => works.layers.includes(layer as typeof works.layers[number]),
         });
-        if (!feature) return;
+        if (!feature) {
+          const territory = map.forEachFeatureAtPixel(event.pixel, item => item, { hitTolerance: 4, layerFilter: layer => layer === parties.layer });
+          const partyId = territory?.get("partidoId");
+          if (typeof partyId === "string") current.current.onPartySelect?.(partyId);
+          return;
+        }
         const members = feature.get("features") as Feature<Point>[] | undefined;
         if (members && members.length > 1) {
           const extent = createEmpty();
@@ -344,7 +392,8 @@ export default function WorkMap(props: WorkMapProps) {
         const feature = map.forEachFeatureAtPixel(event.pixel, (item) => item, {
           hitTolerance: 10, layerFilter: (layer) => works.layers.includes(layer as typeof works.layers[number]),
         });
-        map.getTargetElement().style.cursor = feature ? "pointer" : "";
+        const territory = !feature && map.forEachFeatureAtPixel(event.pixel, item => item, { hitTolerance: 4, layerFilter: layer => layer === parties.layer });
+        map.getTargetElement().style.cursor = feature || territory ? "pointer" : "";
         const members = feature?.get("features") as Feature<Point>[] | undefined;
         const location = feature && (!members || members.length === 1) ? featureLocation((members?.[0] ?? feature) as Feature<Geometry>) : null;
         // Keep the last point's help while crossing the canvas to read it.
@@ -359,7 +408,8 @@ export default function WorkMap(props: WorkMapProps) {
       observer?.disconnect(); unByKey(subscriptions);
       mapRef.current?.getLayers().clear(); mapRef.current?.dispose();
       disposeWorkLayers(works); base.dispose();
-      mapRef.current = null; worksRef.current = null;
+      disposePartyLayer(parties);
+      mapRef.current = null; worksRef.current = null; partiesRef.current = null;
       setStatus("unavailable"); setBaseLoading(false);
       return;
     }
@@ -411,8 +461,9 @@ export default function WorkMap(props: WorkMapProps) {
       active = false; controller.abort(); requests.dispose(); window.clearTimeout(timeout); removeUserInput(); observer?.disconnect(); unByKey(subscriptions);
       map.getLayers().clear();
       disposeWorkLayers(works);
+      disposePartyLayer(parties);
       for (const layer of base.getLayers().getArray()) layer.dispose();
-      base.getLayers().clear(); base.dispose(); map.dispose(); mapRef.current = null; worksRef.current = null; selectionFitKey.current = null;
+      base.getLayers().clear(); base.dispose(); map.dispose(); mapRef.current = null; worksRef.current = null; partiesRef.current = null; selectionFitKey.current = null;
     };
   }, [props.styleUrl, attempt]);
 
@@ -423,6 +474,9 @@ export default function WorkMap(props: WorkMapProps) {
     updateWorks(works, props.features);
     if (autoFitPending.current && fitSources(map, [works.points, works.shapes])) autoFitPending.current = false;
   }, [props.features]);
+  useEffect(() => {
+    if (partiesRef.current) updatePartyLayer(partiesRef.current, props.partyFeatures, props.selectedPartidoId);
+  }, [props.partyFeatures, props.selectedPartidoId]);
   useEffect(() => {
     const works = worksRef.current; const map = mapRef.current;
     if (!works || !map) return;

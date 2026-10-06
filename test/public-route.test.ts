@@ -4,8 +4,9 @@ import examples from "../contracts/examples.json" with { type: "json" };
 import { PublicApiError } from "../src/api/client.js";
 
 const api = vi.hoisted(() => ({ list: vi.fn(), detail: vi.fn(), geojson: vi.fn() }));
+const seo = vi.hoisted(() => ({ origin: new URL("https://obras.example.org") as URL | null }));
 vi.mock("../src/lib/public-api", () => ({ publicApi: () => api }));
-vi.mock("../src/lib/config", () => ({ siteUrl: () => new URL("https://obras.example.org") }));
+vi.mock("../src/lib/config", () => ({ indexableSiteUrl: () => seo.origin }));
 
 import { GET } from "../src/app/api/public/[...path]/route";
 import { GET as sitemap } from "../src/app/sitemap.xml/route";
@@ -14,7 +15,7 @@ const id = examples.detailPopulated.obraId;
 const revision = examples.detailPopulated.revisionId;
 const request = (path: string, query = "", init?: RequestInit) => new Request(`https://obras.example.org/api/public/${path}${query}`, init);
 const context = (...path: string[]) => ({ params: Promise.resolve({ path }) });
-beforeEach(() => vi.resetAllMocks());
+beforeEach(() => { vi.resetAllMocks(); seo.origin = new URL("https://obras.example.org"); });
 
 describe("BFF de lectura pública", () => {
   it("clasifica la caída de red como 503 sin exponer el diagnóstico interno", async () => {
@@ -96,6 +97,15 @@ describe("BFF de lectura pública", () => {
 });
 
 describe("sitemap acotado y consistente", () => {
+  it("no anuncia sitemap ni consulta el catálogo cuando producción no está habilitada", async () => {
+    seo.origin = null;
+    const response = await sitemap();
+    expect(response.status).toBe(404);
+    expect(response.headers.get("X-Robots-Tag")).toBe("noindex");
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(api.list).not.toHaveBeenCalled();
+  });
+
   it("incluye fichas canónicas solo al terminar todas las páginas", async () => {
     api.list.mockResolvedValueOnce({ ...examples.listPopulated, nextCursor: "next" }).mockResolvedValueOnce({ ...examples.listEmpty, catalogoVersion: examples.listPopulated.catalogoVersion });
     const response = await sitemap();
@@ -103,6 +113,7 @@ describe("sitemap acotado y consistente", () => {
     expect(response.headers.get("Content-Type")).toBe("application/xml");
     const xml = await response.text();
     expect(xml).toContain(`<loc>https://obras.example.org/obras/${id}</loc>`);
+    expect(xml).toContain("<loc>https://obras.example.org/terminos</loc>");
     expect(xml).not.toContain("revisionId");
     const signal = api.list.mock.calls[0]![1].signal;
     expect(signal).toBeInstanceOf(AbortSignal);

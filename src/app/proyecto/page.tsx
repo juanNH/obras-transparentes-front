@@ -1,14 +1,13 @@
 /** @file Referencia pública de fuentes, roles, colores, alcance del piloto y créditos cartográficos. */
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo";
 import { SourceLegend, SourceSymbol } from "../../components/source-origin";
 import { MAP_ORIGINS, type MapOriginCategory } from "../../lib/map-origin";
 
 /** Metadatos de referencia pública sobre fuentes, roles y créditos. */
-export const metadata: Metadata = {
+export const metadata = pageMetadata("/proyecto", {
   title: "El proyecto y los colores del mapa",
   description: "Conocé Obras Transparentes, la referencia de colores inspirada en las banderas y los créditos del mapa.",
-  alternates: { canonical: "/proyecto" },
-};
+});
 
 const flagReferences: { category: MapOriginCategory; description: string; href: string; reference: string }[] = [
   { category: "nation", description: "Celeste de la bandera argentina, oscurecido para que el marcador se distinga sobre el mapa.", href: "https://www.argentina.gob.ar/pais/simbolos/bandera", reference: "Bandera nacional" },

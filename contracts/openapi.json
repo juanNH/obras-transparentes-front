@@ -45,6 +45,17 @@
             }
           },
           {
+            "name": "partidoId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "description": "UUID del padrón GET /api/v1/territorios/pba/partidos. Selecciona el territorio canónico indec.departamento REPORTED de la revisión publicada, una equivalencia pba.municipio REPORTED documentada por su par exacto código/nombre en 95 partidos del CSV escolar auditado, o el par nacional histórico REPORTED nacion.provincia=BUENOS_AIRES y nacion.departamento=VICENTE_LOPEZ únicamente para Vicente López. Los otros 40 partidos no reciben equivalencias PBA legacy inferidas y no hay equivalencias nacionales históricas para otros partidos. No acredita gestión municipal ni pertenencia espacial; no infiere por fuente o coordenadas. Incompatible con territorioEsquema y municipioCodigo. El cursor incorpora la versión del padrón cuando se usa este filtro."
+          },
+          {
             "name": "territorioEsquema",
             "required": false,
             "in": "query",
@@ -227,6 +238,41 @@
               }
             }
           },
+          "429": {
+            "description": "RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable.",
+            "headers": {
+              "Retry-After": {
+                "description": "Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "Cache-Control": {
+                "description": "El rechazo por cuota no se almacena en cachés compartidas.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                    "requestId": "10000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "description": "Error interno sin detalles privados.",
             "content": {
@@ -286,6 +332,17 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "name": "partidoId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "description": "UUID del padrón GET /api/v1/territorios/pba/partidos. Selecciona el territorio canónico indec.departamento REPORTED de la revisión publicada, una equivalencia pba.municipio REPORTED documentada por su par exacto código/nombre en 95 partidos del CSV escolar auditado, o el par nacional histórico REPORTED nacion.provincia=BUENOS_AIRES y nacion.departamento=VICENTE_LOPEZ únicamente para Vicente López. Los otros 40 partidos no reciben equivalencias PBA legacy inferidas y no hay equivalencias nacionales históricas para otros partidos. No acredita gestión municipal ni pertenencia espacial; no infiere por fuente o coordenadas. Incompatible con territorioEsquema y municipioCodigo. El cursor incorpora la versión del padrón cuando se usa este filtro."
           },
           {
             "name": "territorioEsquema",
@@ -523,6 +580,41 @@
                         "requestId": "synthetic-request"
                       }
                     }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable.",
+            "headers": {
+              "Retry-After": {
+                "description": "Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "Cache-Control": {
+                "description": "El rechazo por cuota no se almacena en cachés compartidas.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                    "requestId": "10000000-0000-4000-8000-000000000001"
                   }
                 }
               }
@@ -793,6 +885,41 @@
               }
             }
           },
+          "429": {
+            "description": "RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable.",
+            "headers": {
+              "Retry-After": {
+                "description": "Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "Cache-Control": {
+                "description": "El rechazo por cuota no se almacena en cachés compartidas.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                    "requestId": "10000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "description": "Error interno sin detalles privados.",
             "content": {
@@ -809,18 +936,894 @@
           "Obras publicadas"
         ]
       }
+    },
+    "/api/v1/territorios/pba/partidos": {
+      "get": {
+        "description": "Lectura anónima e independiente del catálogo de obras. Devuelve los 135 partidos y sus UUID propios fijados en pba-partidos@1, códigos INDEC de departamento de cinco dígitos y GeoRef de municipio de seis dígitos con ceros conservados, procedencia, atribución y fecha de consulta. equivalenciasPbaMunicipio conserva pares exactos código/nombre comprobados en 95 partidos del CSV escolar auditado; los otros 40 conservan arrays vacíos. equivalenciasNacion conserva solamente el par histórico provincia/departamento de Vicente López. Las equivalencias no acreditan gestión municipal ni ubicación espacial. No incluye geometrías, conteos de obras ni frescura de fuentes de obras; limites indica disponibilidad y versión de una capa visual independiente. No admite parámetros de consulta ni requiere sesión, permisos administrativos, Origin o CSRF.",
+        "operationId": "TerritoriesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Padrón completo de 135 partidos sin paginación; versión nominal independiente de catalogoVersion de obras.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPartyCatalogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Parámetros de consulta no admitidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable.",
+            "headers": {
+              "Retry-After": {
+                "description": "Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "Cache-Control": {
+                "description": "El rechazo por cuota no se almacena en cachés compartidas.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                    "requestId": "10000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno sin detalles privados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar el padrón de los 135 partidos de Buenos Aires",
+        "tags": [
+          "Territorios"
+        ]
+      }
+    },
+    "/api/v1/territorios/pba/partidos/limites": {
+      "get": {
+        "description": "Lectura anónima del derivado GeoRef simplificado conjuntamente para visualización. FeatureCollection de 135 MultiPolygon WGS84 [longitud,latitud], vinculados explícitamente a UUID del padrón. DISPLAY_ONLY: no usar para asignar obras, medir áreas, resolver límites jurídicos o verificar ubicaciones. Conserva fuente, licencia CC BY 4.0, corte abril de 2026, modificaciones y límites de la validación topológica. Presupuesto independiente de 1,5 MiB y 100.000 posiciones; no modifica las consultas o presupuestos de obras. version fija una distribución inmutable; sin ella consulta la actual con caché corta. If-None-Match concordante responde 304 sin cuerpo. Una ausencia o falla de integridad responde 503 recuperable sin afectar la consulta de obras. No requiere sesión, Origin o CSRF.",
+        "operationId": "TerritoriesController_limits",
+        "parameters": [
+          {
+            "name": "version",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^pba-partidos-limites@[1-9][0-9]*$"
+            },
+            "description": "Versión exacta publicada en limites.version del padrón. Una versión no instalada responde 404; el nombre nunca controla una ruta de archivo."
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "ETag de una respuesta anterior; permite revalidación y 304 sin cuerpo.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "FeatureCollection completa sin paginación, con bytes exactos verificados frente al manifiesto.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPartyBoundaryFeatureCollection"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "SHA-256 de los bytes exactos de la distribución."
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "public,max-age=31536000,immutable con versión explícita; public,max-age=3600,must-revalidate para la distribución actual."
+              }
+            }
+          },
+          "304": {
+            "description": "La distribución coincide con If-None-Match; respuesta sin cuerpo.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "BOUNDARY_VERSION_NOT_FOUND: versión no instalada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Parámetros de consulta no admitidos o versión mal formada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable.",
+            "headers": {
+              "Retry-After": {
+                "description": "Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "Cache-Control": {
+                "description": "El rechazo por cuota no se almacena en cachés compartidas.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                    "requestId": "10000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno sin detalles privados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "BOUNDARIES_UNAVAILABLE: asset ausente o integridad/presupuesto no válido; reintentar sin perder la consulta de obras.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar la capa visual de límites de los 135 partidos PBA",
+        "tags": [
+          "Territorios"
+        ]
+      }
     }
   },
   "info": {
     "title": "Obras Transparentes — contrato público",
     "description": "Contrato de lectura anónima. Los ejemplos son sintéticos y no representan publicaciones reales.",
-    "version": "0.6.1",
+    "version": "0.9.0",
     "contact": {}
   },
   "tags": [],
   "servers": [],
   "components": {
     "schemas": {
+      "PublicPartyBoundaryFeatureCollection": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "FeatureCollection"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "string",
+                "enum": [
+                  "pba-partidos-limites@1"
+                ]
+              },
+              "consultadoEn": {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              },
+              "fuente": {
+                "type": "object",
+                "properties": {
+                  "nombre": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "version": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "generadoEn": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "licencia": {
+                    "type": "object",
+                    "properties": {
+                      "nombre": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    },
+                    "required": [
+                      "nombre",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "nombre",
+                  "url",
+                  "version",
+                  "generadoEn",
+                  "sha256",
+                  "licencia"
+                ],
+                "additionalProperties": false
+              },
+              "uso": {
+                "type": "string",
+                "enum": [
+                  "DISPLAY_ONLY"
+                ]
+              },
+              "bbox": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": -180,
+                      "maximum": 180
+                    },
+                    {
+                      "type": "number",
+                      "minimum": -90,
+                      "maximum": 90
+                    },
+                    {
+                      "type": "number",
+                      "minimum": -180,
+                      "maximum": 180
+                    },
+                    {
+                      "type": "number",
+                      "minimum": -90,
+                      "maximum": 90
+                    }
+                  ]
+                },
+                "minItems": 4,
+                "maxItems": 4
+              },
+              "atribucion": {
+                "type": "string",
+                "minLength": 1
+              },
+              "transformacion": {
+                "type": "object",
+                "properties": {
+                  "metodo": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "toleranciaMetros": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "precisionDecimales": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 15
+                  },
+                  "advertencia": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "metodo",
+                  "toleranciaMetros",
+                  "precisionDecimales",
+                  "advertencia"
+                ],
+                "additionalProperties": false
+              },
+              "validacion": {
+                "type": "object",
+                "properties": {
+                  "features": {
+                    "type": "number",
+                    "enum": [
+                      135
+                    ]
+                  },
+                  "posiciones": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 100000
+                  },
+                  "geometriasValidas": {
+                    "type": "number",
+                    "enum": [
+                      135
+                    ]
+                  },
+                  "coberturaValida": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "advertencia": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "features",
+                  "posiciones",
+                  "geometriasValidas",
+                  "coberturaValida",
+                  "advertencia"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "consultadoEn",
+              "fuente",
+              "uso",
+              "bbox",
+              "atribucion",
+              "transformacion",
+              "validacion"
+            ],
+            "additionalProperties": false
+          },
+          "features": {
+            "minItems": 135,
+            "maxItems": 135,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "Feature"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "properties": {
+                  "type": "object",
+                  "properties": {
+                    "partidoId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "nombre": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "indecDepartamento": {
+                      "type": "string",
+                      "pattern": "^06[0-9]{3}$"
+                    }
+                  },
+                  "required": [
+                    "partidoId",
+                    "nombre",
+                    "indecDepartamento"
+                  ],
+                  "additionalProperties": false
+                },
+                "geometry": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "MultiPolygon"
+                      ]
+                    },
+                    "coordinates": {
+                      "minItems": 1,
+                      "maxItems": 1000,
+                      "type": "array",
+                      "items": {
+                        "minItems": 1,
+                        "maxItems": 1000,
+                        "type": "array",
+                        "items": {
+                          "minItems": 4,
+                          "maxItems": 100000,
+                          "type": "array",
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "number",
+                                  "minimum": -180,
+                                  "maximum": 180
+                                },
+                                {
+                                  "type": "number",
+                                  "minimum": -90,
+                                  "maximum": 90
+                                }
+                              ]
+                            },
+                            "minItems": 2,
+                            "maxItems": 2
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "coordinates"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "type",
+                "id",
+                "properties",
+                "geometry"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "type",
+          "metadata",
+          "features"
+        ],
+        "additionalProperties": false
+      },
+      "PublicPartyCatalogResponse": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "enum": [
+              "pba-partidos@1"
+            ]
+          },
+          "consultadoEn": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "provincia": {
+            "type": "object",
+            "properties": {
+              "codigo": {
+                "type": "string",
+                "enum": [
+                  "06"
+                ]
+              },
+              "nombre": {
+                "type": "string",
+                "enum": [
+                  "Buenos Aires"
+                ]
+              }
+            },
+            "required": [
+              "codigo",
+              "nombre"
+            ],
+            "additionalProperties": false
+          },
+          "fuentes": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "nombre": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "licencia": {
+                  "type": "object",
+                  "properties": {
+                    "nombre": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "nombre",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "nombre",
+                "url",
+                "licencia"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "equivalencias": {
+            "type": "object",
+            "properties": {
+              "nombre": {
+                "type": "string",
+                "minLength": 1
+              },
+              "licencia": {
+                "type": "object",
+                "properties": {
+                  "nombre": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "nombre",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              "version": {
+                "type": "string",
+                "enum": [
+                  "pba-edificios-partidos@1"
+                ]
+              },
+              "consultadoEn": {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "registros": {
+                "type": "number",
+                "enum": [
+                  324
+                ]
+              },
+              "partidos": {
+                "type": "number",
+                "enum": [
+                  95
+                ]
+              }
+            },
+            "required": [
+              "nombre",
+              "licencia",
+              "version",
+              "consultadoEn",
+              "url",
+              "sha256",
+              "registros",
+              "partidos"
+            ],
+            "additionalProperties": false
+          },
+          "limites": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "estado": {
+                    "type": "string",
+                    "enum": [
+                      "PENDING_LICENSE_AND_VALIDATION"
+                    ]
+                  },
+                  "version": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "estado",
+                  "version"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "estado": {
+                    "type": "string",
+                    "enum": [
+                      "VALIDATED_FOR_DISPLAY"
+                    ]
+                  },
+                  "version": {
+                    "type": "string",
+                    "enum": [
+                      "pba-partidos-limites@1"
+                    ]
+                  },
+                  "url": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uso": {
+                    "type": "string",
+                    "enum": [
+                      "DISPLAY_ONLY"
+                    ]
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "bytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 9007199254740991
+                  },
+                  "posiciones": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "estado",
+                  "version",
+                  "url",
+                  "uso",
+                  "sha256",
+                  "bytes",
+                  "posiciones"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "items": {
+            "minItems": 135,
+            "maxItems": 135,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partidoId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "nombre": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "codigos": {
+                  "type": "object",
+                  "properties": {
+                    "indecDepartamento": {
+                      "type": "string",
+                      "pattern": "^06[0-9]{3}$"
+                    },
+                    "georefMunicipio": {
+                      "type": "string",
+                      "pattern": "^060[0-9]{3}$"
+                    }
+                  },
+                  "required": [
+                    "indecDepartamento",
+                    "georefMunicipio"
+                  ],
+                  "additionalProperties": false
+                },
+                "equivalenciasPbaMunicipio": {
+                  "maxItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "codigo": {
+                        "type": "string",
+                        "pattern": "^06[0-9]{3}$"
+                      },
+                      "nombre": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "codigo",
+                      "nombre"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "equivalenciasNacion": {
+                  "maxItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "provinciaCodigo": {
+                        "type": "string",
+                        "enum": [
+                          "BUENOS_AIRES"
+                        ]
+                      },
+                      "departamentoCodigo": {
+                        "type": "string",
+                        "enum": [
+                          "VICENTE_LOPEZ"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "provinciaCodigo",
+                      "departamentoCodigo"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "partidoId",
+                "nombre",
+                "codigos",
+                "equivalenciasPbaMunicipio",
+                "equivalenciasNacion"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "version",
+          "consultadoEn",
+          "provincia",
+          "fuentes",
+          "equivalencias",
+          "limites",
+          "items"
+        ],
+        "additionalProperties": false
+      },
       "PublicWorkSummary": {
         "type": "object",
         "properties": {
@@ -895,6 +1898,7 @@
                   "type": "string",
                   "enum": [
                     "pba.municipio",
+                    "indec.departamento",
                     "nacion.provincia",
                     "nacion.departamento"
                   ]
@@ -1103,6 +2107,7 @@
                   "type": "string",
                   "enum": [
                     "pba.municipio",
+                    "indec.departamento",
                     "nacion.provincia",
                     "nacion.departamento"
                   ]
@@ -3354,6 +4359,42 @@
               "requestId": {
                 "nullable": true,
                 "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "requestId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "RateLimitedError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "RATE_LIMITED"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "requestId": {
+                "nullable": true,
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               }
             },
             "required": [

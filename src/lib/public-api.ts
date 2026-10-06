@@ -1,11 +1,13 @@
 /** @file Cliente exclusivo del servidor con timeout, presupuesto de bytes y respuestas de catálogo sin caché. */
 import "server-only";
 import { createPublicApi, PublicApiError } from "../api/client";
+import { MAX_PARTY_CATALOG_BYTES } from "./party-catalog";
+import { MAX_PARTY_BOUNDARY_BYTES } from "./party-boundaries";
 
 // The existing contract validator stays on the server, outside the mobile bundle.
 const MAX_BYTES = 2 * 1024 * 1024;
 /**
- * Crea el cliente público de servidor con 8 segundos por lectura y máximo de 2 MiB por respuesta.
+ * Crea el cliente de obras con 8 segundos/2 MiB y la nómina territorial con 5 segundos/128 KiB por lectura.
  * @returns Cliente con validación de contrato, cancelación combinada y política no-store.
  * @throws PublicApiError Si una respuesta excede el presupuesto de bytes.
  */
@@ -13,7 +15,10 @@ export function publicApi() {
   return createPublicApi({
     baseUrl: process.env.PUBLIC_API_URL ?? "http://127.0.0.1:3000/api/v1",
     fetch: async (input, init) => {
-      const timeout = AbortSignal.timeout(8000);
+      const partyCatalog = String(input).endsWith("/territorios/pba/partidos");
+      const partyBoundaries = String(input).includes("/territorios/pba/partidos/limites?");
+      const maxBytes = partyCatalog ? MAX_PARTY_CATALOG_BYTES : partyBoundaries ? MAX_PARTY_BOUNDARY_BYTES : MAX_BYTES;
+      const timeout = AbortSignal.timeout(partyCatalog ? 5000 : 8000);
       const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
       const response = await fetch(input, { ...init, cache: "no-store", signal });
       const reader = response.body?.getReader();
@@ -25,9 +30,9 @@ export function publicApi() {
           const { value, done } = await reader.read();
           if (done) break;
           size += value.byteLength;
-          if (size > MAX_BYTES) {
+          if (size > maxBytes) {
             await reader.cancel();
-            throw new PublicApiError(413, { code: "RESPONSE_BUDGET", message: "El área contiene demasiados datos; acercá el mapa o ajustá los filtros.", requestId: null });
+            throw new PublicApiError(413, { code: "RESPONSE_BUDGET", message: partyCatalog || partyBoundaries ? "No se pudo cargar la referencia territorial dentro del límite de lectura." : "El área contiene demasiados datos; acercá el mapa o ajustá los filtros.", requestId: null });
           }
           chunks.push(value);
         }

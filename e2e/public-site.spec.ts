@@ -13,7 +13,7 @@ test.beforeEach(async ({ page }) => {
   await isolateMapNetwork(page);
 });
 
-test("landing, lista y ficha son accesibles y tienen HTML indexable", async ({ page, request }) => {
+test("landing, lista y ficha son accesibles y entregan HTML inicial sin indexar el entorno local", async ({ page, request }) => {
   const fontRequests: string[] = [];
   const loadedFonts = new Set<string>();
   page.on("request", request => { if (request.resourceType() === "font") fontRequests.push(request.url()); });
@@ -36,13 +36,35 @@ test("landing, lista y ficha son accesibles y tienen HTML indexable", async ({ p
   const response = await request.get(detailHref);
   const html = await response.text();
   expect(html).toContain(firstName);
-  expect(html).toContain('rel="canonical"');
-  expect(html).toContain("og:title");
+  expect(html).toContain('name="robots" content="noindex, follow"');
+  expect(html).not.toContain('rel="canonical"');
+  expect(html).not.toContain("og:title");
   expect(fontRequests.length).toBeGreaterThan(0);
   for (const url of fontRequests) {
     expect(new URL(url).origin).toBe(new URL(page.url()).origin);
     expect(loadedFonts.has(url)).toBe(true);
   }
+});
+
+test("SEO local no anuncia sitemap y el favicon reutiliza el símbolo de la cabecera", async ({ page, request }) => {
+  await page.goto("/");
+  const iconHref = await page.locator('link[rel="icon"]').getAttribute("href");
+  expect(iconHref).toBeTruthy();
+  const icon = await request.get(iconHref!);
+  expect(icon.ok()).toBe(true);
+  expect(icon.headers()["content-type"]).toContain("image/svg+xml");
+  const svg = await icon.text();
+  expect(Buffer.byteLength(svg)).toBeLessThan(1000);
+  const headerPaths = await page.locator(".brand-symbol svg path").evaluateAll(paths => paths.map(path => path.getAttribute("d")));
+  for (const path of headerPaths) expect(svg).toContain(`d="${path}"`);
+  const robotResponse = await request.get("/robots.txt");
+  expect(robotResponse.ok()).toBe(true);
+  const robotText = await robotResponse.text();
+  expect(robotText).toContain("Disallow: /");
+  expect(robotText).not.toContain("Sitemap:");
+  const sitemapResponse = await request.get("/sitemap.xml");
+  expect(sitemapResponse.status()).toBe(404);
+  expect(sitemapResponse.headers()["x-robots-tag"]).toBe("noindex");
 });
 
 test("lista pagina sin duplicar obras y abre/cierra resumen con foco", async ({ page }) => {

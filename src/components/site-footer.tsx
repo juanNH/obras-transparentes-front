@@ -14,6 +14,8 @@ export function SiteFooter() {
           <Link href="/mapa" prefetch={false}>Explorar obras</Link>
           <Link href="/proyecto">El proyecto</Link>
           <Link href="/#fuentes">Sobre los datos</Link>
+          <Link href="/privacidad">Privacidad</Link>
+          <Link href="/terminos">Términos de uso</Link>
         </nav>
       </div>
       <div className="container footer-note">

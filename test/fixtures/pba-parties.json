@@ -1,0 +1,1880 @@
+{
+  "version": "pba-partidos@1",
+  "consultadoEn": "2026-10-06",
+  "provincia": {
+    "codigo": "06",
+    "nombre": "Buenos Aires"
+  },
+  "fuentes": [
+    {
+      "nombre": "Servicio de Normalización de Datos Geográficos de Argentina (GeoRef)",
+      "url": "https://apis.datos.gob.ar/georef/api/departamentos?provincia=06&max=150&orden=nombre",
+      "licencia": {
+        "nombre": "Creative Commons Atribución 4.0 Internacional (CC BY 4.0)",
+        "url": "https://www.argentina.gob.ar/georef/condiciones-de-uso-y-licencia"
+      }
+    },
+    {
+      "nombre": "Servicio de Normalización de Datos Geográficos de Argentina (GeoRef)",
+      "url": "https://apis.datos.gob.ar/georef/api/municipios?provincia=06&max=150&orden=nombre",
+      "licencia": {
+        "nombre": "Creative Commons Atribución 4.0 Internacional (CC BY 4.0)",
+        "url": "https://www.argentina.gob.ar/georef/condiciones-de-uso-y-licencia"
+      }
+    }
+  ],
+  "equivalencias": {
+    "nombre": "Dirección General de Cultura y Educación PBA — Nuevos edificios escolares",
+    "licencia": {
+      "nombre": "Creative Commons Atribución 4.0 Internacional (CC BY 4.0)",
+      "url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "version": "pba-edificios-partidos@1",
+    "consultadoEn": "2026-10-06",
+    "url": "https://catalogo.datos.gba.gob.ar/dataset/50d50dc6-81f1-4992-a97f-9332ac3974d8/resource/55f3c44e-9739-4d66-bbaa-28ba5c1bbffa/download/nuevos-edificios-28092026.csv",
+    "sha256": "4c6d71b3cd67464c49046dc08f3ffb3d38c2be237e2b1f3d9f0957bfa0b524ca",
+    "registros": 324,
+    "partidos": 95
+  },
+  "limites": {
+    "estado": "VALIDATED_FOR_DISPLAY",
+    "version": "pba-partidos-limites@1",
+    "url": "/api/v1/territorios/pba/partidos/limites?version=pba-partidos-limites%401",
+    "uso": "DISPLAY_ONLY",
+    "sha256": "e57052221b80e709c8199adf2672dbf432a5618f2014466af129317bc5a61920",
+    "bytes": 1462641,
+    "posiciones": 55842
+  },
+  "items": [
+    {
+      "partidoId": "8a01dfdb-ffc8-404f-8aec-aba26c1e9d2b",
+      "nombre": "25 de Mayo",
+      "codigos": {
+        "indecDepartamento": "06854",
+        "georefMunicipio": "060854"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06854",
+          "nombre": "25 de Mayo"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "8d20cdf5-0d3c-4213-beb9-daf330ecfd74",
+      "nombre": "9 de Julio",
+      "codigos": {
+        "indecDepartamento": "06588",
+        "georefMunicipio": "060588"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06588",
+          "nombre": "9 de Julio"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "3b1d7e0e-e356-43a4-8ded-c13b2d215db9",
+      "nombre": "Adolfo Alsina",
+      "codigos": {
+        "indecDepartamento": "06007",
+        "georefMunicipio": "060007"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06007",
+          "nombre": "Adolfo Alsina"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "013408ed-f3ac-4d39-9962-5440597e7771",
+      "nombre": "Adolfo Gonzales Chaves",
+      "codigos": {
+        "indecDepartamento": "06014",
+        "georefMunicipio": "060014"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06014",
+          "nombre": "Adolfo Gonzales Chaves"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "c04c79d7-8c3b-4345-acd0-a961a6326aec",
+      "nombre": "Alberti",
+      "codigos": {
+        "indecDepartamento": "06021",
+        "georefMunicipio": "060021"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06021",
+          "nombre": "Alberti"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "4a7ae357-c09d-47c7-ba8a-d806e983e057",
+      "nombre": "Almirante Brown",
+      "codigos": {
+        "indecDepartamento": "06028",
+        "georefMunicipio": "060028"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06028",
+          "nombre": "Almirante Brown"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "a099bba3-f176-4158-a260-79fceff9e9ab",
+      "nombre": "Arrecifes",
+      "codigos": {
+        "indecDepartamento": "06077",
+        "georefMunicipio": "060077"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "03238f34-e501-4f28-a0d4-71b5cac02169",
+      "nombre": "Avellaneda",
+      "codigos": {
+        "indecDepartamento": "06035",
+        "georefMunicipio": "060035"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06035",
+          "nombre": "Avellaneda"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "eb6dcf88-65ce-4459-aba2-11f4b82ff1b6",
+      "nombre": "Ayacucho",
+      "codigos": {
+        "indecDepartamento": "06042",
+        "georefMunicipio": "060042"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "7f45671d-4243-4b20-8152-de1f80696215",
+      "nombre": "Azul",
+      "codigos": {
+        "indecDepartamento": "06049",
+        "georefMunicipio": "060049"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "4f793644-be59-42c0-9667-e6db71f1bff6",
+      "nombre": "Bahía Blanca",
+      "codigos": {
+        "indecDepartamento": "06056",
+        "georefMunicipio": "060056"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06056",
+          "nombre": "Bahía Blanca"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "6e96a640-9139-4a47-bb9e-7fdbc65681c4",
+      "nombre": "Balcarce",
+      "codigos": {
+        "indecDepartamento": "06063",
+        "georefMunicipio": "060063"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "fb7e600e-a8f7-483a-9e9a-0f714789b975",
+      "nombre": "Baradero",
+      "codigos": {
+        "indecDepartamento": "06070",
+        "georefMunicipio": "060070"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "cacee4a9-1beb-4f38-be29-31eb53832a48",
+      "nombre": "Benito Juárez",
+      "codigos": {
+        "indecDepartamento": "06084",
+        "georefMunicipio": "060084"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "e7087257-1611-4eeb-bd83-b5c959cebf58",
+      "nombre": "Berazategui",
+      "codigos": {
+        "indecDepartamento": "06091",
+        "georefMunicipio": "060091"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06091",
+          "nombre": "Berazategui"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "9d4dc4ee-9b5c-434b-9609-33716b9a10f4",
+      "nombre": "Berisso",
+      "codigos": {
+        "indecDepartamento": "06098",
+        "georefMunicipio": "060098"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06098",
+          "nombre": "Berisso"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "11eef490-4f1f-4495-bf61-aa233b9b2a2c",
+      "nombre": "Bolívar",
+      "codigos": {
+        "indecDepartamento": "06105",
+        "georefMunicipio": "060105"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06105",
+          "nombre": "Bolívar"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "36f65c58-01f7-49a8-8262-79e4f4be0fb5",
+      "nombre": "Bragado",
+      "codigos": {
+        "indecDepartamento": "06112",
+        "georefMunicipio": "060112"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06112",
+          "nombre": "Bragado"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "b6d2da9d-9792-48fa-9495-8ff94462ff91",
+      "nombre": "Brandsen",
+      "codigos": {
+        "indecDepartamento": "06119",
+        "georefMunicipio": "060119"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "ea813711-cf6f-4adf-8125-27f1cbbba3cb",
+      "nombre": "Campana",
+      "codigos": {
+        "indecDepartamento": "06126",
+        "georefMunicipio": "060126"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06126",
+          "nombre": "Campana"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "d3e894da-8a75-492a-851f-6b30c63f7705",
+      "nombre": "Cañuelas",
+      "codigos": {
+        "indecDepartamento": "06134",
+        "georefMunicipio": "060134"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06134",
+          "nombre": "Cañuelas"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "f4792e1c-31ac-44e5-b9fd-b8ea064ccfd6",
+      "nombre": "Capitán Sarmiento",
+      "codigos": {
+        "indecDepartamento": "06140",
+        "georefMunicipio": "060140"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "ced4136f-5df1-439f-ae0e-0dfec942f90a",
+      "nombre": "Carlos Casares",
+      "codigos": {
+        "indecDepartamento": "06147",
+        "georefMunicipio": "060147"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06147",
+          "nombre": "Carlos Casares"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "e47ebdf9-03a5-4fd9-a08a-ae71c8a07110",
+      "nombre": "Carlos Tejedor",
+      "codigos": {
+        "indecDepartamento": "06154",
+        "georefMunicipio": "060154"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06154",
+          "nombre": "Carlos Tejedor"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "392a6009-bced-44fc-9787-97c8d5fa0145",
+      "nombre": "Carmen de Areco",
+      "codigos": {
+        "indecDepartamento": "06161",
+        "georefMunicipio": "060161"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06161",
+          "nombre": "Carmen de Areco"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "22931f5c-504b-4492-9fc1-97dc18a6f709",
+      "nombre": "Castelli",
+      "codigos": {
+        "indecDepartamento": "06168",
+        "georefMunicipio": "060168"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06168",
+          "nombre": "Castelli"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "890a8516-8c6e-4df7-a736-97bc0ffafe30",
+      "nombre": "Chacabuco",
+      "codigos": {
+        "indecDepartamento": "06210",
+        "georefMunicipio": "060210"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06210",
+          "nombre": "Chacabuco"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "3e32773a-05b7-45db-a11f-558d5503bf2a",
+      "nombre": "Chascomús",
+      "codigos": {
+        "indecDepartamento": "06218",
+        "georefMunicipio": "060218"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06218",
+          "nombre": "Chascomús"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "c6f16781-fa7e-401b-b8b1-596b4baed0c6",
+      "nombre": "Chivilcoy",
+      "codigos": {
+        "indecDepartamento": "06224",
+        "georefMunicipio": "060224"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06224",
+          "nombre": "Chivilcoy"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "26adf85b-923a-4437-939c-7efe9149f8d2",
+      "nombre": "Colón",
+      "codigos": {
+        "indecDepartamento": "06175",
+        "georefMunicipio": "060175"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06175",
+          "nombre": "Colón"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "4ac0f14d-07cf-4277-9241-8d70912cd0ff",
+      "nombre": "Coronel de Marina Leonardo Rosales",
+      "codigos": {
+        "indecDepartamento": "06182",
+        "georefMunicipio": "060182"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "6de03d23-a8f2-4c3f-a4a3-ea8345fd2887",
+      "nombre": "Coronel Dorrego",
+      "codigos": {
+        "indecDepartamento": "06189",
+        "georefMunicipio": "060189"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "1f74ae7d-b603-49f8-ad1d-41338cc2e1ae",
+      "nombre": "Coronel Pringles",
+      "codigos": {
+        "indecDepartamento": "06196",
+        "georefMunicipio": "060196"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06196",
+          "nombre": "Coronel Pringles"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "fa1a1d8c-ca9e-4ee2-ba87-b28f0d931704",
+      "nombre": "Coronel Suárez",
+      "codigos": {
+        "indecDepartamento": "06203",
+        "georefMunicipio": "060203"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06203",
+          "nombre": "Coronel Suárez"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "0e7eb322-87e4-40c7-8d5d-96019836c7b2",
+      "nombre": "Daireaux",
+      "codigos": {
+        "indecDepartamento": "06231",
+        "georefMunicipio": "060231"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "37a7ac55-adc1-415b-852f-d28e73f72d57",
+      "nombre": "Dolores",
+      "codigos": {
+        "indecDepartamento": "06238",
+        "georefMunicipio": "060238"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "4300996c-2d68-4718-9580-7cf4085b48e9",
+      "nombre": "Ensenada",
+      "codigos": {
+        "indecDepartamento": "06245",
+        "georefMunicipio": "060245"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06245",
+          "nombre": "Ensenada"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "2cc4adbf-3549-4b4c-a11b-2966b7d2c608",
+      "nombre": "Escobar",
+      "codigos": {
+        "indecDepartamento": "06252",
+        "georefMunicipio": "060252"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06252",
+          "nombre": "Escobar"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "e7e2ec23-2c2c-4bb7-8d79-dccb674ced0b",
+      "nombre": "Esteban Echeverría",
+      "codigos": {
+        "indecDepartamento": "06260",
+        "georefMunicipio": "060260"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06260",
+          "nombre": "Esteban Echeverría"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "43fa1494-a37b-42dd-9a1d-e068327748f6",
+      "nombre": "Exaltación de la Cruz",
+      "codigos": {
+        "indecDepartamento": "06266",
+        "georefMunicipio": "060266"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06266",
+          "nombre": "Exaltación de la Cruz"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "df7fa614-27d3-4772-9f26-4716df79856a",
+      "nombre": "Ezeiza",
+      "codigos": {
+        "indecDepartamento": "06270",
+        "georefMunicipio": "060270"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06270",
+          "nombre": "Ezeiza"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "c77e6240-b187-40ef-8144-564394221712",
+      "nombre": "Florencio Varela",
+      "codigos": {
+        "indecDepartamento": "06274",
+        "georefMunicipio": "060274"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06274",
+          "nombre": "Florencio Varela"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "8088cf14-130e-4fab-989a-e7e38bb96564",
+      "nombre": "Florentino Ameghino",
+      "codigos": {
+        "indecDepartamento": "06277",
+        "georefMunicipio": "060277"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06277",
+          "nombre": "Florentino Ameghino"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "40129891-4486-4844-80a6-c7382349fd69",
+      "nombre": "General Alvarado",
+      "codigos": {
+        "indecDepartamento": "06280",
+        "georefMunicipio": "060280"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06280",
+          "nombre": "General Alvarado"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "97ea98a9-17af-4652-ad09-37372faa88d0",
+      "nombre": "General Alvear",
+      "codigos": {
+        "indecDepartamento": "06287",
+        "georefMunicipio": "060287"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06287",
+          "nombre": "General Alvear"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "936c9fa6-a58a-47ff-b858-594095e47ef3",
+      "nombre": "General Arenales",
+      "codigos": {
+        "indecDepartamento": "06294",
+        "georefMunicipio": "060294"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "8db5dd0c-7f92-400c-80fb-4f5821b57f33",
+      "nombre": "General Belgrano",
+      "codigos": {
+        "indecDepartamento": "06301",
+        "georefMunicipio": "060301"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06301",
+          "nombre": "General Belgrano"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "a5cb4781-69e7-440e-8f20-ac484a149eb4",
+      "nombre": "General Guido",
+      "codigos": {
+        "indecDepartamento": "06308",
+        "georefMunicipio": "060308"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "61f35235-cd3e-49e1-9cb0-c20530e40bdb",
+      "nombre": "General Juan Madariaga",
+      "codigos": {
+        "indecDepartamento": "06315",
+        "georefMunicipio": "060315"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06315",
+          "nombre": "General Juan Madariaga"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "44a5fd1b-4b5d-45d7-9670-f7275b523511",
+      "nombre": "General La Madrid",
+      "codigos": {
+        "indecDepartamento": "06322",
+        "georefMunicipio": "060322"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06322",
+          "nombre": "General La Madrid"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "b5834f31-2ac7-48fc-b190-1b89b1e67911",
+      "nombre": "General Las Heras",
+      "codigos": {
+        "indecDepartamento": "06329",
+        "georefMunicipio": "060329"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "c494c8df-2666-42bf-9d42-17ddfa24302e",
+      "nombre": "General Lavalle",
+      "codigos": {
+        "indecDepartamento": "06336",
+        "georefMunicipio": "060336"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "eea2071c-98cf-4dfe-b76f-e8845f506925",
+      "nombre": "General Paz",
+      "codigos": {
+        "indecDepartamento": "06343",
+        "georefMunicipio": "060343"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06343",
+          "nombre": "General Paz"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "d32f0cb2-032f-4c95-bc89-27ef02a4e0fe",
+      "nombre": "General Pinto",
+      "codigos": {
+        "indecDepartamento": "06351",
+        "georefMunicipio": "060351"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06351",
+          "nombre": "General Pinto"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "09ce694a-a799-4ad2-886b-d08324a8240f",
+      "nombre": "General Pueyrredón",
+      "codigos": {
+        "indecDepartamento": "06357",
+        "georefMunicipio": "060357"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06357",
+          "nombre": "General Pueyrredón"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "ef41113a-38ae-43ee-99b2-5b26a455a150",
+      "nombre": "General Rodríguez",
+      "codigos": {
+        "indecDepartamento": "06364",
+        "georefMunicipio": "060364"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06364",
+          "nombre": "General Rodríguez"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "e717d038-8528-4f77-87cc-19747e0eb854",
+      "nombre": "General San Martín",
+      "codigos": {
+        "indecDepartamento": "06371",
+        "georefMunicipio": "060371"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06371",
+          "nombre": "General San Martín"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "4891ada4-0906-4a98-bad7-ad0d53221da6",
+      "nombre": "General Viamonte",
+      "codigos": {
+        "indecDepartamento": "06385",
+        "georefMunicipio": "060385"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06385",
+          "nombre": "General Viamonte"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "e9060a96-6a92-4eef-bc02-3861f16d425a",
+      "nombre": "General Villegas",
+      "codigos": {
+        "indecDepartamento": "06392",
+        "georefMunicipio": "060392"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06392",
+          "nombre": "General Villegas"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "7ac647ba-3d68-4c40-b8e3-5a7675b2f0db",
+      "nombre": "Guaminí",
+      "codigos": {
+        "indecDepartamento": "06399",
+        "georefMunicipio": "060399"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "bd036b38-505c-497f-8a97-fbea9905c76c",
+      "nombre": "Hipólito Yrigoyen",
+      "codigos": {
+        "indecDepartamento": "06406",
+        "georefMunicipio": "060406"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "b6f4ff03-b562-4163-9d0b-fa098a85553b",
+      "nombre": "Hurlingham",
+      "codigos": {
+        "indecDepartamento": "06408",
+        "georefMunicipio": "060408"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06408",
+          "nombre": "Hurlingham"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "f72edce8-cef3-4985-bb33-e8722996ab0e",
+      "nombre": "Ituzaingó",
+      "codigos": {
+        "indecDepartamento": "06410",
+        "georefMunicipio": "060410"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06410",
+          "nombre": "Ituzaingó"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "6fa47593-8216-43a2-9101-b77aeb4c7a61",
+      "nombre": "José C. Paz",
+      "codigos": {
+        "indecDepartamento": "06412",
+        "georefMunicipio": "060412"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06412",
+          "nombre": "José C. Paz"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "0f0c6f04-6148-45e7-a6ff-184a1414c336",
+      "nombre": "Junín",
+      "codigos": {
+        "indecDepartamento": "06413",
+        "georefMunicipio": "060413"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "954f7400-30d8-4727-892a-2b44c809d8ef",
+      "nombre": "La Costa",
+      "codigos": {
+        "indecDepartamento": "06420",
+        "georefMunicipio": "060420"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06420",
+          "nombre": "La Costa"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "cc99cb2f-9981-4878-abbc-18cc1d9fd84c",
+      "nombre": "La Matanza",
+      "codigos": {
+        "indecDepartamento": "06427",
+        "georefMunicipio": "060427"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06427",
+          "nombre": "La Matanza"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "390d5131-c184-4394-8978-82b7332b6eed",
+      "nombre": "La Plata",
+      "codigos": {
+        "indecDepartamento": "06441",
+        "georefMunicipio": "060441"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06441",
+          "nombre": "La Plata"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "e27d5ea4-9f2f-4a18-8dc5-a943d0dab912",
+      "nombre": "Lanús",
+      "codigos": {
+        "indecDepartamento": "06434",
+        "georefMunicipio": "060434"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06434",
+          "nombre": "Lanús"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "b8efc0f0-b583-400b-a119-46ef5342d304",
+      "nombre": "Laprida",
+      "codigos": {
+        "indecDepartamento": "06448",
+        "georefMunicipio": "060448"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06448",
+          "nombre": "Laprida"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "5ec1c3a4-3a5c-466f-bc61-944f54472f45",
+      "nombre": "Las Flores",
+      "codigos": {
+        "indecDepartamento": "06455",
+        "georefMunicipio": "060455"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "5b3f4782-9c01-4350-817f-0044e376c000",
+      "nombre": "Leandro N. Alem",
+      "codigos": {
+        "indecDepartamento": "06462",
+        "georefMunicipio": "060462"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "5a71133b-de92-4edd-8a7d-467394d6ea79",
+      "nombre": "Lezama",
+      "codigos": {
+        "indecDepartamento": "06466",
+        "georefMunicipio": "060466"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06466",
+          "nombre": "Lezama"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "36550cfc-3ee9-4e9d-8547-d4032c7247d3",
+      "nombre": "Lincoln",
+      "codigos": {
+        "indecDepartamento": "06469",
+        "georefMunicipio": "060469"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "694fe089-78b4-49d0-b0b0-8d3e07e42119",
+      "nombre": "Lobería",
+      "codigos": {
+        "indecDepartamento": "06476",
+        "georefMunicipio": "060476"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06476",
+          "nombre": "Lobería"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "fe330310-94d8-44f0-8477-7643acb1e8b3",
+      "nombre": "Lobos",
+      "codigos": {
+        "indecDepartamento": "06483",
+        "georefMunicipio": "060483"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06483",
+          "nombre": "Lobos"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "80a42a88-890a-4ddf-9fb9-6ada75568480",
+      "nombre": "Lomas de Zamora",
+      "codigos": {
+        "indecDepartamento": "06490",
+        "georefMunicipio": "060490"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06490",
+          "nombre": "Lomas de Zamora"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "b57450c1-2cea-4e65-82fb-fcb6350c9ce3",
+      "nombre": "Luján",
+      "codigos": {
+        "indecDepartamento": "06497",
+        "georefMunicipio": "060497"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06497",
+          "nombre": "Luján"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "561900eb-1c82-4eca-ab44-fecc31e7d86a",
+      "nombre": "Magdalena",
+      "codigos": {
+        "indecDepartamento": "06505",
+        "georefMunicipio": "060505"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06505",
+          "nombre": "Magdalena"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "57bad501-9d0e-4695-b1c8-866e1ad19f77",
+      "nombre": "Maipú",
+      "codigos": {
+        "indecDepartamento": "06511",
+        "georefMunicipio": "060511"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "e8200368-2637-4644-8f78-859ab31f247a",
+      "nombre": "Malvinas Argentinas",
+      "codigos": {
+        "indecDepartamento": "06515",
+        "georefMunicipio": "060515"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06515",
+          "nombre": "Malvinas Argentinas"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "73da4bcb-295d-4395-98cd-ddb42c60f955",
+      "nombre": "Mar Chiquita",
+      "codigos": {
+        "indecDepartamento": "06518",
+        "georefMunicipio": "060518"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06518",
+          "nombre": "Mar Chiquita"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "1eb1463a-f6ba-40c2-9003-098aaaa5ffb5",
+      "nombre": "Marcos Paz",
+      "codigos": {
+        "indecDepartamento": "06525",
+        "georefMunicipio": "060525"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06525",
+          "nombre": "Marcos Paz"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "bb607957-4525-4830-8133-5d8c8ad740fd",
+      "nombre": "Mercedes",
+      "codigos": {
+        "indecDepartamento": "06532",
+        "georefMunicipio": "060532"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06532",
+          "nombre": "Mercedes"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "27bd6849-8cc8-4344-b4ef-7839315200d5",
+      "nombre": "Merlo",
+      "codigos": {
+        "indecDepartamento": "06539",
+        "georefMunicipio": "060539"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06539",
+          "nombre": "Merlo"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "23fbe893-b8b1-471b-a9dd-39475ef2946f",
+      "nombre": "Monte",
+      "codigos": {
+        "indecDepartamento": "06547",
+        "georefMunicipio": "060547"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06547",
+          "nombre": "Monte"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "f0ddd464-46c8-4654-88f3-9b7219907486",
+      "nombre": "Monte Hermoso",
+      "codigos": {
+        "indecDepartamento": "06553",
+        "georefMunicipio": "060553"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "324277dc-d92f-488b-937d-c5008ff362ce",
+      "nombre": "Moreno",
+      "codigos": {
+        "indecDepartamento": "06560",
+        "georefMunicipio": "060560"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06560",
+          "nombre": "Moreno"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "bfd73264-aef7-49ef-aa90-1a2250f022c7",
+      "nombre": "Morón",
+      "codigos": {
+        "indecDepartamento": "06568",
+        "georefMunicipio": "060568"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06568",
+          "nombre": "Morón"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "bbfb39a0-36a4-45a6-b41a-134f5ed7108e",
+      "nombre": "Navarro",
+      "codigos": {
+        "indecDepartamento": "06574",
+        "georefMunicipio": "060574"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "3467be3e-3352-45ee-b502-72e88bed9a7c",
+      "nombre": "Necochea",
+      "codigos": {
+        "indecDepartamento": "06581",
+        "georefMunicipio": "060581"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06581",
+          "nombre": "Necochea"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "a2772aa4-c023-440b-b3bf-9fa1c6e0ce06",
+      "nombre": "Olavarría",
+      "codigos": {
+        "indecDepartamento": "06595",
+        "georefMunicipio": "060595"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06595",
+          "nombre": "Olavarría"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "b936f991-900a-475b-b9d3-1a5ce281673a",
+      "nombre": "Patagones",
+      "codigos": {
+        "indecDepartamento": "06602",
+        "georefMunicipio": "060602"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06602",
+          "nombre": "Patagones"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "fa0b320f-c5e6-4d6e-9de2-badd1b290759",
+      "nombre": "Pehuajó",
+      "codigos": {
+        "indecDepartamento": "06609",
+        "georefMunicipio": "060609"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06609",
+          "nombre": "Pehuajó"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "4005635d-6c98-4a00-a063-4853eae4e31a",
+      "nombre": "Pellegrini",
+      "codigos": {
+        "indecDepartamento": "06616",
+        "georefMunicipio": "060616"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06616",
+          "nombre": "Pellegrini"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "e05361f2-6435-4b30-8168-2fda96dd4a54",
+      "nombre": "Pergamino",
+      "codigos": {
+        "indecDepartamento": "06623",
+        "georefMunicipio": "060623"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06623",
+          "nombre": "Pergamino"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "9761d121-2181-4793-b2e6-1c1167ee0542",
+      "nombre": "Pila",
+      "codigos": {
+        "indecDepartamento": "06630",
+        "georefMunicipio": "060630"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06630",
+          "nombre": "Pila"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "b3a1e10f-2c7f-4b45-ac60-7ba812e271af",
+      "nombre": "Pilar",
+      "codigos": {
+        "indecDepartamento": "06638",
+        "georefMunicipio": "060638"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06638",
+          "nombre": "Pilar"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "673315a9-84d5-4dd3-94b3-e0775dc78818",
+      "nombre": "Pinamar",
+      "codigos": {
+        "indecDepartamento": "06644",
+        "georefMunicipio": "060644"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "e9aeb434-0e08-4bcc-a119-1cc21611c800",
+      "nombre": "Presidente Perón",
+      "codigos": {
+        "indecDepartamento": "06648",
+        "georefMunicipio": "060648"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06648",
+          "nombre": "Presidente Perón"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "5b879f50-5f8d-4b03-a76d-07cc9aa104c6",
+      "nombre": "Puán",
+      "codigos": {
+        "indecDepartamento": "06651",
+        "georefMunicipio": "060651"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "f96b633b-4884-4d40-bd0b-5e75535022b2",
+      "nombre": "Punta Indio",
+      "codigos": {
+        "indecDepartamento": "06655",
+        "georefMunicipio": "060655"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06655",
+          "nombre": "Punta Indio"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "9cc62c35-e86a-4b6a-a0b5-7ba7954d22f9",
+      "nombre": "Quilmes",
+      "codigos": {
+        "indecDepartamento": "06658",
+        "georefMunicipio": "060658"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06658",
+          "nombre": "Quilmes"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "06698926-b2bc-4e9a-9101-b6df5972194c",
+      "nombre": "Ramallo",
+      "codigos": {
+        "indecDepartamento": "06665",
+        "georefMunicipio": "060665"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06665",
+          "nombre": "Ramallo"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "8f37c1f5-5032-4a5b-9dba-c5e62061a9c9",
+      "nombre": "Rauch",
+      "codigos": {
+        "indecDepartamento": "06672",
+        "georefMunicipio": "060672"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06672",
+          "nombre": "Rauch"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "39ff4070-dfcf-4f03-8874-4548efb952b5",
+      "nombre": "Rivadavia",
+      "codigos": {
+        "indecDepartamento": "06679",
+        "georefMunicipio": "060679"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06679",
+          "nombre": "Rivadavia"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "c7becb37-22d7-454f-beac-edf01fda97d7",
+      "nombre": "Rojas",
+      "codigos": {
+        "indecDepartamento": "06686",
+        "georefMunicipio": "060686"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "e07805bd-5fb5-4feb-a2ed-6dae1a6893a8",
+      "nombre": "Roque Pérez",
+      "codigos": {
+        "indecDepartamento": "06693",
+        "georefMunicipio": "060693"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "92aa6690-3f48-4017-bd3c-b9807706e0cf",
+      "nombre": "Saavedra",
+      "codigos": {
+        "indecDepartamento": "06700",
+        "georefMunicipio": "060700"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06700",
+          "nombre": "Saavedra"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "1a5336c0-6ce7-4cc0-8961-7d68be9c8600",
+      "nombre": "Saladillo",
+      "codigos": {
+        "indecDepartamento": "06707",
+        "georefMunicipio": "060707"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06707",
+          "nombre": "Saladillo"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "3a7c6ea2-453c-40c4-ab09-9ed8050736df",
+      "nombre": "Salliqueló",
+      "codigos": {
+        "indecDepartamento": "06721",
+        "georefMunicipio": "060721"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "6b6e9c36-026d-48b7-9f97-311fba05ecc4",
+      "nombre": "Salto",
+      "codigos": {
+        "indecDepartamento": "06714",
+        "georefMunicipio": "060714"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06714",
+          "nombre": "Salto"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "3c94d144-2fd8-4ea3-a194-e91f6cb97da0",
+      "nombre": "San Andrés de Giles",
+      "codigos": {
+        "indecDepartamento": "06728",
+        "georefMunicipio": "060728"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06728",
+          "nombre": "San Andrés de Giles"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "dfff5cbf-2baf-486c-9927-84d35286ad25",
+      "nombre": "San Antonio de Areco",
+      "codigos": {
+        "indecDepartamento": "06735",
+        "georefMunicipio": "060735"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06735",
+          "nombre": "San Antonio de Areco"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "5a14c8d6-4c8b-4d13-9448-353bdb9a5836",
+      "nombre": "San Cayetano",
+      "codigos": {
+        "indecDepartamento": "06742",
+        "georefMunicipio": "060742"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "d9132748-23fc-49fa-b17b-b80c6be117ad",
+      "nombre": "San Fernando",
+      "codigos": {
+        "indecDepartamento": "06749",
+        "georefMunicipio": "060749"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06749",
+          "nombre": "San Fernando"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "aa43f222-7cb2-4efb-8c67-8b46e625a096",
+      "nombre": "San Isidro",
+      "codigos": {
+        "indecDepartamento": "06756",
+        "georefMunicipio": "060756"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "2ae90b41-4c45-4d1f-87e7-696a0f766e22",
+      "nombre": "San Miguel",
+      "codigos": {
+        "indecDepartamento": "06760",
+        "georefMunicipio": "060760"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "14da1e52-4491-4092-ab50-2093b21db874",
+      "nombre": "San Nicolás",
+      "codigos": {
+        "indecDepartamento": "06763",
+        "georefMunicipio": "060763"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "65505fb3-1581-4898-b3d2-985e66999bf6",
+      "nombre": "San Pedro",
+      "codigos": {
+        "indecDepartamento": "06770",
+        "georefMunicipio": "060770"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06770",
+          "nombre": "San Pedro"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "59188eb6-f47b-4525-a2a3-fef3cefb6b71",
+      "nombre": "San Vicente",
+      "codigos": {
+        "indecDepartamento": "06778",
+        "georefMunicipio": "060778"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06778",
+          "nombre": "San Vicente"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "89dacd33-7212-41a1-9edb-a82112083bef",
+      "nombre": "Suipacha",
+      "codigos": {
+        "indecDepartamento": "06784",
+        "georefMunicipio": "060784"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "78c84a38-5d9a-4b15-82c9-09b33b2c3dc8",
+      "nombre": "Tandil",
+      "codigos": {
+        "indecDepartamento": "06791",
+        "georefMunicipio": "060791"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06791",
+          "nombre": "Tandil"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "dcce5782-1aa2-4c08-9601-4d92b63a0301",
+      "nombre": "Tapalqué",
+      "codigos": {
+        "indecDepartamento": "06798",
+        "georefMunicipio": "060798"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06798",
+          "nombre": "Tapalqué"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "d574ac2a-e9bc-4ac0-b08d-1d87c0b15de7",
+      "nombre": "Tigre",
+      "codigos": {
+        "indecDepartamento": "06805",
+        "georefMunicipio": "060805"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06805",
+          "nombre": "Tigre"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "c97f73fb-5665-4a86-859a-ca1894525eb3",
+      "nombre": "Tordillo",
+      "codigos": {
+        "indecDepartamento": "06812",
+        "georefMunicipio": "060812"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "ae4c3590-41cf-47eb-b682-93832898640c",
+      "nombre": "Tornquist",
+      "codigos": {
+        "indecDepartamento": "06819",
+        "georefMunicipio": "060819"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "0c903108-56b5-423e-ab5b-f12ea5b61a31",
+      "nombre": "Trenque Lauquen",
+      "codigos": {
+        "indecDepartamento": "06826",
+        "georefMunicipio": "060826"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06826",
+          "nombre": "Trenque Lauquen"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "a75a6a5d-3350-4bc3-89c6-9705ff2af622",
+      "nombre": "Tres Arroyos",
+      "codigos": {
+        "indecDepartamento": "06833",
+        "georefMunicipio": "060833"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06833",
+          "nombre": "Tres Arroyos"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "913bd1d8-535b-4749-9448-de1f8c5727c7",
+      "nombre": "Tres de Febrero",
+      "codigos": {
+        "indecDepartamento": "06840",
+        "georefMunicipio": "060840"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06840",
+          "nombre": "Tres de Febrero"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "524bb9a2-1c4b-4272-a542-f03fe89a0e0c",
+      "nombre": "Tres Lomas",
+      "codigos": {
+        "indecDepartamento": "06847",
+        "georefMunicipio": "060847"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "47eacfb5-eb79-4ef9-8bd5-77416dc9bf3f",
+      "nombre": "Vicente López",
+      "codigos": {
+        "indecDepartamento": "06861",
+        "georefMunicipio": "060861"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": [
+        {
+          "provinciaCodigo": "BUENOS_AIRES",
+          "departamentoCodigo": "VICENTE_LOPEZ"
+        }
+      ]
+    },
+    {
+      "partidoId": "6a8fd380-62b8-4cbe-aea6-47d74179f861",
+      "nombre": "Villa Gesell",
+      "codigos": {
+        "indecDepartamento": "06868",
+        "georefMunicipio": "060868"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06868",
+          "nombre": "Villa Gesell"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "d7a108c0-8a8b-4d5e-b2a0-c02484c1c7d1",
+      "nombre": "Villarino",
+      "codigos": {
+        "indecDepartamento": "06875",
+        "georefMunicipio": "060875"
+      },
+      "equivalenciasPbaMunicipio": [
+        {
+          "codigo": "06875",
+          "nombre": "Villarino"
+        }
+      ],
+      "equivalenciasNacion": []
+    },
+    {
+      "partidoId": "70cca1ca-a16a-45db-8ccf-05cb91696c22",
+      "nombre": "Zárate",
+      "codigos": {
+        "indecDepartamento": "06882",
+        "georefMunicipio": "060882"
+      },
+      "equivalenciasPbaMunicipio": [],
+      "equivalenciasNacion": []
+    }
+  ]
+}

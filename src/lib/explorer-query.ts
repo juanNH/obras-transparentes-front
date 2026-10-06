@@ -12,7 +12,7 @@ export const SOURCES = { "pba-edificios": "PBA · edificios escolares", "caba-ac
 /** Traducciones de estados informados; no se infieren del avance ni de la ausencia de datos. */
 export const STATES = { COMPLETED: "Finalizada", IN_PROGRESS: "En ejecución", OTHER_REPORTED: "Otro estado informado" } as const;
 /** Consulta de API separada de presentación y selección compartible del explorador. */
-export type ExplorerQuery = { query: ListQuery; view: "lista" | "mapa"; obra?: string; revisionId?: string; ubicacionId?: string };
+export type ExplorerQuery = { query: ListQuery; view: "lista" | "mapa"; showBoundaries?: boolean; obra?: string; revisionId?: string; ubicacionId?: string };
 /** Comprueba el formato UUID antes de incorporar una selección a ruta/consulta pública. */
 export const isUUID = (value: string) => /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
 
@@ -37,6 +37,11 @@ export function parseExplorerQuery(params: URLSearchParams): ExplorerQuery {
   if (geometry) { if (!["true", "false"].includes(geometry)) throw new TypeError("Filtro de ubicación inválido."); query.tieneGeometria = geometry === "true"; }
   const scheme = params.get("territorioEsquema");
   const code = params.get("municipioCodigo");
+  const party = params.get("partidoId");
+  if (party) {
+    if (!isUUID(party) || scheme || code) throw new TypeError("El partido requiere una identidad válida y no se combina con el filtro territorial anterior.");
+    query.partidoId = party.toLowerCase();
+  }
   if (scheme || code) {
     if (scheme !== "pba.municipio" || !code || !/^\d{1,32}$/.test(code)) throw new TypeError("El municipio requiere un código y esquema PBA válidos.");
     query.territorioEsquema = scheme; query.municipioCodigo = code;
@@ -55,10 +60,12 @@ export function parseExplorerQuery(params: URLSearchParams): ExplorerQuery {
   if (cursor) { if (cursor.length > 4096) throw new TypeError("Página inválida."); query.cursor = cursor; }
   const view = params.get("vista") || "mapa";
   if (view !== "lista" && view !== "mapa") throw new TypeError("Vista desconocida.");
+  const boundaries = params.get("limites");
+  if (boundaries && boundaries !== "mostrar") throw new TypeError("Presentación de límites desconocida.");
   const obra = params.get("obra"); const revisionId = params.get("revisionId"); const ubicacionId = params.get("ubicacionId");
   if ((obra && !isUUID(obra)) || (revisionId && (!obra || !isUUID(revisionId))) ||
     (ubicacionId !== null && (!obra || !revisionId || !isUUID(ubicacionId)))) throw new TypeError("Selección inválida.");
-  return { query, view, ...(obra ? { obra: obra.toLowerCase() } : {}), ...(revisionId ? { revisionId: revisionId.toLowerCase() } : {}), ...(ubicacionId ? { ubicacionId: ubicacionId.toLowerCase() } : {}) };
+  return { query, view, ...(boundaries === "mostrar" ? { showBoundaries: true } : {}), ...(obra ? { obra: obra.toLowerCase() } : {}), ...(revisionId ? { revisionId: revisionId.toLowerCase() } : {}), ...(ubicacionId ? { ubicacionId: ubicacionId.toLowerCase() } : {}) };
 }
 
 /** Serializa filtros sin el límite interno de página y conserva los códigos territoriales como texto. */
@@ -71,9 +78,10 @@ export function queryParams(query: ListQuery): URLSearchParams {
 }
 
 /** Genera un enlace de consulta, incluyendo vista lista cuando se solicita; no incorpora una selección ajena. */
-export function explorerHref(query: ListQuery, view: "lista" | "mapa" = "mapa"): string {
+export function explorerHref(query: ListQuery, view: "lista" | "mapa" = "mapa", showBoundaries = false): string {
   const params = queryParams(query);
   if (view === "lista") params.set("vista", "lista");
+  if (showBoundaries) params.set("limites", "mostrar");
   return "/mapa" + (params.size ? "?" + params : "");
 }
 

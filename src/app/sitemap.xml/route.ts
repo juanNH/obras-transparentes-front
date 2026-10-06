@@ -1,5 +1,5 @@
 /** @file Sitemap dinámico de fichas actuales; exige paginación completa de una misma versión del catálogo. */
-import { siteUrl } from "../../lib/config";
+import { indexableSiteUrl } from "../../lib/config";
 import { publicApi } from "../../lib/public-api";
 /** Impide servir un sitemap almacenado cuando cambia el catálogo. */
 export const dynamic = "force-dynamic";
@@ -7,11 +7,13 @@ export const dynamic = "force-dynamic";
 const escape = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
 /**
  * Construye hasta 2.000 fichas actuales con una misma versión y cursores únicos.
- * @returns XML sin caché, o 503 explícito si falta completitud o se requiere particionar.
+ * @returns 404 sin consultar la API mientras no se habilite producción; XML completo o 503.
  */
 export async function GET() {
+  const origin = indexableSiteUrl();
+  if (!origin) return new Response("Sitemap no habilitado para este entorno.", { status: 404, headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
   try {
-    const api = publicApi(); const urls = ["/", "/proyecto", "/privacidad"]; const seen = new Set<string>();
+    const api = publicApi(); const urls = ["/", "/proyecto", "/privacidad", "/terminos"]; const seen = new Set<string>();
     const signal = AbortSignal.timeout(15000);
     let cursor: string | undefined; let version: string | undefined;
     for (let page = 0; page < 10; page++) {
@@ -19,7 +21,7 @@ export async function GET() {
       if (version !== undefined && version !== data.catalogoVersion) throw new Error("CATALOG_CHANGED");
       version = data.catalogoVersion;
       urls.push(...data.items.map(work => "/obras/" + work.obraId));
-      if (!data.nextCursor) return new Response(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${[...new Set(urls)].map(path => `<url><loc>${escape(new URL(path, siteUrl()).href)}</loc></url>`).join("")}</urlset>`, { headers: { "Content-Type": "application/xml", "Cache-Control": "no-store" } });
+      if (!data.nextCursor) return new Response(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${[...new Set(urls)].map(path => `<url><loc>${escape(new URL(path, origin).href)}</loc></url>`).join("")}</urlset>`, { headers: { "Content-Type": "application/xml", "Cache-Control": "no-store" } });
       if (seen.has(data.nextCursor)) throw new Error("REPEATED_CURSOR");
       seen.add(data.nextCursor); cursor = data.nextCursor;
     }

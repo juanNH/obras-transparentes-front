@@ -1,4 +1,596 @@
 {
+  "PublicPartyBoundaryFeatureCollection": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "FeatureCollection"
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "pba-partidos-limites@1"
+          },
+          "consultadoEn": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "fuente": {
+            "type": "object",
+            "properties": {
+              "nombre": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1
+              },
+              "generadoEn": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "licencia": {
+                "type": "object",
+                "properties": {
+                  "nombre": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "nombre",
+                  "url"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "nombre",
+              "url",
+              "version",
+              "generadoEn",
+              "sha256",
+              "licencia"
+            ],
+            "additionalProperties": false
+          },
+          "uso": {
+            "type": "string",
+            "const": "DISPLAY_ONLY"
+          },
+          "bbox": {
+            "type": "array",
+            "items": [
+              {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              },
+              {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              },
+              {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              }
+            ],
+            "additionalItems": false,
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "atribucion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "transformacion": {
+            "type": "object",
+            "properties": {
+              "metodo": {
+                "type": "string",
+                "minLength": 1
+              },
+              "toleranciaMetros": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "precisionDecimales": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "advertencia": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "metodo",
+              "toleranciaMetros",
+              "precisionDecimales",
+              "advertencia"
+            ],
+            "additionalProperties": false
+          },
+          "validacion": {
+            "type": "object",
+            "properties": {
+              "features": {
+                "type": "number",
+                "const": 135
+              },
+              "posiciones": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 100000
+              },
+              "geometriasValidas": {
+                "type": "number",
+                "const": 135
+              },
+              "coberturaValida": {
+                "type": "boolean",
+                "const": true
+              },
+              "advertencia": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "features",
+              "posiciones",
+              "geometriasValidas",
+              "coberturaValida",
+              "advertencia"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "version",
+          "consultadoEn",
+          "fuente",
+          "uso",
+          "bbox",
+          "atribucion",
+          "transformacion",
+          "validacion"
+        ],
+        "additionalProperties": false
+      },
+      "features": {
+        "minItems": 135,
+        "maxItems": 135,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Feature"
+            },
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "properties": {
+              "type": "object",
+              "properties": {
+                "partidoId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "nombre": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "indecDepartamento": {
+                  "type": "string",
+                  "pattern": "^06[0-9]{3}$"
+                }
+              },
+              "required": [
+                "partidoId",
+                "nombre",
+                "indecDepartamento"
+              ],
+              "additionalProperties": false
+            },
+            "geometry": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "MultiPolygon"
+                },
+                "coordinates": {
+                  "minItems": 1,
+                  "maxItems": 1000,
+                  "type": "array",
+                  "items": {
+                    "minItems": 1,
+                    "maxItems": 1000,
+                    "type": "array",
+                    "items": {
+                      "minItems": 4,
+                      "maxItems": 100000,
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
+                          }
+                        ],
+                        "additionalItems": false,
+                        "minItems": 2,
+                        "maxItems": 2
+                      }
+                    }
+                  }
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "type",
+            "id",
+            "properties",
+            "geometry"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "type",
+      "metadata",
+      "features"
+    ],
+    "additionalProperties": false
+  },
+  "PublicPartyCatalogResponse": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "version": {
+        "type": "string",
+        "const": "pba-partidos@1"
+      },
+      "consultadoEn": {
+        "type": "string",
+        "format": "date",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+      },
+      "provincia": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "const": "06"
+          },
+          "nombre": {
+            "type": "string",
+            "const": "Buenos Aires"
+          }
+        },
+        "required": [
+          "codigo",
+          "nombre"
+        ],
+        "additionalProperties": false
+      },
+      "fuentes": {
+        "minItems": 1,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "nombre": {
+              "type": "string",
+              "minLength": 1
+            },
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "licencia": {
+              "type": "object",
+              "properties": {
+                "nombre": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "required": [
+                "nombre",
+                "url"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "nombre",
+            "url",
+            "licencia"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "equivalencias": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 1
+          },
+          "licencia": {
+            "type": "object",
+            "properties": {
+              "nombre": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "nombre",
+              "url"
+            ],
+            "additionalProperties": false
+          },
+          "version": {
+            "type": "string",
+            "const": "pba-edificios-partidos@1"
+          },
+          "consultadoEn": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "registros": {
+            "type": "number",
+            "const": 324
+          },
+          "partidos": {
+            "type": "number",
+            "const": 95
+          }
+        },
+        "required": [
+          "nombre",
+          "licencia",
+          "version",
+          "consultadoEn",
+          "url",
+          "sha256",
+          "registros",
+          "partidos"
+        ],
+        "additionalProperties": false
+      },
+      "limites": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "estado": {
+                "type": "string",
+                "const": "PENDING_LICENSE_AND_VALIDATION"
+              },
+              "version": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "estado",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "estado": {
+                "type": "string",
+                "const": "VALIDATED_FOR_DISPLAY"
+              },
+              "version": {
+                "type": "string",
+                "const": "pba-partidos-limites@1"
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uso": {
+                "type": "string",
+                "const": "DISPLAY_ONLY"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "bytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "posiciones": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "estado",
+              "version",
+              "url",
+              "uso",
+              "sha256",
+              "bytes",
+              "posiciones"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "items": {
+        "minItems": 135,
+        "maxItems": 135,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "partidoId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "nombre": {
+              "type": "string",
+              "minLength": 1
+            },
+            "codigos": {
+              "type": "object",
+              "properties": {
+                "indecDepartamento": {
+                  "type": "string",
+                  "pattern": "^06[0-9]{3}$"
+                },
+                "georefMunicipio": {
+                  "type": "string",
+                  "pattern": "^060[0-9]{3}$"
+                }
+              },
+              "required": [
+                "indecDepartamento",
+                "georefMunicipio"
+              ],
+              "additionalProperties": false
+            },
+            "equivalenciasPbaMunicipio": {
+              "maxItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "codigo": {
+                    "type": "string",
+                    "pattern": "^06[0-9]{3}$"
+                  },
+                  "nombre": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "codigo",
+                  "nombre"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "equivalenciasNacion": {
+              "maxItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "provinciaCodigo": {
+                    "type": "string",
+                    "const": "BUENOS_AIRES"
+                  },
+                  "departamentoCodigo": {
+                    "type": "string",
+                    "const": "VICENTE_LOPEZ"
+                  }
+                },
+                "required": [
+                  "provinciaCodigo",
+                  "departamentoCodigo"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "partidoId",
+            "nombre",
+            "codigos",
+            "equivalenciasPbaMunicipio",
+            "equivalenciasNacion"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "version",
+      "consultadoEn",
+      "provincia",
+      "fuentes",
+      "equivalencias",
+      "limites",
+      "items"
+    ],
+    "additionalProperties": false
+  },
   "PublicWorkSummary": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
@@ -79,6 +671,7 @@
               "type": "string",
               "enum": [
                 "pba.municipio",
+                "indec.departamento",
                 "nacion.provincia",
                 "nacion.departamento"
               ]
@@ -305,6 +898,7 @@
               "type": "string",
               "enum": [
                 "pba.municipio",
+                "indec.departamento",
                 "nacion.provincia",
                 "nacion.departamento"
               ]
@@ -2528,6 +3122,47 @@
             "type": [
               "string",
               "null"
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "requestId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "error"
+    ],
+    "additionalProperties": false
+  },
+  "RateLimitedError": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "const": "RATE_LIMITED"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requestId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },
