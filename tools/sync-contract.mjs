@@ -1,8 +1,7 @@
-/** @file Exportación pública y generación de tipos desde el backend sin iniciar su servidor ni acceder a su base. */
+/** @file Exportación pública y generación de tipos con compilación temporal sólo en frontend, sin iniciar API ni acceder a su base. */
 import { execFileSync } from "node:child_process";
-import { mkdtemp, readFile, writeFile, mkdir, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { resolve, join, dirname } from "node:path";
+import { copyFile, mkdtemp, readFile, writeFile, mkdir, realpath, rm, symlink, unlink } from "node:fs/promises";
+import { resolve, join, dirname, basename, relative, isAbsolute } from "node:path";
 import openapiTS, { astToString } from "openapi-typescript";
 
 const root = resolve(import.meta.dirname, "..");
@@ -29,39 +28,75 @@ const backend = resolve(
   root,
   backendFlag >= 0 ? args[backendFlag + 1] : "../obras-transparentes",
 );
-const temporary = await mkdtemp(join(tmpdir(), "obras-public-contract-"));
+const temporaryPrefix = "public-contract-";
+const repositoryPath = await realpath(root);
+
+/** Comprueba el destino físico antes de crear o borrar artefactos para no salir del frontend mediante enlaces. */
+async function frontendPath(path) {
+  const physical = await realpath(path);
+  const child = relative(repositoryPath, physical);
+  if (!child || child === ".." || child.startsWith("..\\") || child.startsWith("../") || isAbsolute(child))
+    throw new Error("El destino temporal debe permanecer dentro del frontend.");
+  return physical;
+}
+
+/** Crea un solo nivel cuyo padre ya se comprobó; un directorio existente también se valida físicamente. */
+async function temporaryDirectory(path) {
+  await mkdir(path).catch(error => { if (error.code !== "EEXIST") throw error; });
+  return frontendPath(path);
+}
+
+const artifacts = await temporaryDirectory(join(root, "artifacts"));
+const temporaryRoot = await temporaryDirectory(join(artifacts, "local-validation"));
+const temporary = await mkdtemp(join(temporaryRoot, temporaryPrefix));
+const dependencyLink = join(temporary, "node_modules");
 try {
-  // Compila fuentes, no inicia la API ni carga configuración/credenciales de entorno.
+  // Conserva la configuración y dependencias del backend sólo como entradas.
+  // Toda emisión, incluidos mapas/declaraciones, queda en el frontend; desactivar
+  // incremental evita crear o modificar tsbuildinfo en el checkout de la API.
   execFileSync(
     process.execPath,
     [
       join(backend, "node_modules/typescript/bin/tsc"),
       "-p",
-      "tsconfig.build.json",
+      join(backend, "tsconfig.build.json"),
+      "--outDir",
+      join(temporary, "dist"),
+      "--incremental",
+      "false",
     ],
     { cwd: backend, stdio: "pipe", encoding: "utf8" },
   );
   const openapiPath = join(temporary, "openapi.json");
   const examplesPath = join(temporary, "examples.json");
   const schemasPath = join(temporary, "schemas.json");
+  const scripts = join(temporary, "scripts");
+  await mkdir(scripts);
+  const exporter = join(scripts, "export-public-openapi.mjs");
+  await copyFile(join(backend, "scripts/export-public-openapi.mjs"), exporter);
+  // El exporter conserva imports ../dist idénticos a su repositorio fuente.
+  // El enlace permite resolver sus dependencias sin instalarlas/copiar su árbol.
+  await writeFile(join(temporary, "package.json"), '{"type":"module"}\n');
+  await symlink(join(backend, "node_modules"), dependencyLink, process.platform === "win32" ? "junction" : "dir");
   execFileSync(
     process.execPath,
     [
-      join(backend, "scripts/export-public-openapi.mjs"),
+      exporter,
       openapiPath,
       examplesPath,
       schemasPath,
     ],
-    { cwd: backend, stdio: "pipe", encoding: "utf8" },
+    { cwd: temporary, stdio: "pipe", encoding: "utf8" },
   );
   const document = JSON.parse(await readFile(openapiPath, "utf8"));
+  const publicPaths = new Set(["/api/v1/obras", "/api/v1/obras/geojson", "/api/v1/obras/{id}", "/api/v1/territorios/pba/partidos", "/api/v1/territorios/pba/partidos/limites"]);
   if (
     Object.keys(document.paths).some(
-      (path) => !path.startsWith("/api/v1/obras"),
+      (path) => !publicPaths.has(path),
     )
   ) {
     throw new Error(
-      "La exportación debe contener exclusivamente contratos públicos de obras.",
+      "La exportación debe contener exclusivamente rutas públicas de obras y la nómina de partidos admitidas.",
     );
   }
   const examples = JSON.parse(await readFile(examplesPath, "utf8"));
@@ -103,6 +138,12 @@ try {
         : "Contrato público, ejemplos y tipos generados sin acceder a la base de datos.",
     );
 } finally {
-  // Se elimina únicamente el directorio temporal creado en esta ejecución.
+  // Se comprueba el directorio creado por mkdtemp y se desvincula node_modules
+  // antes de borrar. Si unlink falla, se conserva el temporal: no se recorre el
+  // enlace ni se arriesga el árbol de dependencias del backend.
+  const physical = await frontendPath(temporary);
+  if (dirname(physical) !== temporaryRoot || !basename(physical).startsWith(temporaryPrefix))
+    throw new Error("No se puede eliminar un temporal fuera de su directorio/prefijo esperado.");
+  await unlink(dependencyLink).catch(error => { if (error.code !== "ENOENT") throw error; });
   await rm(temporary, { recursive: true, force: true });
 }

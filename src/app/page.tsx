@@ -1,12 +1,11 @@
 /** @file Presentación pública del proyecto, metodología y acceso al catálogo; la ilustración es conceptual. */
-import type { Metadata } from "next";
 import Link from "next/link";
+import { pageMetadata } from "../lib/seo";
 
 /** Título propio y canonical de la landing; la descripción se hereda del layout. */
-export const metadata: Metadata = {
+export const metadata = pageMetadata("/", {
   title: { absolute: "Obras Transparentes · La obra pública, a la vista" },
-  alternates: { canonical: "/" },
-};
+});
 
 /** Dibuja una flecha decorativa junto a acciones que ya tienen nombre textual. */
 function Arrow({ diagonal = false }: { diagonal?: boolean }) {

@@ -5,6 +5,8 @@ import { Ajv } from "ajv";
 import { fullFormats } from "ajv-formats/dist/formats.js";
 import examples from "../contracts/examples.json" with { type: "json" };
 import schemas from "../contracts/schemas.json" with { type: "json" };
+import partyCatalog from "../test/fixtures/pba-parties.json" with { type: "json" };
+import partyBoundaries from "../test/fixtures/pba-party-boundaries.json" with { type: "json" };
 
 const port = Number(process.env.MOCK_API_PORT ?? 4100);
 if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error("Invalid mock API port");
@@ -17,9 +19,14 @@ function validate(schema, value) {
   if (!check(value)) throw new Error(`Invalid synthetic fixture ${schema}: ${ajv.errorsText(check.errors)}`);
   return value;
 }
+validate("PublicPartyCatalogResponse", partyCatalog);
+validate("PublicPartyBoundaryFeatureCollection", partyBoundaries);
 /** Genera UUID estables sintéticos por tipo y ordinal para que las pruebas puedan seleccionar revisiones exactas. */
 const id = (prefix, index) => `${prefix}0000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
 const catalogoVersion = "7";
+// Only the isolated fixture exposes this in-memory ledger. It records transport
+// shape/size so SSR reads can be measured without observing an active backend.
+const requests = [];
 const details = new Map();
 const features = [];
 const items = Array.from({ length: 24 }, (_, index) => {
@@ -32,6 +39,10 @@ const items = Array.from({ length: 24 }, (_, index) => {
   const fuentes = [{ ...examples.listPopulated.items[0].fuentes[0], codigo: number % 3 === 0 ? "caba-actualizado" : "nacion-obras" }];
   const item = { ...structuredClone(examples.listPopulated.items[0]), obraId, revisionId, nombre, estado, fuentes, tieneGeometria: located };
   const detail = { ...structuredClone(located ? examples.detailPopulated : examples.detailPartial), obraId, revisionId, nombre, estado, fuentes, publicadaActualmente: true, catalogoVersion };
+  const party = partyCatalog.items.find(party => party.codigos.indecDepartamento === (number <= 12 ? "06854" : "06861"));
+  const reported = { esquema: "indec.departamento", codigo: party.codigos.indecDepartamento, nombre: party.nombre, condicion: "REPORTED" };
+  item.territorios = [...item.territorios, reported];
+  detail.territorios = [...detail.territorios, reported];
   if (located) {
     const feature = structuredClone(examples.geojsonPopulated.features[0]);
     feature.id = id("4", number);
@@ -78,12 +89,14 @@ function inArea(item, area) {
 /** Aplica filtros admitidos al catálogo sintético conservando obras sin geometría cuando no hay área. */
 function filtered(params) {
   const area = params.has("bbox") ? params.get("bbox").split(",").map(Number) : null;
+  const party = params.has("partidoId") ? partyCatalog.items.find(party => party.partidoId === params.get("partidoId")) : null;
   return items.filter(item =>
     (!params.has("fuente") || item.fuentes.some(source => source.codigo === params.get("fuente"))) &&
     (!params.has("estado") || item.estado === params.get("estado")) &&
     (!params.has("sector") || item.clasificaciones.some(value => value.esquema === "sector" && value.codigo === params.get("sector"))) &&
     (!params.has("tieneGeometria") || item.tieneGeometria === (params.get("tieneGeometria") === "true")) &&
-    (!params.has("municipioCodigo") || item.territorios.some(territory => territory.codigo === params.get("municipioCodigo"))) &&
+    (!params.has("municipioCodigo") || item.territorios.some(territory => territory.esquema === params.get("territorioEsquema") && territory.codigo === params.get("municipioCodigo"))) &&
+    (!params.has("partidoId") || (party && item.territorios.some(territory => territory.esquema === "indec.departamento" && territory.codigo === party.codigos.indecDepartamento && territory.condicion === "REPORTED"))) &&
     inArea(item, area),
   );
 }
@@ -97,10 +110,28 @@ function pageOf(values, params, defaultLimit) {
 }
 const server = createServer((request, response) => {
   const url = new URL(request.url, `http://127.0.0.1:${port}`);
+  const entry = url.pathname.startsWith("/api/v1/")
+    ? { sequence: requests.length + 1, path: url.pathname, query: Object.fromEntries(url.searchParams) }
+    : null;
+  if (entry) requests.push(entry);
   /** Entrega JSON sin caché al consumidor E2E con el estado indicado. */
-  const send = (status, value) => { response.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" }); response.end(JSON.stringify(value)); };
+  const send = (status, value) => {
+    const json = JSON.stringify(value);
+    if (entry) { entry.status = status; entry.responseBytes = Buffer.byteLength(json); }
+    response.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+    response.end(json);
+  };
   if (request.method !== "GET") return send(405, { error: { code: "METHOD_NOT_ALLOWED", message: "Read-only fixture server", requestId: null } });
   if (url.pathname === "/__health") return send(200, { fixture: "synthetic-e2e-only" });
+  if (url.pathname === "/__requests") return send(200, { fixture: "synthetic-e2e-only", requests });
+  if (url.pathname === "/api/v1/territorios/pba/partidos") {
+    if (url.searchParams.size) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic party catalog has no query parameters", requestId: null } });
+    return send(200, partyCatalog);
+  }
+  if (url.pathname === "/api/v1/territorios/pba/partidos/limites") {
+    if (url.searchParams.get("version") !== partyBoundaries.metadata.version) return send(404, { error: { code: "BOUNDARY_VERSION_NOT_FOUND", message: "Fixture boundary version not found", requestId: null } });
+    return send(200, partyBoundaries);
+  }
   if (url.pathname === "/api/v1/obras") {
     const { page, limit, nextCursor } = pageOf(filtered(url.searchParams), url.searchParams, 20);
     return send(200, { items: page, limit, nextCursor, catalogoVersion });

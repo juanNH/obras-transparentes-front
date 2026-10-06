@@ -3,23 +3,27 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { SiteHeader } from "../components/site-header";
 import { SiteFooter } from "../components/site-footer";
-import { siteUrl } from "../lib/config";
+import { indexableSiteUrl } from "../lib/config";
+import { SOCIAL_DESCRIPTION } from "../lib/seo";
 import { MAP_FONT_STYLESHEET } from "../lib/map-style";
 import "./globals.css";
 
-/** Metadatos comunes e indexación habilitada únicamente mediante SITE_INDEXABLE. */
+const origin = indexableSiteUrl();
+
+/** Metadatos existentes; URLs y Open Graph requieren origen y aprobación de producción. */
 export const metadata: Metadata = {
-  metadataBase: siteUrl(),
+  ...(origin ? { metadataBase: origin } : {}),
   title: { default: "Obras Transparentes · La obra pública, a la vista", template: "%s | Obras Transparentes" },
   description: "Explorá información de obras públicas, consultá sus fuentes y conocé qué datos están disponibles. Un proyecto en etapa piloto.",
-  robots: { index: process.env.SITE_INDEXABLE === "true", follow: true },
-  openGraph: {
+  robots: { index: origin !== null, follow: true },
+  ...(origin ? { openGraph: {
     type: "website",
     locale: "es_AR",
     siteName: "Obras Transparentes",
     title: "Obras Transparentes",
-    description: "Información pública para entender las obras y el territorio.",
-  },
+    description: SOCIAL_DESCRIPTION,
+    url: origin.href,
+  } } : {}),
 };
 
 /** Aplica idioma, enlaces de salto, cabecera/pie y tipografías locales a todas las rutas. */

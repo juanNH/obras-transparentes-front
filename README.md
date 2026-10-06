@@ -41,12 +41,15 @@ Variables sólo del servidor, documentadas en `.env.example`:
 | Variable | Uso |
 | --- | --- |
 | `PUBLIC_API_URL` | Base pública de NestJS, por defecto `http://127.0.0.1:3000/api/v1`. Sin credenciales. |
-| `SITE_URL` | Origen público de canonical y sitemap. Por defecto `http://localhost:3002`. Configurarlo antes del build. |
-| `SITE_INDEXABLE` | `false` por defecto. Configurar `true` antes de compilar un despliegue público revisado. |
+| `SITE_URL` | Sin valor por defecto. Configurar sólo el origen HTTPS público real (sin ruta, parámetros ni credenciales) antes del build; orígenes locales, IP y nombres reservados no habilitan SEO público. |
+| `SITE_ENVIRONMENT` | `local` por defecto; `local` y `staging` conservan `noindex`. Sólo `production` permite habilitar indexación con las otras dos variables. |
+| `SITE_INDEXABLE` | `false` por defecto. `true` requiere además `SITE_ENVIRONMENT=production` y `SITE_URL` válida; desarrollo sigue cerrado. |
 | `MAP_STYLE_URL` | Estilo HTTPS MapLibre v8 interpretado por ol-mapbox-style; por defecto Liberty de OpenFreeMap. Al cambiar proveedor, revisar estilo, atribución, sprites y privacidad. |
-| `REPORT_EMAIL` | Correo atendido por el proyecto. Sólo si está configurado aparece el enlace para informar errores. |
+| `REPORT_EMAIL` | Contacto opcional para informar errores desde las fichas; sin valor predeterminado. Sólo se muestra con un correo válido configurado. Las páginas legales no publican correo. |
 
 La landing se prerenderiza. Lista y fichas se consultan en servidor sin caché de datos para no mezclar versiones. El navegador usa exclusivamente `/api/public/…`: rutas GET limitadas, sin cookies ni autorización hacia NestJS, con validación de contrato, timeout y presupuesto de respuesta. No es un proxy general ni expone el backoffice.
+
+Las solicitudes GET de documento a `/obras/UUID` comprueban antes de renderizar si la ficha o revisión está ausente, para ofrecer recuperación HTML incluso sin JavaScript. El precheck tiene un máximo total de 2 segundos: ante 404 lee sólo un sobre de error de hasta 16 KiB y lo valida contra `PublicApiError`; en otros estados cancela el body tras recibir los headers. No reenvía Cookie, Authorization o X-Forwarded-For. Un enlace inválido no consulta la API, un 404 compatible con el contrato hace una solicitud breve y una ficha válida requiere dos solicitudes upstream: precheck y lectura completa validada para el render. RSC, precargas y HEAD siguen el recorrido habitual. Un 404 con HTML, JSON inválido o sobre incompatible, fallas, timeout, 429 y 5xx pasan al manejo de errores existente. La [medición aislada](docs/volumen-mapa.md) registra ese costo y sus límites; un endpoint público liviano de existencia o una capacidad equivalente queda como dependencia futura de API. No hay caché global compartida ni traslado del contenido de ficha en headers.
 
 Las rutas `/api/public/obras`, `/api/public/obras/{obraId}` y `/api/public/geojson` pertenecen a esta web (3002); NestJS expone `/api/v1/obras`, `/api/v1/obras/{obraId}` y `/api/v1/obras/geojson`. Si devuelve catálogo `"0"` vacío, verificar el archivo de entorno con que arrancó la API: una instancia de aceptación puede usar otra base que desarrollo. `PUBLIC_API_URL` elige la instancia para Next y `API_ORIGIN` para `api:check`. No cargar fixtures para ocultar un catálogo vacío. Reiniciar Next tras cambiar su configuración.
 
@@ -62,8 +65,11 @@ Los assets con hash aprovechan la caché del framework. El mapa base sigue las c
 - `/mapa?vista=lista`: alternativa textual sin cargar el motor ni el proveedor del mapa. Alternar vistas conserva consulta, páginas cargadas y selección.
 - `/mapa?vista=mapa&bbox=west,south,east,north`: mapa y lista de la misma área. «Buscar en esta zona» actualiza ambos; mover el mapa no consulta el catálogo.
 - `/mapa?obra=UUID&revisionId=UUID`: restaura y ubica la revisión seleccionada. El resumen se abre con una acción explícita; cerrarlo mantiene la selección. Atrás/Adelante la restaura.
-- `/obras/UUID`: ficha actual con canonical y fuentes. `?revisionId=UUID` conserva una publicación específica y lleva `noindex`.
-- `/privacidad`, `/robots.txt`, `/sitemap.xml`: ubicación e indexación. Sitemap consistente hasta 2.000 fichas; si supera su límite, falla explícitamente y exige particionarlo.
+- `/obras/UUID`: ficha HTML actual con título propio, territorio reportado cuando existe y fuentes. `?revisionId=UUID` conserva una publicación específica y lleva `noindex`.
+- `/privacidad`, `/terminos`: privacidad y condiciones del catálogo basadas en el funcionamiento actual, sin correo publicado. Mantienen visibles los datos del operador, el canal de consultas y la conservación propia aún no informados; la revisión jurídica y operativa se registra en la documentación.
+- `/robots.txt`, `/sitemap.xml`: en local/staging robots bloquea todo y no anuncia sitemap; sitemap devuelve 404 sin consultar el catálogo. Sólo al habilitar producción con URL real se publican canonical, Open Graph de texto y sitemap consistente hasta 2.000 fichas; si supera su límite, falla explícitamente y exige particionarlo. La imagen y verificación de preview social quedan pendientes de esa URL y de un asset aprobado.
+
+La descripción general y las metadescripciones existentes por página se conservan. Landing, proyecto, legales y fichas entregan contenido HTML inicial; los filtros del explorador mantienen `noindex`. El favicon SVG reutiliza el símbolo de la cabecera sin añadir una imagen raster. La configuración SEO se decide antes del build: no usar una URL local o de ejemplo como origen público ni habilitar indexación en staging. Mantener `SITE_URL`, `SITE_ENVIRONMENT` y `SITE_INDEXABLE` iguales entre build y arranque del mismo entorno; generar un build nuevo si cambian, para que metadatos prerenderizados, robots y sitemap mantengan la misma política.
 
 Sin área, la lista incluye obras sin geometría. Con área sólo aparecen ubicaciones aprobadas que la intersectan; se ofrece quitar el área y consultar obras sin ubicación. El número de obras cargadas no representa un total. Los clusters cuentan puntos, que pueden corresponder a una misma obra.
 

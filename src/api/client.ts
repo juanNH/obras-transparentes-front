@@ -10,6 +10,10 @@ export type WorkDetail = components["schemas"]["PublicWorkDetail"];
 export type WorkSummary = components["schemas"]["PublicWorkSummary"];
 /** Página de ubicaciones aceptadas y su versión, tomada del contrato GeoJSON generado. */
 export type WorkGeoJSON = components["schemas"]["PublicGeoFeatureCollection"];
+/** Nómina oficial versionada de los 135 partidos, con códigos separados y estado de límites. */
+export type PartyCatalog = components["schemas"]["PublicPartyCatalogResponse"];
+/** Límites versionados para representación territorial; no prueban ubicación de obras. */
+export type PartyBoundaries = components["schemas"]["PublicPartyBoundaryFeatureCollection"];
 /** Sobre público de error que permite conservar código e identificador de solicitud. */
 type ErrorEnvelope = components["schemas"]["PublicApiError"];
 /** Área WGS84 en orden oeste, sur, este, norte; no admite cruce del antimeridiano. */
@@ -105,6 +109,7 @@ function queryParameters(
     "sector",
     "territorioEsquema",
     "municipioCodigo",
+    "partidoId",
   ] as const) {
     const value = query[key];
     if (value !== undefined) params.set(key, value);
@@ -113,6 +118,11 @@ function queryParameters(
     throw new TypeError(
       "El código de municipio requiere su esquema territorial.",
     );
+  }
+  if (query.partidoId !== undefined) {
+    identifier(query.partidoId);
+    if (query.territorioEsquema !== undefined || query.municipioCodigo !== undefined)
+      throw new TypeError("Elegí un partido o el filtro territorial anterior, sin combinarlos.");
   }
   if (
     query.municipioCodigo !== undefined &&
@@ -200,6 +210,15 @@ export function createPublicApi(
     return parsePublicResponse<T>(schema, body);
   }
   return {
+    /** Lee la nómina territorial independiente del catálogo de obras y de sus geometrías. */
+    parties(requestOptions: RequestOptions = {}): Promise<PartyCatalog> {
+      return read("/territorios/pba/partidos", "PublicPartyCatalogResponse", requestOptions);
+    },
+    /** Lee una distribución territorial explícitamente versionada sin incorporar filtros de obras. */
+    boundaries(version: string, requestOptions: RequestOptions = {}): Promise<PartyBoundaries> {
+      if (!/^[a-z0-9][a-z0-9@._-]{0,127}$/.test(version)) throw new TypeError("Versión de límites inválida.");
+      return read("/territorios/pba/partidos/limites?" + new URLSearchParams({ version }), "PublicPartyBoundaryFeatureCollection", requestOptions);
+    },
     /**
      * Obtiene una página de publicaciones; sin área incluye obras sin geometría aprobada.
      * @param query - Filtros y cursor de la misma consulta/versionado.

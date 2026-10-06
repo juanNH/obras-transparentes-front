@@ -86,6 +86,41 @@
   gap: var(--space-4);
 }
 
+.explorer .party-filter {
+  flex: 1 1 100%;
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+  grid-column: 1 / -1;
+}
+
+.explorer .party-filter-help {
+  font-size: 0.875rem;
+  max-width: 70ch;
+  margin-block: 0;
+  overflow-wrap: anywhere;
+}
+
+.explorer .territory-controls {
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.explorer .territory-controls > label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-min);
+  cursor: pointer;
+}
+
+.explorer .territory-controls input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--color-primary);
+}
+
 .explorer .with-map {
   grid-template-columns: minmax(0, 1fr);
   align-items: start;

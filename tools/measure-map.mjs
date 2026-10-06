@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import { createServer as createPortProbe } from "node:net";
 import { once } from "node:events";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { Ajv } from "ajv";
 import { fullFormats } from "ajv-formats/dist/formats.js";
@@ -14,6 +15,7 @@ import { disableWebGL, isolateMapNetwork, useSyntheticBasemap } from "../e2e/map
 // Reproducible read-only laboratory against an existing production build.
 // node tools/measure-map.mjs [--visual-only | --memory-only]
 // --memory-snapshot/--diagnose-three are optional local diagnosis controls.
+// --party-boundaries adds the final licensed GeoRef asset, separately from synthetic works.
 // Starts its own isolated fixture API/Next servers; never accesses the live API.
 const apiPort = Number(process.env.MAP_LAB_API_PORT ?? 4101);
 const sitePort = Number(process.env.MAP_LAB_SITE_PORT ?? 3103);
@@ -21,11 +23,12 @@ if (![apiPort, sitePort].every(port => Number.isInteger(port) && port >= 1024 &&
   throw new Error("Map lab needs two different nonprivileged ports.");
 const origin = `http://127.0.0.1:${sitePort}`;
 const area = "-59,-35,-58,-34"; // Synthetic fixture extent, never browser/user location.
-const listPath = `/mapa?bbox=${area}&vista=lista`;
+const includePartyBoundaries = process.argv.includes("--party-boundaries");
+const listPath = `/mapa?bbox=${area}&vista=lista${includePartyBoundaries ? "&limites=mostrar" : ""}`;
 const firstId = "10000000-0000-4000-8000-000000000001";
 const firstRevision = "20000000-0000-4000-8000-000000000001";
 const firstName = "EJEMPLO SINTÉTICO — Obra 01";
-const outputRelative = "artifacts/local-validation/map-lab" + (process.argv.includes("--memory-snapshot") ? "-snapshot" : "");
+const outputRelative = "artifacts/local-validation/map-lab" + (includePartyBoundaries ? "-party-boundaries" : "") + (process.argv.includes("--memory-snapshot") ? "-snapshot" : "");
 const outputDirectory = path.resolve(outputRelative);
 await mkdir(outputDirectory, { recursive: true });
 const children = [];
@@ -48,6 +51,14 @@ const report = {
     "All external requests are fulfilled synthetically or aborted; no real provider tiles are downloaded/prefetched.",
   ], scenarios: [], memory: [], visual: [],
 };
+if (includePartyBoundaries) {
+  const bytes = await readFile("test/fixtures/pba-party-boundaries.json");
+  const boundaries = JSON.parse(bytes.toString("utf8"));
+  report.partyBoundaryDataset = { file: "test/fixtures/pba-party-boundaries.json", bytes: bytes.byteLength,
+    sha256: createHash("sha256").update(bytes).digest("hex"), version: boundaries.metadata.version,
+    features: boundaries.features.length, positions: boundaries.metadata.validacion.posiciones,
+    usage: boundaries.metadata.uso, scope: "Final licensed GeoRef boundaries; synthetic works and basemap. No spatial assignment or field latency validation." };
+}
 
 /** Inicia un proceso de laboratorio aislado, oculto en Windows, y retiene sus logs para verificar el bind propio. */
 function startNode(label, args, env) {
@@ -134,6 +145,7 @@ async function waitForPaint(page) {
     });
   }, null, { timeout: 60000 });
   await page.waitForFunction(() => ![...document.querySelectorAll(".map-region [role=status]")].some(element => element.textContent.includes("Consultando ubicaciones")), null, { timeout: 60000 });
+  if (includePartyBoundaries) await page.waitForFunction(() => document.querySelector(".territory-controls")?.textContent.includes("135 límites de partidos cargados"), null, { timeout: 60000 });
 }
 /** Resume recursos/scripts desde Performance API usando rutas, sin conservar hosts o parámetros del usuario. */
 async function resources(page) {

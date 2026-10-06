@@ -11,6 +11,7 @@ Fecha de consulta y decisión local: **2026-10-03**, zona horaria `America/Bueno
 | [Normalización de datos](https://docs.google.com/document/d/134at08j8tXLs7iiLKL1UmdX-Jdieq-s4dPlGwH9GPjQ/edit)                         | Semántica de importes, fechas, estados y datos desconocidos; consultado en esta etapa.                                                            |
 | [Modelo de obras](https://docs.google.com/document/d/1dnX32wzOSXM5769edSRt1MODNLdlyqS9qsiKtFOJ9v8/edit)                                | Estructura y relaciones de la información pública; consultado en esta etapa.                                                                      |
 | [Plan local de la etapa 1](etapa-1.md)                                                                                                 | Decisiones y alcance de la base de integración; checklist de validación y pendientes.                                                             |
+| [Salida a producción — ProgresoUrbano](https://docs.google.com/document/d/1Rc6Wp70stMVFRJEYpmQSrJYhK2ZH9SkFKPzP_CKQ8W4/edit) | Preparación del lanzamiento; tareas del sitio público, operador y revisión legal pendientes. Consultado el 2026-10-05; no constituye un despliegue. |
 
 La instrucción vigente fija NestJS y PostgreSQL/PostGIS. Las referencias genéricas a alternativas de backend no autorizan una reescritura. React/Vite se conserva para backoffice; la [etapa 2](etapa-2.md), autorizada el 2026-10-04, adopta Next.js para el público y documenta verificación actual de OpenFreeMap y sus límites.
 
