@@ -8,6 +8,9 @@ describe("procedencia institucional para el mapa", () => {
     ["caba-actualizado", "caba"],
     ["pba-edificios", "province"],
     ["vl-obras", "municipality"],
+    ["bahia-obras", "municipality"],
+    ["olavarria-obras", "municipality"],
+    ["pergamino-obras", "municipality"],
   ] as const)("clasifica %s por el catálogo de origen", (codigo, expected) => {
     expect(mapOriginCategory([{ codigo }])).toBe(expected);
   });
@@ -18,5 +21,9 @@ describe("procedencia institucional para el mapa", () => {
 
   it("distingue una fuente no informada", () => {
     expect(mapOriginCategory([])).toBe("unknown");
+  });
+  it("varias fuentes municipales conservan su nivel sin atribuir gestión o mezclarlas con Nación", () => {
+    expect(mapOriginCategory([{ codigo: "bahia-obras" }, { codigo: "olavarria-obras" }, { codigo: "pergamino-obras" }])).toBe("municipality");
+    expect(mapOriginCategory([{ codigo: "pergamino-obras" }, { codigo: "nacion-obras" }])).toBe("mixed");
   });
 });

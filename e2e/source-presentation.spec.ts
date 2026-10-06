@@ -8,14 +8,15 @@ test.beforeEach(async ({ page }) => {
   await disableWebGL(page);
 });
 
-test("explica las banderas y los créditos en la página del proyecto", async ({ page }) => {
+test("explica las referencias visuales y los créditos en la página del proyecto", async ({ page }, testInfo) => {
   await page.goto("/proyecto");
   await expect(page.getByRole("heading", { name: "Por qué usamos estos colores", exact: true })).toBeVisible();
   await expect(page.locator(".project-color-list > li")).toHaveCount(4);
-  await expect(page.locator("#colores")).toContainText("Oro del sol del escudo");
+  await expect(page.locator("#colores")).toContainText("no representan la bandera o el escudo de un municipio particular");
   await expect(page.locator("#responsabilidad")).toContainText("La fuente tampoco determina por sí sola quién la ejecuta o la financia.");
   await expect(page.locator("#mapa").getByRole("link", { name: "OpenFreeMap", exact: true })).toHaveAttribute("href", "https://openfreemap.org/");
   await expect(page.locator("#mapa")).toContainText("permanecen visibles junto al mapa");
+  await page.screenshot({ path: testInfo.outputPath("municipal-project.png"), fullPage: true });
   await page.setViewportSize({ width: 320, height: 900 });
   await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
   await page.evaluate(() => document.fonts.ready);
@@ -30,6 +31,7 @@ test("explica las banderas y los créditos en la página del proyecto", async ({
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   const report = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   expect(report.violations).toEqual([]);
+  await page.screenshot({ path: testInfo.outputPath("municipal-project-reflow.png"), fullPage: true });
 });
 
 test("omite sólo la marca opcional y mantiene los créditos visibles del mapa", async ({ page }) => {

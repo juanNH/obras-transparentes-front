@@ -93,22 +93,31 @@ test("renderiza 135 límites reales dentro de su presupuesto y los reutiliza sin
 
 test("seleccionar un límite real aplica UUID y conserva su presentación sin reasignar obras", async ({ page, request }) => {
   const baseline = (await ledger(request)).length;
-  await page.goto("/mapa?bbox=" + bbox.join(",") + "&limites=mostrar");
+  const existing = catalog.items.find(item => item.nombre === "25 de Mayo")!;
+  await page.goto("/mapa?bbox=" + bbox.join(",") + "&limites=mostrar&partidos=" + existing.partidoId);
   await expectCanvasMap(page);
   await expect(page.locator(".territory-controls")).toContainText("135 límites de partidos cargados");
   await expect.poll(() => hasMapColor(page, [107, 133, 155])).toBe(true);
   const canvas = page.locator(".map-canvas");
   const box = await canvas.boundingBox();
   await canvas.click({ position: { x: box!.width / 2, y: box!.height / 2 } });
-  await expect(page).toHaveURL(new RegExp("partidoId=" + party.partidoId));
+  await expect(page).toHaveURL(new RegExp("partidos=" + party.partidoId));
+  expect(new URL(page.url()).searchParams.getAll("partidos").sort()).toEqual([existing.partidoId, party.partidoId].sort());
+  expect(new URL(page.url()).searchParams.has("provinciaCodigo")).toBe(false);
   expect(new URL(page.url()).searchParams.get("limites")).toBe("mostrar");
-  await expect(page.locator(".scope-note")).toContainText("Partido informado por la fuente: Tornquist");
+  await expect(page.locator(".scope-note")).toContainText("Partidos informados por la fuente:");
+  await expect(page.locator(".scope-note")).toContainText("Tornquist");
   await expect(page.getByRole("checkbox", { name: "Mostrar límites de partidos" })).toBeChecked();
   await expect(page.locator(".territory-controls")).toContainText("135 límites de partidos cargados");
   const records = (await ledger(request)).slice(baseline);
   expect(records.filter(record => record.path.endsWith("/limites"))).toHaveLength(1);
-  expect(records.filter(record => record.path === "/api/v1/obras").at(-1)!.query.partidoId).toBe(party.partidoId);
+  expect(records.filter(record => record.path === "/api/v1/obras").at(-1)!.query.provinciaCodigo).toBeUndefined();
   await expect(page.getByRole("heading", { name: "No hay obras para mostrar" })).toBeVisible();
+  await expectCanvasMap(page);
+  await expect.poll(() => hasMapColor(page, [10, 76, 120])).toBe(true);
+  const refreshedBox = await canvas.boundingBox();
+  await canvas.click({ position: { x: refreshedBox!.width / 2, y: refreshedBox!.height / 2 } });
+  await expect.poll(() => new URL(page.url()).searchParams.getAll("partidos")).toEqual([existing.partidoId]);
 });
 
 test("una falla de límites permite reintentar y mantiene las obras", async ({ page }) => {

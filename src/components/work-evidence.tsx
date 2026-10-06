@@ -6,7 +6,7 @@ import { fieldLabel, publicationDate, safeSourceUrl } from "../lib/presentation"
 export function Evidence({ evidence, obraId }: { evidence: WorkDetail["procedencia"][string]["evidencias"][number]; obraId: string }) {
   if (evidence.tipo === "SOURCE_CELL") {
     const location = evidence.localizador;
-    return <><p>Dato del archivo fuente · columna {evidence.columna}.</p><p>{location.format === "CSV" ? `CSV · líneas ${location.lineStart} a ${location.lineEnd}.` : `Hoja ${location.worksheet} · fila ${location.row} · celdas ${location.cells.join(", ")}.`}</p><p className="muted">Recurso: <span className="technical-id">{evidence.recursoId}</span></p></>;
+    return <><p>Dato del archivo fuente · columna {evidence.columna}.</p><p>{location.format === "CSV" ? `CSV · líneas ${location.lineStart} a ${location.lineEnd}.` : location.format === "JSON" ? `JSON · registro ${location.dataOrdinal} · referencia ${location.pointer} · bytes ${location.byteStart} a ${location.byteEndExclusive} (fin exclusivo).` : `Hoja ${location.worksheet} · fila ${location.row} · celdas ${location.cells.join(", ")}.`}</p><p className="muted">Recurso: <span className="technical-id">{evidence.recursoId}</span></p></>;
   }
   if (evidence.tipo === "CATALOG_METADATA") {
     const href = safeSourceUrl(evidence.referencia.url);

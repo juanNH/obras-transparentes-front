@@ -6,9 +6,9 @@ import { publicApi } from "../../../../lib/public-api";
 /** Evita caché de rutas BFF para consultar la versión vigente del catálogo. */
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store" };
-const allowed = new Set(["fuente", "estado", "sector", "territorioEsquema", "municipioCodigo", "partidoId", "partidoVerificadoId", "gestionMunicipalId", "organizacionId", "rolInstitucional", "periodoDesde", "periodoHasta", "tieneGeometria", "bbox", "cursor"]);
+const allowed = new Set(["fuente", "estado", "sector", "provinciaCodigo", "partidos", "territorioEsquema", "municipioCodigo", "partidoId", "partidoVerificadoId", "gestionMunicipalId", "organizacionId", "rolInstitucional", "periodoDesde", "periodoHasta", "tieneGeometria", "bbox", "cursor"]);
 /**
- * Acepta lista, GeoJSON, ficha y catálogos públicos de partidos/instituciones; los catálogos no admiten filtros y usan presupuestos independientes.
+ * Acepta lista, GeoJSON, ficha y catálogos públicos de provincias/partidos/instituciones; los catálogos no admiten filtros y usan presupuestos independientes.
  * @param request - GET de mismo origen; su señal cancela la lectura upstream.
  * @param params - Segmentos de la ruta pública resueltos por App Router.
  * @returns JSON validado sin caché o un error público que no revela URLs internas.
@@ -20,7 +20,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
   try {
     const api = publicApi();
     let result: unknown;
-    if (path.length === 1 && path[0] === "organizaciones-institucionales") {
+    if (path.length === 2 && path.join("/") === "territorios/provincias") {
+      if (url.searchParams.size) throw new TypeError("El catálogo provincial no recibe filtros de obras.");
+      validated = true;
+      result = await api.provinces({ signal: request.signal });
+    } else if (path.length === 1 && path[0] === "organizaciones-institucionales") {
       if (url.searchParams.size) throw new TypeError("El catálogo institucional no recibe filtros de obras.");
       validated = true;
       result = await api.organizations({ signal: request.signal });
@@ -56,7 +60,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
     const status = error instanceof PublicApiError ? error.status : !validated && error instanceof TypeError ? 400 : 503;
     const code = error instanceof PublicApiError ? error.code : status === 400 ? "INVALID_QUERY" : "UNAVAILABLE";
     // Do not expose internal addresses or upstream diagnostic payloads.
-    const message = code === "CATALOG_CHANGED" ? "El catálogo cambió. Reiniciá la consulta." : code === "RESPONSE_BUDGET" ? path[0] === "organizaciones-institucionales" ? "No se pudo cargar el catálogo institucional dentro del límite de lectura." : "Esta zona contiene demasiados datos. Acercá el mapa o ajustá los filtros." : status === 400 ? "Revisá los filtros del enlace." : status === 404 ? "No encontramos esa publicación." : "El catálogo no está disponible en este momento. Intentá nuevamente.";
+    const message = code === "CATALOG_CHANGED" ? "El catálogo cambió. Reiniciá la consulta." : code === "RESPONSE_BUDGET" ? path[0] === "organizaciones-institucionales" ? "No se pudo cargar el catálogo institucional dentro del límite de lectura." : path[0] === "territorios" ? "No se pudo cargar la referencia territorial dentro del límite de lectura." : "Esta zona contiene demasiados datos. Acercá el mapa o ajustá los filtros." : status === 400 ? "Revisá los filtros del enlace." : status === 404 ? "No encontramos esa publicación." : "El catálogo no está disponible en este momento. Intentá nuevamente.";
     return Response.json({ error: { code, message } }, { status, headers });
   }
 }

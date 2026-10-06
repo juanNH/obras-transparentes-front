@@ -27,9 +27,12 @@ test("la tarjeta separa territorio reportado de asociación espacial y gestión 
 test("los seis filtros explícitos se conservan al aplicar, recargar y alternar vistas", async ({ page }, info) => {
   await page.goto("/mapa?vista=lista");
   await page.getByText("Filtrar obras", { exact: true }).click();
-  await page.getByRole("combobox", { name: "Partido de Buenos Aires", exact: true }).selectOption(reported.partidoId);
+  await page.locator(".party-picker > summary").click();
+  await page.getByRole("checkbox", { name: reported.nombre, exact: true }).check();
+  await page.getByText("Filtros territoriales avanzados", { exact: true }).click();
   await page.getByRole("combobox", { name: "Partido con ubicación verificada", exact: true }).selectOption(verified.partidoId);
   await page.getByRole("combobox", { name: "Gestión municipal verificada", exact: true }).selectOption(verified.partidoId);
+  await page.getByText("Filtros institucionales", { exact: true }).click();
   await page.getByRole("combobox", { name: "Organización institucional verificada", exact: true }).selectOption(organizationId);
   await page.getByRole("combobox", { name: "Rol institucional verificado", exact: true }).selectOption("FINANCIADOR");
   await page.getByLabel("Vigencia del rol desde", { exact: true }).fill("2025-01-01");
@@ -49,7 +52,8 @@ test("los seis filtros explícitos se conservan al aplicar, recargar y alternar 
   await page.getByRole("button", { name: "Aplicar filtros", exact: true }).click();
   await expect(page.getByRole("link", { name: /^Ver ficha/ })).toHaveCount(1);
   await expect(page.getByRole("heading", { name: workName, exact: true })).toBeVisible();
-  const expected = { partidoId: reported.partidoId, partidoVerificadoId: verified.partidoId, gestionMunicipalId: verified.partidoId, organizacionId: organizationId, rolInstitucional: "FINANCIADOR", periodoDesde: "2025-01-01", periodoHasta: "2025-12-31" };
+  const expected = { partidos: reported.partidoId, partidoVerificadoId: verified.partidoId, gestionMunicipalId: verified.partidoId, organizacionId: organizationId, rolInstitucional: "FINANCIADOR", periodoDesde: "2025-01-01", periodoHasta: "2025-12-31" };
+  expect(new URL(page.url()).searchParams.has("provinciaCodigo")).toBe(false);
   for (const [key, value] of Object.entries(expected)) expect(new URL(page.url()).searchParams.get(key)).toBe(value);
   await page.getByRole("button", { name: "Mapa", exact: true }).click();
   await expect(page.locator(".map-region canvas").first()).toBeVisible();
@@ -58,7 +62,9 @@ test("los seis filtros explícitos se conservan al aplicar, recargar y alternar 
   for (const [key, value] of Object.entries(expected)) expect(new URL(page.url()).searchParams.get(key)).toBe(value);
   await expect(page.getByRole("link", { name: /^Ver ficha/ })).toHaveCount(1);
   await page.locator(".filter-group > summary").click();
-  const savedSelectors = [["Partido de Buenos Aires", reported.partidoId], ["Partido con ubicación verificada", verified.partidoId], ["Gestión municipal verificada", verified.partidoId], ["Organización institucional verificada", organizationId], ["Rol institucional verificado", "FINANCIADOR"]] as const;
+  await page.locator(".party-picker > summary").click();
+  await expect(page.getByRole("checkbox", { name: reported.nombre, exact: true })).toBeChecked();
+  const savedSelectors = [["Partido con ubicación verificada", verified.partidoId], ["Gestión municipal verificada", verified.partidoId], ["Organización institucional verificada", organizationId], ["Rol institucional verificado", "FINANCIADOR"]] as const;
   for (const [name, value] of savedSelectors) await expect(page.getByRole("combobox", { name, exact: true })).toHaveValue(value);
   await expect(page.getByLabel("Vigencia del rol desde", { exact: true })).toHaveValue("2025-01-01");
   await expect(page.getByLabel("Vigencia del rol hasta", { exact: true })).toHaveValue("2025-12-31");
@@ -97,7 +103,9 @@ test("sin JavaScript la ficha y filtros institucionales conservan el contrato", 
   await expect(page.locator(".institutional-roles")).toContainText("Financiador verificado");
   await page.goto("http://127.0.0.1:3102/mapa?vista=lista");
   await page.getByText("Filtrar obras", { exact: true }).click();
+  await page.getByText("Filtros territoriales avanzados", { exact: true }).click();
   await page.getByRole("combobox", { name: "Gestión municipal verificada", exact: true }).selectOption(verified.partidoId);
+  await page.getByText("Filtros institucionales", { exact: true }).click();
   await page.getByRole("combobox", { name: "Organización institucional verificada", exact: true }).selectOption(organizationId);
   await page.getByRole("button", { name: "Aplicar filtros", exact: true }).click();
   await expect(page.getByRole("link", { name: /^Ver ficha/ })).toHaveCount(2);

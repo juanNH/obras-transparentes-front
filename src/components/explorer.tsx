@@ -4,9 +4,9 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { BoundingBox, InstitutionalOrganizationCatalog, ListQuery, PartyBoundaries, PartyCatalog, WorkDetail, WorkGeoJSON, WorkList } from "../api/client";
+import type { BoundingBox, InstitutionalOrganizationCatalog, ListQuery, PartyBoundaries, PartyCatalog, ProvinceCatalog, WorkDetail, WorkGeoJSON, WorkList } from "../api/client";
 import { BrowserApiError, readPublic } from "../lib/browser-api";
-import { DEFAULT_BBOX, INSTITUTIONAL_ROLES, MAP_READ_BBOX, SOURCES, STATES, explorerHref, queryParams, unlocatedListHref } from "../lib/explorer-query";
+import { DEFAULT_BBOX, INSTITUTIONAL_ROLES, MAP_READ_BBOX, SOURCES, STATES, explorerHref, parseExplorerQuery, queryParams, unlocatedListHref } from "../lib/explorer-query";
 import type { ExplorerQuery } from "../lib/explorer-query";
 import { limitMapFeatures, limitMapLayers, MAX_MAP_FEATURES } from "../lib/map-budget";
 import { detailMapFeatures } from "../lib/map-data";
@@ -16,6 +16,7 @@ import { LocationQuality } from "./location-quality";
 import { SourceBadge, SourceLegend } from "./source-origin";
 import { MapAvailability } from "./map-availability";
 import { PartyFilter } from "./party-filter";
+import { ProvinceFilter } from "./province-filter";
 import { InstitutionalFilter } from "./institutional-filter";
 import { WorkAssociationSummary } from "./work-associations";
 import "./explorer.css";
@@ -30,9 +31,10 @@ type Selection = { id: string; revisionId?: string; locationId?: string };
  * @param props - Página inicial, estado validado de URL y estilo cartográfico configurado.
  * @returns Explorador que conserva filtros al alternar presentación y confirma área sólo por acción explícita.
  */
-export function Explorer({ initial, initialError, state, styleUrl, partyCatalog = null, institutionalCatalog = null }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string; partyCatalog?: PartyCatalog | null; institutionalCatalog?: InstitutionalOrganizationCatalog | null }) {
+export function Explorer({ initial, initialError, state, styleUrl, partyCatalog = null, provinceCatalog = null, institutionalCatalog = null }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string; partyCatalog?: PartyCatalog | null; provinceCatalog?: ProvinceCatalog | null; institutionalCatalog?: InstitutionalOrganizationCatalog | null }) {
   const router = useRouter();
   const { query } = state;
+  const selectedPartyIds = useMemo(() => query.partidos ?? (query.partidoId ? [query.partidoId] : []), [query.partidos, query.partidoId]);
   const [view, setView] = useState(state.view);
   const [hydrated, setHydrated] = useState(false);
   const [items, setItems] = useState(initial?.items ?? []);
@@ -199,7 +201,7 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
     }
     if (selection?.id !== id || selection.revisionId !== revisionId || selection.locationId !== locationId) setSelection({ id, revisionId, ...(locationId ? { locationId } : {}) });
     setExpanded(false); setSummaryOpen(summary);
-    const url = new URL(window.location.href);
+    const url = scopedUrl();
     url.searchParams.set("obra", id); url.searchParams.set("revisionId", revisionId);
     if (locationId) url.searchParams.set("ubicacionId", locationId);
     else url.searchParams.delete("ubicacionId");
@@ -209,7 +211,7 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
   function clearSelection() {
     mapRegion.current?.focus({ preventScroll: true });
     setSelection(null); setSummaryOpen(false);
-    const url = new URL(window.location.href); url.searchParams.delete("obra"); url.searchParams.delete("revisionId"); url.searchParams.delete("ubicacionId");
+    const url = scopedUrl(); url.searchParams.delete("obra"); url.searchParams.delete("revisionId"); url.searchParams.delete("ubicacionId");
     window.history.replaceState(null, "", url);
   }
   /** Agrega una página sin obras duplicadas ni cursores repetidos y retira resultados si cambia la versión. */
@@ -237,7 +239,7 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
   function navigateView(next: "lista" | "mapa") {
     if (next === view) return;
     setFocusBBox(null);
-    const url = new URL(window.location.href);
+    const url = scopedUrl();
     if (next === "lista") url.searchParams.set("vista", "lista");
     else url.searchParams.delete("vista");
     setView(next);
@@ -279,74 +281,120 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
   }
   /** Copia el enlace de filtros/selección sin cursor de página y ofrece alternativa si el portapapeles falla. */
   async function share() {
-    const url = new URL(window.location.href); url.searchParams.delete("cursor");
+    const url = scopedUrl(); url.searchParams.delete("cursor");
     try { await navigator.clipboard.writeText(url.href); setShareMessage("Enlace copiado."); }
     catch { setShareMessage("Podés copiar el enlace desde la barra de direcciones del navegador."); }
   }
   const clearArea = { ...firstQuery }; delete clearArea.bbox;
   const clearLegacy = { ...firstQuery }; delete clearLegacy.territorioEsquema; delete clearLegacy.municipioCodigo;
   const hasData = Boolean(initial);
-  const activeFilters = [query.fuente, query.estado, query.sector, query.tieneGeometria, query.territorioEsquema, query.partidoId, query.partidoVerificadoId, query.gestionMunicipalId, query.organizacionId, query.rolInstitucional, query.periodoDesde, query.periodoHasta].filter(value => value !== undefined).length;
-  const selectedParty = partyCatalog?.items.find(party => party.partidoId === query.partidoId);
+  const activeFilters = [query.provinciaCodigo?.length ? true : undefined, query.bbox, query.fuente, query.estado, query.sector, query.tieneGeometria, query.territorioEsquema, selectedPartyIds.length ? true : undefined, query.partidoVerificadoId, query.gestionMunicipalId, query.organizacionId, query.rolInstitucional, query.periodoDesde ? true : undefined].filter(value => value !== undefined).length;
+  const provinceNames = (query.provinciaCodigo ?? []).map(code => provinceCatalog?.items.find(province => province.codigo === code)?.nombre ?? (code === "06" ? "Buenos Aires" : code === "02" ? "Ciudad Autónoma de Buenos Aires" : code));
+  const selectedPartyNames = selectedPartyIds.map(id => partyCatalog?.items.find(party => party.partidoId === id)?.nombre ?? "identidad territorial seleccionada");
+  const selectedPartySummary = selectedPartyNames.slice(0, 3).join(" · ") + (selectedPartyNames.length > 3 ? ` · y ${selectedPartyNames.length - 3} más` : "");
   const locatedWorks = new Set(representedFeatures.map(feature => feature.properties.obraId)).size;
   const unlocatedLoaded = items.filter(work => !work.tieneGeometria).length;
   const selectedItem = items.find(work => work.obraId === selection?.id);
+
+  /** Canoniza filtros explícitos en nuevos enlaces sin agregar restricciones a una consulta global. */
+  function scopedUrl() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("provinciaCodigo");
+    for (const code of query.provinciaCodigo ?? []) url.searchParams.append("provinciaCodigo", code);
+    if (query.partidos) {
+      url.searchParams.delete("partidos");
+      for (const id of query.partidos) url.searchParams.append("partidos", id);
+    }
+    return url;
+  }
 
   /** Omite opciones vacías en la URL de filtros; el formulario GET nativo conserva la alternativa sin JavaScript. */
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const params = new URLSearchParams();
     new FormData(event.currentTarget).forEach((value, key) => {
-      if (typeof value === "string" && value) params.set(key, value);
+      if (typeof value === "string" && value) params.append(key, value);
     });
-    window.location.assign("/mapa" + (params.size ? "?" + params : ""));
+    const next = parseExplorerQuery(params);
+    window.location.assign(explorerHref(next.query, next.view, next.showBoundaries));
   }
 
-  /** Selecciona un UUID del padrón desde el mapa como filtro declarado; no utiliza inclusión espacial de obras. */
+  /** Alterna un partido reportado sin borrar los otros; los límites visuales no verifican ubicación ni gestión. */
   function chooseParty(partidoId: string) {
-    if (query.partidoId === partidoId || !partyCatalog?.items.some(party => party.partidoId === partidoId)) return;
-    router.push(explorerHref({ ...clearLegacy, partidoId }, view, showBoundaries), { scroll: false });
+    if (!partyCatalog?.items.some(party => party.partidoId === partidoId)) return;
+    const next = { ...clearLegacy };
+    delete next.partidoId;
+    const ids = selectedPartyIds.includes(partidoId) ? selectedPartyIds.filter(id => id !== partidoId) : [...selectedPartyIds, partidoId];
+    if (ids.length) next.partidos = ids.sort(); else delete next.partidos;
+    router.push(explorerHref(next, view, showBoundaries), { scroll: false });
   }
 
   /** Comparte la presentación de límites sin aplicar otro filtro ni consultar ubicaciones de obras. */
   function toggleBoundaries(visible: boolean) {
     setShowBoundaries(visible);
-    const url = new URL(window.location.href);
+    const url = scopedUrl();
     if (visible) url.searchParams.set("limites", "mostrar"); else url.searchParams.delete("limites");
     window.history.replaceState(null, "", url);
   }
 
+  /** Quita un grupo de filtros y su cursor, preservando los demás valores y la presentación. */
+  function withoutFilters(...keys: (keyof ListQuery)[]) {
+    const next: ListQuery = { ...firstQuery };
+    for (const key of keys) delete next[key];
+    return explorerHref(next, view, showBoundaries);
+  }
+  const resetHref = explorerHref({ limit: 20 }, view);
+
   return <div className="explorer">
     <div className="consultation-header">
-    <details className="filter-group"><summary>Filtrar obras{activeFilters > 0 && <span className="muted"> · {activeFilters} {activeFilters === 1 ? "filtro activo" : "filtros activos"}</span>}</summary>
-    <form action="/mapa" method="get" className="filters" aria-label="Filtrar obras" onSubmit={applyFilters}>
-      {query.bbox && <input type="hidden" name="bbox" value={query.bbox.join(",")} />}
-      {view === "lista" && <input type="hidden" name="vista" value="lista" />}
-      {showBoundaries && <input type="hidden" name="limites" value="mostrar" />}
-      {query.territorioEsquema && <><input type="hidden" name="territorioEsquema" value={query.territorioEsquema} /><input type="hidden" name="municipioCodigo" value={query.municipioCodigo} /></>}
-      <PartyFilter catalog={partyCatalog} partidoId={query.partidoId} partidoVerificadoId={query.partidoVerificadoId} gestionMunicipalId={query.gestionMunicipalId} showReported={!query.territorioEsquema} />
-      <InstitutionalFilter catalog={institutionalCatalog} query={query} />
-      <label>Fuente<select name="fuente" defaultValue={query.fuente ?? ""}><option value="">Todas las fuentes</option>{Object.entries(SOURCES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-      <label>Estado informado<select name="estado" defaultValue={query.estado ?? ""}><option value="">Todos los estados</option>{Object.entries(STATES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-      <label>Sector<select name="sector" defaultValue={query.sector ?? ""}><option value="">Todos los sectores</option><option value="educacion">Educación</option></select></label>
-      {!query.bbox && <label>Ubicación<select name="tieneGeometria" defaultValue={query.tieneGeometria === undefined ? "" : String(query.tieneGeometria)}><option value="">Con y sin ubicación</option><option value="true">Con ubicación aprobada</option><option value="false">Sin ubicación aprobada</option></select></label>}
-      <button className="button" type="submit">Aplicar filtros</button><a href="/mapa" className="filter-reset">Limpiar</a>
-    </form>
-    </details>
     <div className="explorer-toolbar">
       <div className="view-switch" role="group" aria-label="Forma de explorar">
         <button type="button" disabled={!hydrated} aria-pressed={view === "lista"} onClick={() => navigateView("lista")}>Lista</button>
         <button type="button" disabled={!hydrated} aria-pressed={view === "mapa"} onClick={() => navigateView("mapa")}>Mapa</button>
       </div>
       <button type="button" className="button secondary" disabled={!hydrated} onClick={() => void share()}>Copiar enlace</button>
+      <a href={resetHref} className="button secondary filter-clear-all">Limpiar filtros</a>
       <span className="muted" role="status">{shareMessage}</span>
     </div>
+    <details className="filter-group"><summary>Filtrar obras{activeFilters > 0 && <span className="muted"> · {activeFilters} {activeFilters === 1 ? "filtro activo" : "filtros activos"}</span>}</summary>
+    <form action="/mapa" method="get" className="filters" aria-label="Filtrar obras" onSubmit={applyFilters}>
+      {query.bbox && <input type="hidden" name="bbox" value={query.bbox.join(",")} />}
+      {view === "lista" && <input type="hidden" name="vista" value="lista" />}
+      {showBoundaries && <input type="hidden" name="limites" value="mostrar" />}
+      {query.territorioEsquema && <><input type="hidden" name="territorioEsquema" value={query.territorioEsquema} /><input type="hidden" name="municipioCodigo" value={query.municipioCodigo} /></>}
+      <ProvinceFilter catalog={provinceCatalog} provinciaCodigo={query.provinciaCodigo} />
+      <PartyFilter catalog={partyCatalog} partidos={selectedPartyIds} partidoVerificadoId={query.partidoVerificadoId} gestionMunicipalId={query.gestionMunicipalId} showReported={!query.territorioEsquema} />
+      <details className="advanced-filter institutional-options" open={Boolean(query.organizacionId || query.rolInstitucional || query.periodoDesde)}><summary>Filtros institucionales</summary><InstitutionalFilter catalog={institutionalCatalog} query={query} /></details>
+      <label>Fuente<select name="fuente" defaultValue={query.fuente ?? ""}><option value="">Todas las fuentes</option>{Object.entries(SOURCES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label>Estado informado<select name="estado" defaultValue={query.estado ?? ""}><option value="">Todos los estados</option>{Object.entries(STATES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label>Sector<select name="sector" defaultValue={query.sector ?? ""}><option value="">Todos los sectores</option><option value="educacion">Educación</option></select></label>
+      {!query.bbox && <label>Ubicación<select name="tieneGeometria" defaultValue={query.tieneGeometria === undefined ? "" : String(query.tieneGeometria)}><option value="">Con y sin ubicación</option><option value="true">Con ubicación aprobada</option><option value="false">Sin ubicación aprobada</option></select></label>}
+      <button className="button" type="submit">Aplicar filtros</button><a href={resetHref} className="filter-reset">Restablecer consulta</a>
+    </form>
+    </details>
     </div>
+    {activeFilters > 0 && <ul className="active-filter-list" aria-label="Filtros aplicados">
+      {provinceNames.length > 0 && <li>Jurisdicción: {provinceNames.join(" · ")} <a href={withoutFilters("provinciaCodigo")} aria-label="Quitar filtro de jurisdicción">Quitar</a></li>}
+      {selectedPartyIds.length > 0 && <li>{selectedPartyIds.length} {selectedPartyIds.length === 1 ? "partido" : "partidos"} <a href={withoutFilters("partidos", "partidoId")} aria-label="Quitar filtro de partidos">Quitar</a></li>}
+      {query.fuente && <li>Fuente: {SOURCES[query.fuente]} <a href={withoutFilters("fuente")} aria-label="Quitar filtro de fuente">Quitar</a></li>}
+      {query.estado && <li>Estado: {STATES[query.estado]} <a href={withoutFilters("estado")} aria-label="Quitar filtro de estado">Quitar</a></li>}
+      {query.sector && <li>Educación <a href={withoutFilters("sector")} aria-label="Quitar filtro de sector">Quitar</a></li>}
+      {query.tieneGeometria !== undefined && <li>{query.tieneGeometria ? "Con ubicación" : "Sin ubicación"} <a href={withoutFilters("tieneGeometria")} aria-label="Quitar filtro de ubicación">Quitar</a></li>}
+      {query.bbox && <li>Área del mapa <a href={withoutFilters("bbox")} aria-label="Quitar filtro de área">Quitar</a></li>}
+      {query.territorioEsquema && <li>Municipio: {query.municipioCodigo} <a href={withoutFilters("territorioEsquema", "municipioCodigo")} aria-label="Quitar filtro territorial anterior">Quitar</a></li>}
+      {query.partidoVerificadoId && <li>Ubicación verificada <a href={withoutFilters("partidoVerificadoId")} aria-label="Quitar filtro de ubicación territorial verificada">Quitar</a></li>}
+      {query.gestionMunicipalId && <li>Gestión municipal <a href={withoutFilters("gestionMunicipalId")} aria-label="Quitar filtro de gestión municipal">Quitar</a></li>}
+      {query.organizacionId && <li>Organización <a href={withoutFilters("organizacionId")} aria-label="Quitar filtro de organización">Quitar</a></li>}
+      {query.rolInstitucional && <li>Rol: {INSTITUTIONAL_ROLES[query.rolInstitucional]} <a href={withoutFilters("rolInstitucional")} aria-label="Quitar filtro de rol institucional">Quitar</a></li>}
+      {query.periodoDesde && <li>Período <a href={withoutFilters("periodoDesde", "periodoHasta")} aria-label="Quitar filtro de período">Quitar</a></li>}
+    </ul>}
     <SourceLegend />
     <div className="scope-note">
-      <p><strong>{query.bbox ? "Consulta por área" : "Todo el catálogo"}</strong> · {query.bbox ? "Solo obras con ubicación aprobada que intersecta la zona consultada." : "Sin filtro de área. Incluye obras con y sin ubicación aprobada."}</p>
+      <p><strong>{provinceNames.length ? provinceNames.join(" · ") : "Todas las obras publicadas"}{query.bbox ? " · Consulta por área" : ""}</strong> · {query.bbox ? "Solo obras con ubicación aprobada que intersecta la zona consultada." : "Sin filtro de área. Incluye obras con y sin ubicación aprobada."}</p>
+      {provinceNames.length > 0 && <p>La jurisdicción requiere evidencia territorial compatible. Las obras con territorio no informado pueden consultarse quitando este filtro o eligiendo su fuente. <a href={withoutFilters("provinciaCodigo")}>Ver sin filtro de jurisdicción</a>.</p>}
+      <details className="coverage-help"><summary>Acerca de la cobertura territorial</summary><p>Los 135 partidos son opciones de búsqueda. Los resultados dependen de las obras publicadas y del territorio informado por cada fuente. Algunas publicaciones no informan un partido; algunas fuentes municipales todavía no tienen publicaciones. <a href="/proyecto#cobertura">Cobertura de las fuentes</a>.</p></details>
       {query.territorioEsquema && <p>Municipio PBA: código {query.municipioCodigo}. Este filtro territorial no equivale al área del mapa. <a href={explorerHref(clearLegacy, view, showBoundaries)}>Quitar este filtro y elegir entre los 135 partidos</a>.</p>}
-      {query.partidoId && <p><strong>Partido informado por la fuente: {selectedParty?.nombre ?? "identidad territorial seleccionada"}.</strong> La asociación reportada por la fuente no acredita ubicación espacial verificada ni gestión municipal.</p>}
+      {selectedPartyIds.length > 0 && <p><strong>{selectedPartyIds.length === 1 ? "Partido informado por la fuente" : "Partidos informados por la fuente"}: {selectedPartySummary}.</strong> {selectedPartyIds.length > 1 && "Incluye obras informadas en cualquiera de los partidos seleccionados. "}La asociación reportada por la fuente no acredita ubicación espacial verificada ni gestión municipal.</p>}
       {query.partidoVerificadoId && <p><strong>Ubicación territorial verificada: {partyCatalog?.items.find(party => party.partidoId === query.partidoVerificadoId)?.nombre ?? "partido del padrón no disponible"}.</strong> Requiere una asociación espacial verificada publicada para la revisión.</p>}
       {query.gestionMunicipalId && <p><strong>Gestión municipal verificada: {partyCatalog?.items.find(party => party.partidoId === query.gestionMunicipalId)?.nombre ?? "partido del padrón no disponible"}.</strong> Requiere un rol municipal de promotor, contratante, ejecutor o financiador; no se deduce de la ubicación.</p>}
       {query.organizacionId && <p>Organización institucional: {institutionalCatalog?.items.find(organization => organization.id === query.organizacionId)?.nombre ?? "organización no disponible en el catálogo actual"}.</p>}
@@ -382,7 +430,7 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
           </div>
           <div className="card-actions"><button className="button secondary" type="button" onClick={() => setSummaryOpen(true)}>Ver resumen</button><button className="button secondary" type="button" onClick={clearSelection}>Quitar selección</button></div>
         </div>}
-        <div className="map-stage"><WorkMap features={mapLayers.catalog} selectionFeatures={mapLayers.selection} partyFeatures={showBoundaries ? boundaries?.features ?? [] : []} selectedPartidoId={query.partidoId ?? null} onPartySelect={chooseParty} selectionFocus={selectionFocus} autoFit={!query.bbox && !camera.current} preserveCamera={Boolean(camera.current)} initialBBox={camera.current ?? query.bbox ?? DEFAULT_BBOX} selectedId={selection?.id ?? null} selectedLocationId={selectedLocationId ?? null} selectedRevisionId={selectedDetail?.revisionId ?? selection?.revisionId ?? null} focusBBox={focusBBox} onViewport={box => { camera.current = box; setCandidate(box); }} onSelect={(id, revision, location) => select(id, revision, false, location)} styleUrl={styleUrl} /></div>
+        <div className="map-stage"><WorkMap features={mapLayers.catalog} selectionFeatures={mapLayers.selection} partyFeatures={showBoundaries ? boundaries?.features ?? [] : []} selectedPartidoIds={selectedPartyIds} onPartySelect={chooseParty} selectionFocus={selectionFocus} autoFit={!query.bbox && !camera.current} preserveCamera={Boolean(camera.current)} initialBBox={camera.current ?? query.bbox ?? DEFAULT_BBOX} selectedId={selection?.id ?? null} selectedLocationId={selectedLocationId ?? null} selectedRevisionId={selectedDetail?.revisionId ?? selection?.revisionId ?? null} focusBBox={focusBBox} onViewport={box => { camera.current = box; setCandidate(box); }} onSelect={(id, revision, location) => select(id, revision, false, location)} styleUrl={styleUrl} /></div>
         <div className="map-actions"><button type="button" className="button" disabled={!hydrated} onClick={searchArea}>Buscar en esta zona</button><button type="button" className="button secondary" disabled={!hydrated || locating} onClick={useLocation}>{locating ? "Buscando ubicación…" : "Usar mi ubicación"}</button></div>
         {selectedLocations.length > 0 && <details className="location-details" key={`${selection?.id}:${selection?.revisionId}:${selectedLocationId ?? "all"}`} open={selectedLocations.length === 1}>
           <summary>Cómo interpretar {selectedLocations.length === 1 ? "esta ubicación" : `las ${selectedLocations.length} ubicaciones seleccionadas`}</summary>

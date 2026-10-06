@@ -56,6 +56,8 @@ test("forwards public reads and conditional caching without credentials or cooki
     "/api/v1/obras?limit=20",
     "/api/v1/obras/geojson?bbox=1,2,3,4",
     "/api/v1/obras/123e4567-e89b-12d3-a456-426614174000",
+    "/api/v1/territorios/provincias",
+    "/api/v1/obras?provinciaCodigo=06&partidos=aaaaaaaa-0000-4000-8000-000000000001&partidos=bbbbbbbb-0000-4000-8000-000000000001",
   ];
   for (const path of paths) {
     const response = await fetch(origin + path, {
@@ -114,6 +116,8 @@ test("rejects private routes, writes, malformed targets and oversized queries be
     "/api/v1/obras/../admin",
     "/api/v1/obras/%2e%2e/admin",
     "/api/v1/obras/",
+    "/api/v1/territorios/provincias/",
+    "/api/v1/territorios/provincias/admin",
   ]) {
     const response = await raw(origin, path);
     assert.equal(response.status, 404, path);

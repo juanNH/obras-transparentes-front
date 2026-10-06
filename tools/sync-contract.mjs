@@ -89,14 +89,14 @@ try {
     { cwd: temporary, stdio: "pipe", encoding: "utf8" },
   );
   const document = JSON.parse(await readFile(openapiPath, "utf8"));
-  const publicPaths = new Set(["/api/v1/obras", "/api/v1/obras/geojson", "/api/v1/obras/{id}", "/api/v1/territorios/pba/partidos", "/api/v1/territorios/pba/partidos/limites", "/api/v1/organizaciones-institucionales"]);
+  const publicPaths = new Set(["/api/v1/obras", "/api/v1/obras/geojson", "/api/v1/obras/{id}", "/api/v1/territorios/provincias", "/api/v1/territorios/pba/partidos", "/api/v1/territorios/pba/partidos/limites", "/api/v1/organizaciones-institucionales"]);
   if (
     Object.keys(document.paths).some(
       (path) => !publicPaths.has(path),
     )
   ) {
     throw new Error(
-      "La exportación debe contener exclusivamente rutas públicas de obras, partidos y organizaciones institucionales admitidas.",
+      "La exportación debe contener exclusivamente rutas públicas de obras, provincias, partidos y organizaciones institucionales admitidas.",
     );
   }
   const examples = JSON.parse(await readFile(examplesPath, "utf8"));

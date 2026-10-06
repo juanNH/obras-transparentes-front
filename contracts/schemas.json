@@ -1,4 +1,98 @@
 {
+  "PublicProvinceCatalog": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "version": {
+        "type": "string",
+        "minLength": 1
+      },
+      "consultadoEn": {
+        "type": "string",
+        "format": "date",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+      },
+      "fuentes": {
+        "minItems": 1,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "nombre": {
+              "type": "string",
+              "minLength": 1
+            },
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "licencia": {
+              "type": "object",
+              "properties": {
+                "nombre": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "required": [
+                "nombre",
+                "url"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "nombre",
+            "url",
+            "licencia"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "items": {
+        "minItems": 1,
+        "maxItems": 24,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "codigo": {
+              "type": "string",
+              "pattern": "^[0-9]{2}$"
+            },
+            "nombre": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tipo": {
+              "type": "string",
+              "enum": [
+                "PROVINCIA",
+                "CIUDAD_AUTONOMA"
+              ]
+            }
+          },
+          "required": [
+            "codigo",
+            "nombre",
+            "tipo"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "version",
+      "consultadoEn",
+      "fuentes",
+      "items"
+    ],
+    "additionalProperties": false
+  },
   "PublicInstitutionalOrganizationCatalogResponse": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
@@ -767,7 +861,10 @@
                 "pba-edificios",
                 "caba-actualizado",
                 "nacion-obras",
-                "vl-obras"
+                "vl-obras",
+                "bahia-obras",
+                "olavarria-obras",
+                "pergamino-obras"
               ]
             },
             "recursoId": {
@@ -1094,6 +1191,42 @@
                       },
                       "localizador": {
                         "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "format": {
+                                "type": "string",
+                                "const": "JSON"
+                              },
+                              "byteStart": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "byteEndExclusive": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "dataOrdinal": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "pointer": {
+                                "type": "string",
+                                "pattern": "^\\/(?:0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": [
+                              "format",
+                              "byteStart",
+                              "byteEndExclusive",
+                              "dataOrdinal",
+                              "pointer"
+                            ],
+                            "additionalProperties": false
+                          },
                           {
                             "type": "object",
                             "properties": {
@@ -1725,6 +1858,42 @@
                       },
                       "localizador": {
                         "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "format": {
+                                "type": "string",
+                                "const": "JSON"
+                              },
+                              "byteStart": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "byteEndExclusive": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "dataOrdinal": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "pointer": {
+                                "type": "string",
+                                "pattern": "^\\/(?:0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": [
+                              "format",
+                              "byteStart",
+                              "byteEndExclusive",
+                              "dataOrdinal",
+                              "pointer"
+                            ],
+                            "additionalProperties": false
+                          },
                           {
                             "type": "object",
                             "properties": {
@@ -3358,6 +3527,42 @@
                             "properties": {
                               "format": {
                                 "type": "string",
+                                "const": "JSON"
+                              },
+                              "byteStart": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "byteEndExclusive": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "dataOrdinal": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "pointer": {
+                                "type": "string",
+                                "pattern": "^\\/(?:0|[1-9]\\d*)$"
+                              }
+                            },
+                            "required": [
+                              "format",
+                              "byteStart",
+                              "byteEndExclusive",
+                              "dataOrdinal",
+                              "pointer"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "format": {
+                                "type": "string",
                                 "const": "CSV"
                               },
                               "byteStart": {
@@ -3589,7 +3794,10 @@
                 "pba-edificios",
                 "caba-actualizado",
                 "nacion-obras",
-                "vl-obras"
+                "vl-obras",
+                "bahia-obras",
+                "olavarria-obras",
+                "pergamino-obras"
               ]
             },
             "recursoId": {
@@ -4035,7 +4243,10 @@
                           "pba-edificios",
                           "caba-actualizado",
                           "nacion-obras",
-                          "vl-obras"
+                          "vl-obras",
+                          "bahia-obras",
+                          "olavarria-obras",
+                          "pergamino-obras"
                         ]
                       },
                       "recursoId": {
@@ -4359,6 +4570,42 @@
                                 },
                                 "localizador": {
                                   "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "format": {
+                                          "type": "string",
+                                          "const": "JSON"
+                                        },
+                                        "byteStart": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "byteEndExclusive": {
+                                          "type": "integer",
+                                          "exclusiveMinimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "dataOrdinal": {
+                                          "type": "integer",
+                                          "exclusiveMinimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "pointer": {
+                                          "type": "string",
+                                          "pattern": "^\\/(?:0|[1-9]\\d*)$"
+                                        }
+                                      },
+                                      "required": [
+                                        "format",
+                                        "byteStart",
+                                        "byteEndExclusive",
+                                        "dataOrdinal",
+                                        "pointer"
+                                      ],
+                                      "additionalProperties": false
+                                    },
                                     {
                                       "type": "object",
                                       "properties": {

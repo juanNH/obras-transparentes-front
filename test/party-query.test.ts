@@ -20,7 +20,7 @@ describe("identidad compartible del partido informado", () => {
     expect(explorerHref(state.query, "lista", true)).toContain("limites=mostrar");
     expect(() => parseExplorerQuery(new URLSearchParams("limites=unknown"))).toThrow(TypeError);
   });
-  it.each(["partidoId=invalid", `partidoId=${party}&partidoId=${party}`, `partidoId=${party}&territorioEsquema=pba.municipio&municipioCodigo=06854`, `partidoId=${party}&municipioCodigo=001`])("rechaza identidades o filtros ambiguos: %s", value => {
+  it.each(["partidoId=invalid", `partidoId=${party}&partidoId=${party}`, `partidoId=${party}&territorioEsquema=pba.municipio&municipioCodigo=06854`, `partidoId=${party}&municipioCodigo=001`, `partidoId=${party}&territorioEsquema=`, `partidoId=${party}&municipioCodigo=`])("rechaza identidades o filtros ambiguos: %s", value => {
     expect(() => parseExplorerQuery(new URLSearchParams(value))).toThrow(TypeError);
   });
   it("envía partidoId a lista y GeoJSON manteniendo el bbox separado", async () => {

@@ -49,7 +49,7 @@ test("explica con texto, colores y formas el nivel de cada fuente de datos", asy
     { label: "Nación", color: "#0077A8", shape: "circle" },
     { label: "Ciudad de Buenos Aires", color: "#B42332", shape: "rect" },
     { label: "Provincia de Buenos Aires", color: "#287A3A", shape: "polygon" },
-    { label: "Municipio · Vicente López", color: "#946800", shape: "polygon" },
+    { label: "Municipios", color: "#946800", shape: "polygon" },
     { label: "Fuentes de distintos niveles", color: "#334155", shape: "polygon" },
     { label: "Fuente no informada", color: "#596979", shape: "circle" },
   ];

@@ -6,9 +6,16 @@ import examples from "../contracts/examples.json" with { type: "json" };
 import type { WorkDetail } from "../src/api/client.js";
 import { parsePublicResponse } from "../src/api/contract.js";
 import { WorkDetailContent } from "../src/components/work-detail.js";
-import { civilDate, formatExactDecimal, publicationDate, reportedDate, safeSourceUrl, stateLabel } from "../src/lib/presentation.js";
+import { civilDate, formatExactDecimal, publicationDate, reportedDate, safeSourceUrl, sourceLabel, stateLabel } from "../src/lib/presentation.js";
 
 describe("Presentación pública sin inferencias", () => {
+  it.each([
+    ["bahia-obras", "Municipalidad de Bahía Blanca"],
+    ["olavarria-obras", "Municipalidad de Olavarría"],
+    ["pergamino-obras", "Municipalidad de Pergamino"],
+  ] as const)("identifica %s como editor de datos sin asignar un rol de obra", (source, label) => {
+    expect(sourceLabel(source)).toBe(label);
+  });
   it("conserva importes mayores que el entero seguro y todos sus decimales", () => {
     expect(formatExactDecimal("90071992547409931234.567890123456789")).toBe("90.071.992.547.409.931.234,567890123456789");
     expect(formatExactDecimal("-0000.00")).toBe("-0,00");

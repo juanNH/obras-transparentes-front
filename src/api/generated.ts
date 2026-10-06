@@ -120,6 +120,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/territorios/provincias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar las provincias disponibles para filtros públicos
+         * @description Lectura anónima e independiente de obras, base de datos, cola y storage. provincias@2 registra Ciudad Autónoma de Buenos Aires (02, CIUDAD_AUTONOMA) y Buenos Aires (06, PROVINCIA). Conserva consultadoEn y las fuentes del padrón PBA ya instalado; la fuente adicional identifica el código CABA corroborado en la revisión GeoRef del 2026-10-05 y su API v2.0, sin acreditar una nueva consulta remota. Registrar una jurisdicción no atribuye obras por su fuente: el filtro requiere evidencia territorial publicada. El contrato admite futuras jurisdicciones con códigos INDEC textuales de dos dígitos. No devuelve geometrías, conteos ni frescura de las fuentes de obras. No admite parámetros de consulta ni requiere sesión, permisos administrativos, Origin o CSRF.
+         */
+        get: operations["TerritoriesController_provinces"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -229,7 +249,7 @@ export interface components {
                     estado: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED" | null;
                     fuentes: {
                         /** @enum {string} */
-                        codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras";
+                        codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
                         /** Format: uuid */
                         recursoId: string;
                         sha256: string;
@@ -249,6 +269,13 @@ export interface components {
                         evidencias: ({
                             columna: string;
                             localizador: {
+                                byteEndExclusive: number;
+                                byteStart: number;
+                                dataOrdinal: number;
+                                /** @enum {string} */
+                                format: "JSON";
+                                pointer: string;
+                            } | {
                                 byteEndExclusive: number;
                                 byteStart: number;
                                 dataOrdinal: number;
@@ -495,6 +522,27 @@ export interface components {
             /** @enum {string} */
             version: "pba-partidos@1";
         };
+        PublicProvinceCatalog: {
+            /** Format: date */
+            consultadoEn: string;
+            fuentes: {
+                licencia: {
+                    nombre: string;
+                    /** Format: uri */
+                    url: string;
+                };
+                nombre: string;
+                /** Format: uri */
+                url: string;
+            }[];
+            items: {
+                codigo: string;
+                nombre: string;
+                /** @enum {string} */
+                tipo: "PROVINCIA" | "CIUDAD_AUTONOMA";
+            }[];
+            version: string;
+        };
         PublicWorkDetail: {
             asociacionesEspaciales: {
                 /** @enum {string} */
@@ -590,7 +638,7 @@ export interface components {
             })[];
             fuentes: {
                 /** @enum {string} */
-                codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras";
+                codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
                 /** Format: uuid */
                 recursoId: string;
                 sha256: string;
@@ -699,6 +747,13 @@ export interface components {
                             byteStart: number;
                             dataOrdinal: number;
                             /** @enum {string} */
+                            format: "JSON";
+                            pointer: string;
+                        } | {
+                            byteEndExclusive: number;
+                            byteStart: number;
+                            dataOrdinal: number;
+                            /** @enum {string} */
                             format: "CSV";
                             lineEnd: number;
                             lineStart: number;
@@ -767,6 +822,13 @@ export interface components {
                 evidencias: ({
                     columna: string;
                     localizador: {
+                        byteEndExclusive: number;
+                        byteStart: number;
+                        dataOrdinal: number;
+                        /** @enum {string} */
+                        format: "JSON";
+                        pointer: string;
+                    } | {
                         byteEndExclusive: number;
                         byteStart: number;
                         dataOrdinal: number;
@@ -1004,7 +1066,7 @@ export interface components {
             estado: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED" | null;
             fuentes: {
                 /** @enum {string} */
-                codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras";
+                codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
                 /** Format: uuid */
                 recursoId: string;
                 sha256: string;
@@ -1038,6 +1100,13 @@ export interface components {
                 evidencias: ({
                     columna: string;
                     localizador: {
+                        byteEndExclusive: number;
+                        byteStart: number;
+                        dataOrdinal: number;
+                        /** @enum {string} */
+                        format: "JSON";
+                        pointer: string;
+                    } | {
                         byteEndExclusive: number;
                         byteStart: number;
                         dataOrdinal: number;
@@ -1161,7 +1230,7 @@ export interface operations {
                 /** @description Cursor de la página anterior con los mismos filtros. catalogoVersion es un string decimal exacto. */
                 cursor?: string;
                 estado?: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED";
-                fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras";
+                fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
                 /** @description Partido de una institución municipal con rol VERIFIED PROMOTOR, CONTRATANTE, EJECUTOR o FINANCIADOR. No incluye CONTRATISTA ni deduce responsabilidades de la fuente. */
                 gestionMunicipalId?: string;
                 limit?: number;
@@ -1169,14 +1238,18 @@ export interface operations {
                 municipioCodigo?: string;
                 /** @description Identidad del catálogo institucional público; debe cumplir los demás filtros institucionales en la misma relación de esta revisión. */
                 organizacionId?: string;
-                /** @description UUID del padrón GET /api/v1/territorios/pba/partidos. Selecciona el territorio canónico indec.departamento REPORTED de la revisión publicada, una equivalencia pba.municipio REPORTED documentada por su par exacto código/nombre en 95 partidos del CSV escolar auditado, o el par nacional histórico REPORTED nacion.provincia=BUENOS_AIRES y nacion.departamento=VICENTE_LOPEZ únicamente para Vicente López. Los otros 40 partidos no reciben equivalencias PBA legacy inferidas y no hay equivalencias nacionales históricas para otros partidos. No acredita gestión municipal ni pertenencia espacial; no infiere por fuente o coordenadas. Incompatible con territorioEsquema y municipioCodigo. El cursor incorpora la versión del padrón cuando se usa este filtro. */
+                /** @description UUID del padrón GET /api/v1/territorios/pba/partidos. Selecciona el territorio canónico indec.departamento REPORTED de la revisión publicada, una equivalencia pba.municipio REPORTED documentada por su par exacto código/nombre en 95 partidos del CSV escolar auditado, o el par nacional histórico REPORTED nacion.provincia=BUENOS_AIRES y nacion.departamento=VICENTE_LOPEZ únicamente para Vicente López. Los otros 40 partidos no reciben equivalencias PBA legacy inferidas y no hay equivalencias nacionales históricas para otros partidos. No acredita gestión municipal ni pertenencia espacial; no infiere por fuente o coordenadas. Incompatible con partidos, territorioEsquema y municipioCodigo. El cursor incorpora la versión del padrón cuando se usa este filtro. */
                 partidoId?: string;
+                /** @description UUID repetible del padrón PBA; máximo 135 valores brutos. Se convierte a minúsculas, deduplica y ordena. OR entre partidos, AND con provinciaCodigo y otros filtros; sin partidos no restringe partidos. Cada identidad conserva la semántica REPORTED de partidoId: territorio canónico indec.departamento, uno de los 95 pares pba.municipio exactos auditados, o únicamente el par nacional histórico de Vicente López. No usa relaciones VERIFIED ni infiere equivalencias nuevas. Incompatible con partidoId, territorioEsquema y municipioCodigo. El cursor incorpora el conjunto canónico y la versión del padrón. */
+                partidos?: string[];
                 /** @description Partido con asociación espacial VERIFIED en la revisión publicada; usa sólo geometrías aceptadas y límites originales auditados. Independiente de partidoId REPORTED. */
                 partidoVerificadoId?: string;
                 /** @description Inicio civil YYYY-MM-DD, inclusivo, de solapamiento con vigencia institucional. Requiere periodoHasta. YEAR se expande sólo para búsqueda; una única fecha conocida usa su propio intervalo y ambas desconocidas se excluyen. No consulta fechas de obra, períodos educativos, publicación ni actualización de fuente. */
                 periodoDesde?: string & (string);
                 /** @description Fin civil YYYY-MM-DD inclusivo y no anterior a periodoDesde; todos los filtros institucionales coinciden en el mismo rol. */
                 periodoHasta?: string & (string);
+                /** @description Código INDEC provincial repetible del catálogo GET /api/v1/territorios/provincias: 02 (CABA) y 06 (Buenos Aires). Admite un valor o parámetros repetidos, máximo 24 valores brutos; deduplica y ordena. Sin este filtro conserva el alcance global, incluidas obras con territorio vacío. OR entre provincias y AND con los demás filtros. PBA exige nacion.provincia=BUENOS_AIRES REPORTED, partido canónico o par legacy exacto REPORTED del padrón, o asociación espacial VERIFIED publicada. CABA exige nacion.provincia=CABA REPORTED; no existe caba.comuna soportado. Para cada provincia veta cualquier código provincial REPORTED distinto o texto nacional crudo no compatible tras NFD, acentos, espacios y caso. Los únicos aliases crudos CABA son CABA, CIUDAD AUTONOMA DE BUENOS AIRES y CAPITAL FEDERAL; PBA admite BUENOS AIRES. Para CABA también veta partido PBA REPORTED reconocido o asociación VERIFIED PBA. Texto provincial desconocido, vacío, múltiple o contradictorio veta. No atribuye por fuente, editor, institución, candidata, coordenadas, corroboración CRS ni bbox. El cursor incluye catálogos provincial/de partidos y versión de relaciones. */
+                provinciaCodigo?: string[];
                 /** @description Rol verificado; organización, gestión municipal y período se aplican a la misma fila. */
                 rolInstitucional?: "PROMOTOR" | "CONTRATANTE" | "EJECUTOR" | "FINANCIADOR" | "CONTRATISTA";
                 sector?: "educacion";
@@ -1209,7 +1282,7 @@ export interface operations {
                     "application/json": components["schemas"]["PublicApiError"];
                 };
             };
-            /** @description Filtros, combinación territorial, límite o cursor no válidos. */
+            /** @description Filtros, códigos provinciales o UUID fuera de catálogos, listas vacías o excesivas, combinación territorial, límite o cursor no válidos. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -1332,7 +1405,7 @@ export interface operations {
                 /** @description Cursor de la página anterior con los mismos filtros. catalogoVersion es un string decimal exacto. */
                 cursor?: string;
                 estado?: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED";
-                fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras";
+                fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
                 /** @description Partido de una institución municipal con rol VERIFIED PROMOTOR, CONTRATANTE, EJECUTOR o FINANCIADOR. No incluye CONTRATISTA ni deduce responsabilidades de la fuente. */
                 gestionMunicipalId?: string;
                 limit?: number;
@@ -1340,14 +1413,18 @@ export interface operations {
                 municipioCodigo?: string;
                 /** @description Identidad del catálogo institucional público; debe cumplir los demás filtros institucionales en la misma relación de esta revisión. */
                 organizacionId?: string;
-                /** @description UUID del padrón GET /api/v1/territorios/pba/partidos. Selecciona el territorio canónico indec.departamento REPORTED de la revisión publicada, una equivalencia pba.municipio REPORTED documentada por su par exacto código/nombre en 95 partidos del CSV escolar auditado, o el par nacional histórico REPORTED nacion.provincia=BUENOS_AIRES y nacion.departamento=VICENTE_LOPEZ únicamente para Vicente López. Los otros 40 partidos no reciben equivalencias PBA legacy inferidas y no hay equivalencias nacionales históricas para otros partidos. No acredita gestión municipal ni pertenencia espacial; no infiere por fuente o coordenadas. Incompatible con territorioEsquema y municipioCodigo. El cursor incorpora la versión del padrón cuando se usa este filtro. */
+                /** @description UUID del padrón GET /api/v1/territorios/pba/partidos. Selecciona el territorio canónico indec.departamento REPORTED de la revisión publicada, una equivalencia pba.municipio REPORTED documentada por su par exacto código/nombre en 95 partidos del CSV escolar auditado, o el par nacional histórico REPORTED nacion.provincia=BUENOS_AIRES y nacion.departamento=VICENTE_LOPEZ únicamente para Vicente López. Los otros 40 partidos no reciben equivalencias PBA legacy inferidas y no hay equivalencias nacionales históricas para otros partidos. No acredita gestión municipal ni pertenencia espacial; no infiere por fuente o coordenadas. Incompatible con partidos, territorioEsquema y municipioCodigo. El cursor incorpora la versión del padrón cuando se usa este filtro. */
                 partidoId?: string;
+                /** @description UUID repetible del padrón PBA; máximo 135 valores brutos. Se convierte a minúsculas, deduplica y ordena. OR entre partidos, AND con provinciaCodigo y otros filtros; sin partidos no restringe partidos. Cada identidad conserva la semántica REPORTED de partidoId: territorio canónico indec.departamento, uno de los 95 pares pba.municipio exactos auditados, o únicamente el par nacional histórico de Vicente López. No usa relaciones VERIFIED ni infiere equivalencias nuevas. Incompatible con partidoId, territorioEsquema y municipioCodigo. El cursor incorpora el conjunto canónico y la versión del padrón. */
+                partidos?: string[];
                 /** @description Partido con asociación espacial VERIFIED en la revisión publicada; usa sólo geometrías aceptadas y límites originales auditados. Independiente de partidoId REPORTED. */
                 partidoVerificadoId?: string;
                 /** @description Inicio civil YYYY-MM-DD, inclusivo, de solapamiento con vigencia institucional. Requiere periodoHasta. YEAR se expande sólo para búsqueda; una única fecha conocida usa su propio intervalo y ambas desconocidas se excluyen. No consulta fechas de obra, períodos educativos, publicación ni actualización de fuente. */
                 periodoDesde?: string & (string);
                 /** @description Fin civil YYYY-MM-DD inclusivo y no anterior a periodoDesde; todos los filtros institucionales coinciden en el mismo rol. */
                 periodoHasta?: string & (string);
+                /** @description Código INDEC provincial repetible del catálogo GET /api/v1/territorios/provincias: 02 (CABA) y 06 (Buenos Aires). Admite un valor o parámetros repetidos, máximo 24 valores brutos; deduplica y ordena. Sin este filtro conserva el alcance global, incluidas obras con territorio vacío. OR entre provincias y AND con los demás filtros. PBA exige nacion.provincia=BUENOS_AIRES REPORTED, partido canónico o par legacy exacto REPORTED del padrón, o asociación espacial VERIFIED publicada. CABA exige nacion.provincia=CABA REPORTED; no existe caba.comuna soportado. Para cada provincia veta cualquier código provincial REPORTED distinto o texto nacional crudo no compatible tras NFD, acentos, espacios y caso. Los únicos aliases crudos CABA son CABA, CIUDAD AUTONOMA DE BUENOS AIRES y CAPITAL FEDERAL; PBA admite BUENOS AIRES. Para CABA también veta partido PBA REPORTED reconocido o asociación VERIFIED PBA. Texto provincial desconocido, vacío, múltiple o contradictorio veta. No atribuye por fuente, editor, institución, candidata, coordenadas, corroboración CRS ni bbox. El cursor incluye catálogos provincial/de partidos y versión de relaciones. */
+                provinciaCodigo?: string[];
                 /** @description Rol verificado; organización, gestión municipal y período se aplican a la misma fila. */
                 rolInstitucional?: "PROMOTOR" | "CONTRATANTE" | "EJECUTOR" | "FINANCIADOR" | "CONTRATISTA";
                 sector?: "educacion";
@@ -1383,7 +1460,7 @@ export interface operations {
             /**
              * @description bbox inválido o BBOX_TOO_BROAD al exceder 10 MiB: reducir bbox/limit.
              *
-             *     Filtros, combinación territorial, límite o cursor no válidos.
+             *     Filtros, códigos provinciales o UUID fuera de catálogos, listas vacías o excesivas, combinación territorial, límite o cursor no válidos.
              */
             422: {
                 headers: {
@@ -1636,6 +1713,66 @@ export interface operations {
             503: {
                 headers: {
                     "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
+    };
+    TerritoriesController_provinces: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Catálogo nominal completo sin paginación y con versión independiente de catalogoVersion de obras. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicProvinceCatalog"];
+                };
+            };
+            /** @description Parámetros de consulta no admitidos. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+            /** @description Error interno sin detalles privados. */
+            500: {
+                headers: {
                     [name: string]: unknown;
                 };
                 content: {

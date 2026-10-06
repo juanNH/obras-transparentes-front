@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import examples from "../contracts/examples.json" with { type: "json" };
 import { PublicApiError } from "../src/api/client.js";
 
-const api = vi.hoisted(() => ({ list: vi.fn(), detail: vi.fn(), geojson: vi.fn(), organizations: vi.fn() }));
+const api = vi.hoisted(() => ({ list: vi.fn(), detail: vi.fn(), geojson: vi.fn(), organizations: vi.fn(), provinces: vi.fn() }));
 const seo = vi.hoisted(() => ({ origin: new URL("https://obras.example.org") as URL | null }));
 vi.mock("../src/lib/public-api", () => ({ publicApi: () => api }));
 vi.mock("../src/lib/config", () => ({ indexableSiteUrl: () => seo.origin }));
@@ -18,6 +18,45 @@ const context = (...path: string[]) => ({ params: Promise.resolve({ path }) });
 beforeEach(() => { vi.resetAllMocks(); seo.origin = new URL("https://obras.example.org"); });
 
 describe("BFF de lectura pública", () => {
+  it("lee provincias por ruta pública sin filtros ni credenciales entrantes", async () => {
+    const catalog = { version: "provincias@1", items: [{ codigo: "06", nombre: "Buenos Aires", tipo: "PROVINCIA" }] };
+    api.provinces.mockResolvedValue(catalog);
+    const input = request("territorios/provincias", "", { headers: { Cookie: "private-session=secret", Authorization: "Bearer secret" } });
+    const response = await GET(input, context("territorios", "provincias"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(response.headers.get("Set-Cookie")).toBeNull();
+    expect(await response.json()).toEqual(catalog);
+    expect(api.provinces).toHaveBeenCalledWith({ signal: input.signal });
+    expect((await GET(request("territorios/provincias", "?provinciaCodigo=06"), context("territorios", "provincias"))).status).toBe(400);
+    expect(api.provinces).toHaveBeenCalledTimes(1);
+  });
+  it("normaliza arrays OR igual para lista y mapa mientras conserva asociaciones escalares", async () => {
+    const first = "aaaaaaaa-0000-4000-8000-000000000001";
+    const second = "bbbbbbbb-0000-4000-8000-000000000001";
+    const query = `?provinciaCodigo=06&provinciaCodigo=02&provinciaCodigo=06&partidos=${second.toUpperCase()}&partidos=${first}&partidos=${second}&partidoVerificadoId=${second}&gestionMunicipalId=${first}&cursor=synthetic-page`;
+    const filters = { provinciaCodigo: ["02", "06"], partidos: [first, second], partidoVerificadoId: second, gestionMunicipalId: first, cursor: "synthetic-page" };
+    api.list.mockResolvedValue(examples.listEmpty);
+    api.geojson.mockResolvedValue(examples.geojsonEmpty);
+    const list = request("obras", query);
+    expect((await GET(list, context("obras"))).status).toBe(200);
+    expect(api.list).toHaveBeenCalledWith({ ...filters, limit: 20 }, { signal: list.signal });
+    const map = request("geojson", query + "&bbox=-59,-35,-58,-34");
+    expect((await GET(map, context("geojson"))).status).toBe(200);
+    expect(api.geojson).toHaveBeenCalledWith({ ...filters, limit: 100, bbox: [-59, -35, -58, -34] }, { signal: map.signal });
+  });
+  it("explica una respuesta provincial excesiva y oculta el diagnóstico interno", async () => {
+    api.provinces.mockRejectedValue(new PublicApiError(413, { code: "RESPONSE_BUDGET", message: "private-diagnostic", requestId: null }));
+    const response = await GET(request("territorios/provincias"), context("territorios", "provincias"));
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ error: { code: "RESPONSE_BUDGET", message: "No se pudo cargar la referencia territorial dentro del límite de lectura." } });
+  });
+  it("conserva llamadas BFF globales cuando no hay provincia explícita", async () => {
+    api.list.mockResolvedValue(examples.listEmpty);
+    const input = request("obras");
+    expect((await GET(input, context("obras"))).status).toBe(200);
+    expect(api.list).toHaveBeenCalledWith({ limit: 20 }, { signal: input.signal });
+  });
   it("lee el catálogo institucional sin parámetros ni credenciales de visitante", async () => {
     api.organizations.mockResolvedValue({ items: [] });
     const input = request("organizaciones-institucionales", "", { headers: { Cookie: "private-session=secret", Authorization: "Bearer secret" } });
@@ -63,6 +102,13 @@ describe("BFF de lectura pública", () => {
     ["obras", "?periodoDesde=2026-01-01"],
     ["obras", "?periodoHasta=2026-12-31"],
     ["obras", "?organizacionId=no-es-identidad"],
+    ["obras", "?provinciaCodigo=07"],
+    ["obras", "?provinciaCodigo="],
+    ["obras", "?partidos=invalid"],
+    ["obras", "?partidos=aaaaaaaa-0000-4000-8000-000000000001&partidoId=bbbbbbbb-0000-4000-8000-000000000001"],
+    ["obras", "?partidos=aaaaaaaa-0000-4000-8000-000000000001&municipioCodigo=001&territorioEsquema=pba.municipio"],
+    ["obras", "?" + Array(136).fill("partidos=aaaaaaaa-0000-4000-8000-000000000001").join("&")],
+    ["obras", "?" + Array(25).fill("provinciaCodigo=06").join("&")],
     ["geojson", "?bbox=-59,-35,-58,-34&rolInstitucional=RESPONSABLE"],
   ])("rechaza parámetros no admitidos antes de consultar %s%s", async (path, query) => {
     const response = await GET(request(path, query), context(path));

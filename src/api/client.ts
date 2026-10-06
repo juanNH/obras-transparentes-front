@@ -12,6 +12,8 @@ export type WorkSummary = components["schemas"]["PublicWorkSummary"];
 export type WorkGeoJSON = components["schemas"]["PublicGeoFeatureCollection"];
 /** Nómina oficial versionada de los 135 partidos, con códigos separados y estado de límites. */
 export type PartyCatalog = components["schemas"]["PublicPartyCatalogResponse"];
+/** Provincias y ciudades autónomas habilitadas, con códigos INDEC y procedencia del catálogo versionado. */
+export type ProvinceCatalog = components["schemas"]["PublicProvinceCatalog"];
 /** Límites versionados para representación territorial; no prueban ubicación de obras. */
 export type PartyBoundaries = components["schemas"]["PublicPartyBoundaryFeatureCollection"];
 /** Organizaciones con roles verificados en publicaciones actuales; sus identidades son independientes de las organizaciones de seguridad. */
@@ -25,11 +27,13 @@ export type BoundingBox = readonly [number, number, number, number];
 type ListParameters = NonNullable<
   paths["/api/v1/obras"]["get"]["parameters"]["query"]
 >;
-/** Filtros compartidos de obras/ubicaciones; el booleano de geometría se serializa al crear la consulta. */
+/** Filtros de obras/ubicaciones derivados del contrato; arrays readonly de provincias/partidos se serializan como valores repetidos. */
 export type PublicFilters = Omit<
   ListParameters,
-  "bbox" | "limit" | "cursor" | "tieneGeometria"
-> & { tieneGeometria?: boolean };
+  "bbox" | "limit" | "cursor" | "tieneGeometria" | "provinciaCodigo" | "partidos"
+> & { tieneGeometria?: boolean } & {
+  [Key in "provinciaCodigo" | "partidos"]?: Readonly<NonNullable<ListParameters[Key]>>;
+};
 /** Consulta paginada; un área limita el listado a obras con ubicaciones aprobadas que la intersectan. */
 export type ListQuery = PublicFilters &
   Pick<ListParameters, "limit" | "cursor"> & { bbox?: BoundingBox };
@@ -98,7 +102,7 @@ export function serializeBBox(bbox: BoundingBox): string {
   return bbox.join(",");
 }
 
-/** Serializa exclusivamente filtros públicos con límites de página y pares esquema/código territorial válidos. */
+/** Serializa filtros públicos sin provincia predeterminada, con arrays OR normalizados y límites crudos previos a deduplicar. */
 function queryParameters(
   query: ListQuery,
   maxLimit: number,
@@ -121,6 +125,18 @@ function queryParameters(
   ] as const) {
     const value = query[key];
     if (value !== undefined) params.set(key, value);
+  }
+  if (query.provinciaCodigo !== undefined) {
+    if (!Array.isArray(query.provinciaCodigo) || query.provinciaCodigo.length < 1 || query.provinciaCodigo.length > 24 || query.provinciaCodigo.some(value => value !== "02" && value !== "06"))
+      throw new TypeError("La provincia requiere un código activo válido y hasta 24 valores.");
+    [...new Set(query.provinciaCodigo)].sort().forEach(value => params.append("provinciaCodigo", value));
+  }
+  if (query.partidos !== undefined) {
+    if (!Array.isArray(query.partidos) || query.partidos.length < 1 || query.partidos.length > 135 || query.partidos.some(value => typeof value !== "string" || !uuid.test(value)))
+      throw new TypeError("Los partidos requieren identidades UUID válidas y hasta 135 valores.");
+    if (query.partidoId !== undefined || query.territorioEsquema !== undefined || query.municipioCodigo !== undefined)
+      throw new TypeError("Elegí partidos o el filtro territorial anterior, sin combinarlos.");
+    [...new Set(query.partidos.map(value => identifier(value)))].sort().forEach(value => params.append("partidos", value));
   }
   if (Boolean(query.territorioEsquema) !== Boolean(query.municipioCodigo)) {
     throw new TypeError(
@@ -229,6 +245,10 @@ export function createPublicApi(
     /** Lee la nómina territorial independiente del catálogo de obras y de sus geometrías. */
     parties(requestOptions: RequestOptions = {}): Promise<PartyCatalog> {
       return read("/territorios/pba/partidos", "PublicPartyCatalogResponse", requestOptions);
+    },
+    /** Lee provincias y ciudades autónomas habilitadas sin filtros de obras ni provincia implícita. */
+    provinces(requestOptions: RequestOptions = {}): Promise<ProvinceCatalog> {
+      return read("/territorios/provincias", "PublicProvinceCatalog", requestOptions);
     },
     /** Lee una distribución territorial explícitamente versionada sin incorporar filtros de obras. */
     boundaries(version: string, requestOptions: RequestOptions = {}): Promise<PartyBoundaries> {

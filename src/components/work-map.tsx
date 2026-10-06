@@ -42,7 +42,7 @@ export interface WorkMapProps {
   selectionFeatures: WorkGeoJSON["features"];
   /** Capa administrativa independiente; sus posiciones no pertenecen al presupuesto de obras. */
   partyFeatures?: PartyBoundaries["features"];
-  selectedPartidoId?: string | null;
+  selectedPartidoIds?: readonly string[];
   onPartySelect?: (partidoId: string) => void;
   /** Initial permission for this mount; remembered or explicit areas disable it. */
   autoFit: boolean;
@@ -142,12 +142,12 @@ type WorkLayers = ReturnType<typeof createWorkLayers>;
 const partyStyle = new Style({ fill: new Fill({ color: "rgba(116,182,232,0.05)" }), stroke: new Stroke({ color: "#6b859b", width: 1.5, lineDash: [6, 4] }) });
 const selectedPartyStyle = new Style({ fill: new Fill({ color: "rgba(116,182,232,0.16)" }), stroke: new Stroke({ color: "#0a4c78", width: 3, lineDash: [6, 4] }) });
 
-/** Mantiene sólo la identidad seleccionada en el callback de estilo, sin retener el contexto del efecto React. */
+/** Mantiene las identidades seleccionadas sin retener el contexto del efecto React. */
 class PartyLayerStyles {
-  selectedId: string | null = null;
-  /** Distingue el partido seleccionado sin reutilizar estilos de obras ni atribuirle gestión. */
+  selectedIds = new Set<string>();
+  /** Distingue todos los partidos seleccionados sin reutilizar estilos de obras ni atribuirles gestión. */
   style(feature: { get(key: string): unknown }) {
-    return feature.get("partidoId") === this.selectedId ? selectedPartyStyle : partyStyle;
+    return this.selectedIds.has(String(feature.get("partidoId"))) ? selectedPartyStyle : partyStyle;
   }
 }
 
@@ -162,8 +162,8 @@ function createPartyLayer() {
 type PartyLayer = ReturnType<typeof createPartyLayer>;
 
 /** Sustituye límites completos ya conciliados con el padrón; no calcula relaciones espaciales de obras. */
-function updatePartyLayer(parties: PartyLayer, features: PartyBoundaries["features"] | undefined, selectedId: string | null | undefined) {
-  parties.styles.selectedId = selectedId ?? null;
+function updatePartyLayer(parties: PartyLayer, features: PartyBoundaries["features"] | undefined, selectedIds: readonly string[] | undefined) {
+  parties.styles.selectedIds = new Set(selectedIds);
   parties.source.clear(true);
   if (features?.length) parties.source.addFeatures(geojson.readFeatures({ type: "FeatureCollection", features }));
   parties.layer.changed();
@@ -171,7 +171,7 @@ function updatePartyLayer(parties: PartyLayer, features: PartyBoundaries["featur
 
 /** Libera la geometría administrativa y el estilo independiente del motor de obras. */
 function disposePartyLayer(parties: PartyLayer) {
-  parties.styles.selectedId = null;
+  parties.styles.selectedIds.clear();
   parties.source.clear(true); parties.source.dispose(); parties.layer.dispose();
 }
 
@@ -336,7 +336,7 @@ export default function WorkMap(props: WorkMapProps) {
         view: new View({ center: [0, 0], zoom: 2, minZoom: 1, maxZoom: 19, enableRotation: false, multiWorld: false }),
       });
       mapRef.current = map; worksRef.current = works; partiesRef.current = parties;
-      updatePartyLayer(parties, current.current.partyFeatures, current.current.selectedPartidoId);
+      updatePartyLayer(parties, current.current.partyFeatures, current.current.selectedPartidoIds);
       updateWorks(works, current.current.features);
       const selectedKey = updateSelection(works, current.current.selectionFeatures, current.current.selectedId, current.current.selectedLocationId, current.current.selectedRevisionId);
       fit(map, current.current.focusBBox ?? current.current.initialBBox, current.current.preserveCamera && !current.current.focusBBox);
@@ -475,8 +475,8 @@ export default function WorkMap(props: WorkMapProps) {
     if (autoFitPending.current && fitSources(map, [works.points, works.shapes])) autoFitPending.current = false;
   }, [props.features]);
   useEffect(() => {
-    if (partiesRef.current) updatePartyLayer(partiesRef.current, props.partyFeatures, props.selectedPartidoId);
-  }, [props.partyFeatures, props.selectedPartidoId]);
+    if (partiesRef.current) updatePartyLayer(partiesRef.current, props.partyFeatures, props.selectedPartidoIds);
+  }, [props.partyFeatures, props.selectedPartidoIds]);
   useEffect(() => {
     const works = worksRef.current; const map = mapRef.current;
     if (!works || !map) return;

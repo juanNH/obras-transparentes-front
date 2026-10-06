@@ -7,8 +7,10 @@ export const DEFAULT_BBOX: BoundingBox = [-73.6, -55.2, -53.5, -21.7];
 // Read the representable world with the same page/byte/position budgets.
 /** Área mundial representable en Mercator para leer geometrías cuando el usuario no confirmó un bbox. */
 export const MAP_READ_BBOX: BoundingBox = [-180, -85.051129, 180, 85.051129];
+/** Jurisdicciones habilitadas para filtros explícitos; la entrada sin selección conserva todo el catálogo. */
+export const AVAILABLE_PROVINCE_CODES = ["02", "06"] as const;
 /** Fuentes de catálogo admitidas en filtros públicos; sus nombres no atribuyen responsabilidad de la obra. */
-export const SOURCES = { "pba-edificios": "PBA · edificios escolares", "caba-actualizado": "CABA · obras", "nacion-obras": "Nación · obras", "vl-obras": "Vicente López · obras" } as const;
+export const SOURCES = { "pba-edificios": "PBA · edificios escolares", "caba-actualizado": "CABA · obras", "nacion-obras": "Nación · obras", "vl-obras": "Vicente López · obras", "bahia-obras": "Municipalidad de Bahía Blanca", "olavarria-obras": "Municipalidad de Olavarría", "pergamino-obras": "Municipalidad de Pergamino" } as const;
 /** Traducciones de estados informados; no se infieren del avance ni de la ausencia de datos. */
 export const STATES = { COMPLETED: "Finalizada", IN_PROGRESS: "En ejecución", OTHER_REPORTED: "Otro estado informado" } as const;
 /** Roles institucionales publicados tras revisión; la fuente de datos no determina ninguno de estos roles. */
@@ -25,16 +27,20 @@ export function isCivilDate(value: string): boolean {
 }
 
 /**
- * Valida filtros, área y selección, rechazando parámetros repetidos y combinaciones incompatibles.
+ * Valida filtros, área y selección; sólo provinciaCodigo y partidos admiten valores repetidos con semántica OR.
  * @param params - Parámetros de URL sin deduplicar previamente.
- * @returns Consulta con página de 20 obras y presentación/selección separadas.
+ * @returns Consulta global con página de 20 obras salvo filtros explícitos, y presentación/selección separadas.
  * @throws TypeError Si el enlace contiene valores o relaciones inválidas.
  */
 export function parseExplorerQuery(params: URLSearchParams): ExplorerQuery {
   for (const key of new Set(params.keys())) {
-    if (params.getAll(key).length > 1) throw new TypeError("Hay parámetros repetidos en el enlace.");
+    if (key !== "provinciaCodigo" && key !== "partidos" && params.getAll(key).length > 1) throw new TypeError("Hay parámetros repetidos en el enlace.");
   }
   const query: ListQuery = { limit: 20 };
+  const provinces = params.getAll("provinciaCodigo");
+  if (provinces.length > 24 || provinces.some(value => !AVAILABLE_PROVINCE_CODES.some(code => code === value)))
+    throw new TypeError("La provincia requiere un código activo válido y hasta 24 valores.");
+  if (provinces.length) query.provinciaCodigo = [...new Set(provinces)].sort();
   const fuente = params.get("fuente");
   if (fuente) { if (!Object.hasOwn(SOURCES, fuente)) throw new TypeError("Fuente desconocida."); query.fuente = fuente as keyof typeof SOURCES; }
   const estado = params.get("estado");
@@ -46,8 +52,14 @@ export function parseExplorerQuery(params: URLSearchParams): ExplorerQuery {
   const scheme = params.get("territorioEsquema");
   const code = params.get("municipioCodigo");
   const party = params.get("partidoId");
+  const parties = params.getAll("partidos");
+  if (parties.length > 135 || parties.some(value => !isUUID(value)))
+    throw new TypeError("Los partidos requieren identidades UUID válidas y hasta 135 valores.");
+  if (params.has("partidos") && (params.has("partidoId") || params.has("territorioEsquema") || params.has("municipioCodigo")))
+    throw new TypeError("Elegí partidos o el filtro territorial anterior, sin combinarlos.");
+  if (parties.length) query.partidos = [...new Set(parties.map(value => value.toLowerCase()))].sort();
   if (party) {
-    if (!isUUID(party) || scheme || code) throw new TypeError("El partido requiere una identidad válida y no se combina con el filtro territorial anterior.");
+    if (!isUUID(party) || params.has("territorioEsquema") || params.has("municipioCodigo")) throw new TypeError("El partido requiere una identidad válida y no se combina con el filtro territorial anterior.");
     query.partidoId = party.toLowerCase();
   }
   if (scheme || code) {
@@ -97,11 +109,13 @@ export function parseExplorerQuery(params: URLSearchParams): ExplorerQuery {
   return { query, view, ...(boundaries === "mostrar" ? { showBoundaries: true } : {}), ...(obra ? { obra: obra.toLowerCase() } : {}), ...(revisionId ? { revisionId: revisionId.toLowerCase() } : {}), ...(ubicacionId ? { ubicacionId: ubicacionId.toLowerCase() } : {}) };
 }
 
-/** Serializa filtros sin el límite interno de página y conserva los códigos territoriales como texto. */
+/** Serializa filtros sin el límite interno; provincia y partidos usan valores repetidos, bbox usa comas y los códigos conservan ceros. */
 export function queryParams(query: ListQuery): URLSearchParams {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
-    if (value !== undefined && key !== "limit") params.set(key, Array.isArray(value) ? value.join(",") : String(value));
+    if (value === undefined || key === "limit") continue;
+    if (Array.isArray(value) && key !== "bbox") value.forEach(item => params.append(key, String(item)));
+    else params.set(key, Array.isArray(value) ? value.join(",") : String(value));
   }
   return params;
 }
@@ -124,7 +138,7 @@ export function unlocatedListHref(query: ListQuery): string {
   return explorerHref({ ...filters, tieneGeometria: false }, "lista");
 }
 
-/** Convierte searchParams de App Router conservando repeticiones para que el parser pueda rechazarlas. */
+/** Convierte searchParams de App Router conservando valores repetidos para validar arrays y rechazar escalares ambiguos. */
 export function searchParamsOf(values: Record<string, string | string[] | undefined>) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(values)) {

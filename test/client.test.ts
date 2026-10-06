@@ -119,6 +119,65 @@ describe("Contrato público del consumidor", () => {
 });
 
 describe("Cliente público", () => {
+  it("envía provincias y partidos repetidos iguales a lista y mapa, con bbox separado y sin mutar los arrays", async () => {
+    const first = "aaaaaaaa-0000-4000-8000-000000000001";
+    const second = "bbbbbbbb-0000-4000-8000-000000000001";
+    const filters = { provinciaCodigo: ["06", "02", "06"], partidos: [second.toUpperCase(), first, second], partidoVerificadoId: second, gestionMunicipalId: first } as const;
+    const request = mockedFetch(examples.listEmpty);
+    const api = createPublicApi({ fetch: request });
+    await api.list({ ...filters, cursor: "synthetic-page" });
+    request.mockResolvedValue(json(examples.geojsonEmpty));
+    await api.geojson({ ...filters, bbox: [-59, -35, -58, -34], cursor: "synthetic-page" });
+    for (const [input] of request.mock.calls) {
+      const params = new URL(String(input), "https://example.test").searchParams;
+      expect(params.getAll("provinciaCodigo")).toEqual(["02", "06"]);
+      expect(params.getAll("partidos")).toEqual([first, second]);
+      expect(params.get("cursor")).toBe("synthetic-page");
+      expect(params.get("partidoVerificadoId")).toBe(second);
+      expect(params.get("gestionMunicipalId")).toBe(first);
+      expect(params.has("partidoId")).toBe(false);
+    }
+    expect(new URL(String(request.mock.calls[1]![0]), "https://example.test").searchParams.getAll("bbox")).toEqual(["-59,-35,-58,-34"]);
+    expect(filters.partidos).toEqual([second.toUpperCase(), first, second]);
+    expect(filters.provinciaCodigo).toEqual(["06", "02", "06"]);
+  });
+  it("conserva el alcance global de llamadas antiguas sin una provincia implícita", async () => {
+    const request = mockedFetch(examples.listEmpty);
+    const api = createPublicApi({ fetch: request });
+    await api.list();
+    request.mockResolvedValue(json(examples.geojsonEmpty));
+    await api.geojson({ bbox: [-59, -35, -58, -34] });
+    for (const [input] of request.mock.calls) {
+      const params = new URL(String(input), "https://example.test").searchParams;
+      expect(params.has("provinciaCodigo")).toBe(false);
+      expect(params.has("partidos")).toBe(false);
+    }
+  });
+  it("valida el catálogo provincial versionado en su ruta anónima y preserva cancelación", async () => {
+    const catalog = { version: "provincias@2", consultadoEn: "2026-10-06", fuentes: [{ nombre: "Fuente territorial sintética", url: "https://example.test/provincias", licencia: { nombre: "Licencia sintética", url: "https://example.test/licencia" } }], items: [{ codigo: "06", nombre: "Buenos Aires", tipo: "PROVINCIA" }, { codigo: "02", nombre: "Ciudad Autónoma de Buenos Aires", tipo: "CIUDAD_AUTONOMA" }] };
+    const request = mockedFetch(catalog);
+    const controller = new AbortController();
+    const api = createPublicApi({ fetch: request });
+    await expect(api.provinces({ signal: controller.signal })).resolves.toEqual(catalog);
+    expect(request).toHaveBeenCalledWith("/api/v1/territorios/provincias", expect.objectContaining({ signal: controller.signal, credentials: "omit", redirect: "error" }));
+    request.mockResolvedValue(json({ ...catalog, items: [{ codigo: "6", nombre: "Buenos Aires", tipo: "PROVINCIA" }] }));
+    await expect(api.provinces()).rejects.toBeInstanceOf(ApiContractError);
+  });
+  it("rechaza conjuntos excesivos, inválidos o mezclados antes de acceder a la red", async () => {
+    const party = "aaaaaaaa-0000-4000-8000-000000000001";
+    const request = mockedFetch(examples.listEmpty);
+    const api = createPublicApi({ fetch: request });
+    for (const filters of [
+      { partidos: Array(136).fill(party) }, { partidos: ["invalid"] }, { partidos: [] },
+      { partidos: [party], partidoId: party }, { partidos: [party], territorioEsquema: "pba.municipio" as const, municipioCodigo: "001" },
+      { provinciaCodigo: Array(25).fill("06") }, { provinciaCodigo: ["6"] }, { provinciaCodigo: ["07"] }, { provinciaCodigo: [] },
+    ]) expect(() => api.list(filters)).toThrow(TypeError);
+    expect(request).not.toHaveBeenCalled();
+    await api.list({ partidos: Array(135).fill(party), provinciaCodigo: Array(24).fill("06") });
+    const params = new URL(String(request.mock.calls[0]![0]), "https://example.test").searchParams;
+    expect(params.getAll("partidos")).toEqual([party]);
+    expect(params.getAll("provinciaCodigo")).toEqual(["06"]);
+  });
   it("serializa asociaciones y vigencia del rol iguales para lista y mapa sin parámetros de UI", async () => {
     const request = mockedFetch(examples.listEmpty);
     const api = createPublicApi({ fetch: request });

@@ -21,12 +21,16 @@ function validate(schema, value) {
 }
 validate("PublicPartyCatalogResponse", partyCatalog);
 validate("PublicPartyBoundaryFeatureCollection", partyBoundaries);
+const provinceCatalog = { version: "provincias@2", consultadoEn: partyCatalog.consultadoEn, fuentes: partyCatalog.fuentes, items: [{ codigo: "06", nombre: "Buenos Aires", tipo: "PROVINCIA" }, { codigo: "02", nombre: "Ciudad Autónoma de Buenos Aires", tipo: "CIUDAD_AUTONOMA" }] };
+validate("PublicProvinceCatalog", provinceCatalog);
 /** Genera UUID estables sintéticos por tipo y ordinal para que las pruebas puedan seleccionar revisiones exactas. */
 const id = (prefix, index) => `${prefix}0000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
 const catalogoVersion = "7";
 // Only the isolated fixture exposes this in-memory ledger. It records transport
 // shape/size so SSR reads can be measured without observing an active backend.
 const requests = [];
+// Only the default isolated E2E fixture accepts these temporary failure switches.
+const territorialFailures = { parties: false, provinces: false };
 const details = new Map();
 const features = [];
 const institutionalParty = partyCatalog.items.find(party => party.codigos.indecDepartamento === "06861");
@@ -87,6 +91,20 @@ const items = Array.from({ length: 24 }, (_, index) => {
 validate("PublicWorkListResponse", { items, nextCursor: null, limit: 24, catalogoVersion });
 validate("PublicGeoFeatureCollection", { type: "FeatureCollection", features, nextCursor: null, catalogoVersion });
 validate("PublicInstitutionalOrganizationCatalogResponse", institutionalCatalog);
+let jurisdictionFixturesEnabled = false;
+/** Publicaciones CABA sintéticas para el escenario explícito; no modifican la nómina estándar de otras pruebas. */
+const jurisdictionItems = [false, true].map((hasReportedProvince, index) => {
+  const obraId = id("1", 25 + index);
+  const revisionId = id("2", 25 + index);
+  const nombre = `EJEMPLO SINTÉTICO — CABA ${hasReportedProvince ? "con provincia informada" : "con territorio no informado"}`;
+  const territorios = hasReportedProvince ? [{ esquema: "nacion.provincia", codigo: "CABA", nombre: "Ciudad Autónoma de Buenos Aires", condicion: "REPORTED" }] : [];
+  const fuentes = [{ ...examples.listPopulated.items[0].fuentes[0], codigo: "caba-actualizado" }];
+  const item = { ...structuredClone(examples.listPopulated.items[0]), obraId, revisionId, nombre, territorios, fuentes, tieneGeometria: false, asociacionesEspaciales: [], rolesInstitucionales: [] };
+  const detail = { ...structuredClone(examples.detailPartial), obraId, revisionId, nombre, territorios, fuentes, publicadaActualmente: true, catalogoVersion, asociacionesEspaciales: [], rolesInstitucionales: [] };
+  details.set(obraId, validate("PublicWorkDetail", detail));
+  validate("PublicWorkListResponse", { items: [item], nextCursor: null, limit: 1, catalogoVersion });
+  return item;
+});
 
 /** Aplica intersección por extensión de figuras sintéticas; no simula ni acredita las reglas topológicas PostGIS. */
 function inArea(item, area) {
@@ -110,14 +128,19 @@ function inArea(item, area) {
 /** Aplica filtros admitidos al catálogo sintético conservando obras sin geometría cuando no hay área. */
 function filtered(params) {
   const area = params.has("bbox") ? params.get("bbox").split(",").map(Number) : null;
-  const party = params.has("partidoId") ? partyCatalog.items.find(party => party.partidoId === params.get("partidoId")) : null;
-  return items.filter(item =>
+  const partyIds = params.has("partidos") ? params.getAll("partidos") : params.has("partidoId") ? [params.get("partidoId")] : [];
+  const parties = partyCatalog.items.filter(party => partyIds.includes(party.partidoId));
+  const available = jurisdictionFixturesEnabled ? [...jurisdictionItems, ...items] : items;
+  return available.filter(item =>
+    (!params.has("provinciaCodigo") || params.getAll("provinciaCodigo").some(code => code === "06"
+      ? item.territorios.some(territory => territory.esquema === "indec.departamento" && territory.condicion === "REPORTED" && partyCatalog.items.some(party => party.codigos.indecDepartamento === territory.codigo))
+      : code === "02" && item.territorios.some(territory => territory.esquema === "nacion.provincia" && territory.codigo === "CABA" && territory.condicion === "REPORTED"))) &&
     (!params.has("fuente") || item.fuentes.some(source => source.codigo === params.get("fuente"))) &&
     (!params.has("estado") || item.estado === params.get("estado")) &&
     (!params.has("sector") || item.clasificaciones.some(value => value.esquema === "sector" && value.codigo === params.get("sector"))) &&
     (!params.has("tieneGeometria") || item.tieneGeometria === (params.get("tieneGeometria") === "true")) &&
     (!params.has("municipioCodigo") || item.territorios.some(territory => territory.esquema === params.get("territorioEsquema") && territory.codigo === params.get("municipioCodigo"))) &&
-    (!params.has("partidoId") || (party && item.territorios.some(territory => territory.esquema === "indec.departamento" && territory.codigo === party.codigos.indecDepartamento && territory.condicion === "REPORTED"))) &&
+    (!partyIds.length || parties.some(party => item.territorios.some(territory => territory.esquema === "indec.departamento" && territory.codigo === party.codigos.indecDepartamento && territory.condicion === "REPORTED"))) &&
     (!params.has("partidoVerificadoId") || item.asociacionesEspaciales.some(association => association.partidoId === params.get("partidoVerificadoId"))) &&
     (["gestionMunicipalId", "organizacionId", "rolInstitucional", "periodoDesde", "periodoHasta"].every(key => !params.has(key)) || item.rolesInstitucionales.some(role => {
       const start = role.vigencia.inicio?.precision === "YEAR" ? role.vigencia.inicio.valor + "-01-01" : role.vigencia.inicio?.valor;
@@ -142,7 +165,7 @@ function pageOf(values, params, defaultLimit) {
 const server = createServer((request, response) => {
   const url = new URL(request.url, `http://127.0.0.1:${port}`);
   const entry = url.pathname.startsWith("/api/v1/")
-    ? { sequence: requests.length + 1, path: url.pathname, query: Object.fromEntries(url.searchParams) }
+    ? { sequence: requests.length + 1, path: url.pathname, query: Object.fromEntries(url.searchParams), queryValues: Object.fromEntries([...new Set(url.searchParams.keys())].map(key => [key, url.searchParams.getAll(key)])) }
     : null;
   if (entry) requests.push(entry);
   /** Entrega JSON sin caché al consumidor E2E con el estado indicado. */
@@ -155,12 +178,31 @@ const server = createServer((request, response) => {
   if (request.method !== "GET") return send(405, { error: { code: "METHOD_NOT_ALLOWED", message: "Read-only fixture server", requestId: null } });
   if (url.pathname === "/__health") return send(200, { fixture: "synthetic-e2e-only" });
   if (url.pathname === "/__requests") return send(200, { fixture: "synthetic-e2e-only", requests });
+  if (url.pathname === "/__jurisdiction-fixtures" && port === 4100) {
+    if (url.searchParams.size !== 1 || !["0", "1"].includes(url.searchParams.get("enabled"))) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic jurisdiction switch requires enabled=0 or 1", requestId: null } });
+    jurisdictionFixturesEnabled = url.searchParams.get("enabled") === "1";
+    return send(200, { fixture: "synthetic-e2e-only", enabled: jurisdictionFixturesEnabled });
+  }
+  if (url.pathname === "/__territorial-failures" && port === 4100) {
+    if ([...url.searchParams.keys()].some(key => key !== "parties" && key !== "provinces") ||
+      ["parties", "provinces"].some(key => url.searchParams.getAll(key).length !== 1 || !["0", "1"].includes(url.searchParams.get(key))))
+      return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic failure switches require parties/provinces=0 or 1", requestId: null } });
+    territorialFailures.parties = url.searchParams.get("parties") === "1";
+    territorialFailures.provinces = url.searchParams.get("provinces") === "1";
+    return send(200, { fixture: "synthetic-e2e-only", ...territorialFailures });
+  }
+  if (url.pathname === "/api/v1/territorios/provincias") {
+    if (url.searchParams.size) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic province catalog has no query parameters", requestId: null } });
+    if (territorialFailures.provinces) return send(503, { error: { code: "UNAVAILABLE", message: "Synthetic province catalog temporarily unavailable", requestId: null } });
+    return send(200, provinceCatalog);
+  }
   if (url.pathname === "/api/v1/organizaciones-institucionales") {
     if (url.searchParams.size) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic institutional catalog has no query parameters", requestId: null } });
     return send(200, institutionalCatalog);
   }
   if (url.pathname === "/api/v1/territorios/pba/partidos") {
     if (url.searchParams.size) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic party catalog has no query parameters", requestId: null } });
+    if (territorialFailures.parties) return send(503, { error: { code: "UNAVAILABLE", message: "Synthetic party catalog temporarily unavailable", requestId: null } });
     return send(200, partyCatalog);
   }
   if (url.pathname === "/api/v1/territorios/pba/partidos/limites") {

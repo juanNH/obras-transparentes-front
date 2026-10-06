@@ -25,7 +25,7 @@ export const MAP_ORIGINS = {
     lineDash: [3, 3],
   },
   municipality: {
-    label: "Municipio · Vicente López",
+    label: "Municipios",
     color: "#946800",
     fill: "rgba(148,104,0,0.22)",
     marker: "diamond",
@@ -57,6 +57,9 @@ const SOURCE_CATEGORY: Record<PublicSource["codigo"], Exclude<MapOriginCategory,
   "caba-actualizado": "caba",
   "pba-edificios": "province",
   "vl-obras": "municipality",
+  "bahia-obras": "municipality",
+  "olavarria-obras": "municipality",
+  "pergamino-obras": "municipality",
 };
 
 /** Maps the public source catalog to its jurisdiction level, never from the work's location. */

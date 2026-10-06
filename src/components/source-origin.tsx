@@ -26,7 +26,7 @@ export function SourceBadge({ sources }: { sources: Parameters<typeof mapOriginC
 /** Explica todas las referencias visuales por fuente mediante forma y texto además del color. */
 export function SourceLegend() {
   return <div className="map-origin-key" role="group" aria-label="Referencia de fuente de datos">
-    <p className="map-origin-title">Colores inspirados en las banderas</p>
+    <p className="map-origin-title">Referencia de colores y formas</p>
     <ul>{Object.entries(MAP_ORIGINS).map(([key, origin]) => <li key={key}>
       <SourceSymbol category={key as MapOriginCategory} /><span>{origin.label}</span>
     </li>)}</ul>

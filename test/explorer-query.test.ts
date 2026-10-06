@@ -1,9 +1,16 @@
 /** @file Comprueba URLs compartibles, filtros incompatibles y conservación de consulta entre presentaciones. */
 import { describe, expect, it } from "vitest";
-import { explorerHref, isCivilDate, parseExplorerQuery, queryParams, unlocatedListHref } from "../src/lib/explorer-query";
+import { explorerHref, isCivilDate, parseExplorerQuery, queryParams, searchParamsOf, unlocatedListHref } from "../src/lib/explorer-query";
 
 const parse = (query: string) => parseExplorerQuery(new URLSearchParams(query));
 describe("consultas públicas compartibles", () => {
+  it.each(["bahia-obras", "olavarria-obras", "pergamino-obras"] as const)("conserva fuente %s y acceso a publicaciones sin ubicación", fuente => {
+    const initial = parse(`fuente=${fuente}&vista=lista`);
+    expect(initial.query).toEqual({ limit: 20, fuente });
+    const withoutPoint = unlocatedListHref({ ...initial.query, bbox: [-60, -36, -59, -35], cursor: "synthetic-page" });
+    expect(parse(withoutPoint.split("?")[1]!)).toEqual({ query: { limit: 20, fuente, tieneGeometria: false }, view: "lista" });
+    expect(queryParams(initial.query).get("fuente")).toBe(fuente);
+  });
   it("combina reporte, asociación espacial y gestión institucional sin sustituir identidades", () => {
     const reported = "aaaaaaaa-0000-4000-8000-000000000001";
     const verified = "bbbbbbbb-0000-4000-8000-000000000001";
@@ -38,8 +45,49 @@ describe("consultas públicas compartibles", () => {
     expect(query.bbox).toEqual([-58.5, -34.6, -58.2, -34.4]);
     expect(query.cursor).toBe("pagina-anterior");
   });
-  it("abre mapa y resultados sin aplicar un límite espacial al catálogo", () => {
-    expect(parse("")).toEqual({ query: { limit: 20 }, view: "mapa" });
+  it("abre todo el catálogo sin jurisdicción ni bbox y conserva el alcance global del enlace", () => {
+    const initial = parse("");
+    expect(initial).toEqual({ query: { limit: 20 }, view: "mapa" });
+    expect(explorerHref(initial.query)).toBe("/mapa");
+  });
+  it("incluye CABA como jurisdicción explícita y combina sus códigos sin provincia oculta", () => {
+    expect(parse("provinciaCodigo=02").query).toEqual({ limit: 20, provinciaCodigo: ["02"] });
+    const state = parse("provinciaCodigo=06&provinciaCodigo=02&provinciaCodigo=02");
+    expect(state.query.provinciaCodigo).toEqual(["02", "06"]);
+    expect(parse(explorerHref(state.query).split("?")[1]!).query).toEqual(state.query);
+  });
+  it("normaliza conjuntos repetidos antes del roundtrip y conserva la selección por revisión", () => {
+    const first = "aaaaaaaa-0000-4000-8000-000000000001";
+    const second = "bbbbbbbb-0000-4000-8000-000000000001";
+    const params = searchParamsOf({ provinciaCodigo: ["06", "06"], partidos: [second.toUpperCase(), first, second], partidoVerificadoId: second, gestionMunicipalId: first, bbox: "-59,-35,-58,-34", cursor: "synthetic-page", vista: "lista", obra: first, revisionId: second });
+    const state = parseExplorerQuery(params);
+    expect(state.query.partidos).toEqual([first, second]);
+    expect(state.query.provinciaCodigo).toEqual(["06"]);
+    expect(state.obra).toBe(first);
+    expect(state.revisionId).toBe(second);
+    const shared = queryParams(state.query);
+    expect(shared.getAll("partidos")).toEqual([first, second]);
+    expect(shared.getAll("provinciaCodigo")).toEqual(["06"]);
+    expect(shared.getAll("bbox")).toEqual(["-59,-35,-58,-34"]);
+    expect(parseExplorerQuery(shared).query).toEqual(state.query);
+    expect(parse(explorerHref(state.query, "mapa").split("?")[1]!).query).toEqual(state.query);
+    expect(parse(unlocatedListHref(state.query).split("?")[1]!).query).toEqual({ ...state.query, bbox: undefined, cursor: undefined, tieneGeometria: false });
+  });
+  it("cuenta valores crudos antes de deduplicar partidos y provincias", () => {
+    const party = "aaaaaaaa-0000-4000-8000-000000000001";
+    expect(parseExplorerQuery(searchParamsOf({ partidos: Array(135).fill(party), provinciaCodigo: Array(24).fill("06") })).query).toEqual({ limit: 20, provinciaCodigo: ["06"], partidos: [party] });
+    expect(() => parseExplorerQuery(searchParamsOf({ partidos: Array(136).fill(party) }))).toThrow(TypeError);
+    expect(() => parseExplorerQuery(searchParamsOf({ provinciaCodigo: Array(25).fill("06") }))).toThrow(TypeError);
+  });
+  it.each([
+    "partidos=invalid", "partidos=", "partidos=aaaaaaaa-0000-4000-8000-000000000001,bbbbbbbb-0000-4000-8000-000000000001",
+    "partidos=aaaaaaaa-0000-4000-8000-000000000001&partidoId=bbbbbbbb-0000-4000-8000-000000000001",
+    "partidos=aaaaaaaa-0000-4000-8000-000000000001&partidoId=",
+    "partidos=aaaaaaaa-0000-4000-8000-000000000001&territorioEsquema=pba.municipio&municipioCodigo=001",
+    "partidos=aaaaaaaa-0000-4000-8000-000000000001&municipioCodigo=001",
+    "provinciaCodigo=", "provinciaCodigo=6", "provinciaCodigo=07", "provinciaCodigo=06,06",
+  ])("rechaza conjuntos territoriales inválidos o mezclados: %s", input => {
+    expect(() => parse(input)).toThrow(TypeError);
   });
   it("cambiar la presentación conserva la consulta y los faltantes", () => {
     expect(parse("vista=mapa&tieneGeometria=false&cursor=fixture-offset-20").query).toEqual(parse("vista=lista&tieneGeometria=false&cursor=fixture-offset-20").query);

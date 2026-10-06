@@ -2,6 +2,8 @@
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
+  // QA/dev can use a separate build without overwriting the active local .next.
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   poweredByHeader: false,
   /** Resuelve imports .js de NodeNext a fuentes TypeScript sin reescribir el cliente independiente. */
   webpack(config) {

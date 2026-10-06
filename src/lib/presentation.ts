@@ -17,6 +17,9 @@ export function sourceLabel(source: WorkSummary["fuentes"][number]["codigo"]): s
     "caba-actualizado": "Obras de la Ciudad de Buenos Aires",
     "nacion-obras": "Obras de Nación",
     "vl-obras": "Obras de Vicente López",
+    "bahia-obras": "Municipalidad de Bahía Blanca",
+    "olavarria-obras": "Municipalidad de Olavarría",
+    "pergamino-obras": "Municipalidad de Pergamino",
   }[source];
 }
 
