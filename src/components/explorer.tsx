@@ -4,9 +4,9 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { BoundingBox, ListQuery, PartyBoundaries, PartyCatalog, WorkDetail, WorkGeoJSON, WorkList } from "../api/client";
+import type { BoundingBox, InstitutionalOrganizationCatalog, ListQuery, PartyBoundaries, PartyCatalog, WorkDetail, WorkGeoJSON, WorkList } from "../api/client";
 import { BrowserApiError, readPublic } from "../lib/browser-api";
-import { DEFAULT_BBOX, MAP_READ_BBOX, SOURCES, STATES, explorerHref, queryParams, unlocatedListHref } from "../lib/explorer-query";
+import { DEFAULT_BBOX, INSTITUTIONAL_ROLES, MAP_READ_BBOX, SOURCES, STATES, explorerHref, queryParams, unlocatedListHref } from "../lib/explorer-query";
 import type { ExplorerQuery } from "../lib/explorer-query";
 import { limitMapFeatures, limitMapLayers, MAX_MAP_FEATURES } from "../lib/map-budget";
 import { detailMapFeatures } from "../lib/map-data";
@@ -16,6 +16,8 @@ import { LocationQuality } from "./location-quality";
 import { SourceBadge, SourceLegend } from "./source-origin";
 import { MapAvailability } from "./map-availability";
 import { PartyFilter } from "./party-filter";
+import { InstitutionalFilter } from "./institutional-filter";
+import { WorkAssociationSummary } from "./work-associations";
 import "./explorer.css";
 
 const WorkMap = dynamic(() => import("./work-map"), { ssr: false, loading: () => <p className="notice" role="status">Cargando el mapa… La lista sigue disponible.</p> });
@@ -28,7 +30,7 @@ type Selection = { id: string; revisionId?: string; locationId?: string };
  * @param props - Página inicial, estado validado de URL y estilo cartográfico configurado.
  * @returns Explorador que conserva filtros al alternar presentación y confirma área sólo por acción explícita.
  */
-export function Explorer({ initial, initialError, state, styleUrl, partyCatalog = null }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string; partyCatalog?: PartyCatalog | null }) {
+export function Explorer({ initial, initialError, state, styleUrl, partyCatalog = null, institutionalCatalog = null }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string; partyCatalog?: PartyCatalog | null; institutionalCatalog?: InstitutionalOrganizationCatalog | null }) {
   const router = useRouter();
   const { query } = state;
   const [view, setView] = useState(state.view);
@@ -284,7 +286,7 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
   const clearArea = { ...firstQuery }; delete clearArea.bbox;
   const clearLegacy = { ...firstQuery }; delete clearLegacy.territorioEsquema; delete clearLegacy.municipioCodigo;
   const hasData = Boolean(initial);
-  const activeFilters = [query.fuente, query.estado, query.sector, query.tieneGeometria, query.territorioEsquema, query.partidoId].filter(value => value !== undefined).length;
+  const activeFilters = [query.fuente, query.estado, query.sector, query.tieneGeometria, query.territorioEsquema, query.partidoId, query.partidoVerificadoId, query.gestionMunicipalId, query.organizacionId, query.rolInstitucional, query.periodoDesde, query.periodoHasta].filter(value => value !== undefined).length;
   const selectedParty = partyCatalog?.items.find(party => party.partidoId === query.partidoId);
   const locatedWorks = new Set(representedFeatures.map(feature => feature.properties.obraId)).size;
   const unlocatedLoaded = items.filter(work => !work.tieneGeometria).length;
@@ -322,7 +324,8 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
       {view === "lista" && <input type="hidden" name="vista" value="lista" />}
       {showBoundaries && <input type="hidden" name="limites" value="mostrar" />}
       {query.territorioEsquema && <><input type="hidden" name="territorioEsquema" value={query.territorioEsquema} /><input type="hidden" name="municipioCodigo" value={query.municipioCodigo} /></>}
-      {!query.territorioEsquema && <PartyFilter catalog={partyCatalog} partidoId={query.partidoId} />}
+      <PartyFilter catalog={partyCatalog} partidoId={query.partidoId} partidoVerificadoId={query.partidoVerificadoId} gestionMunicipalId={query.gestionMunicipalId} showReported={!query.territorioEsquema} />
+      <InstitutionalFilter catalog={institutionalCatalog} query={query} />
       <label>Fuente<select name="fuente" defaultValue={query.fuente ?? ""}><option value="">Todas las fuentes</option>{Object.entries(SOURCES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label>Estado informado<select name="estado" defaultValue={query.estado ?? ""}><option value="">Todos los estados</option>{Object.entries(STATES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label>Sector<select name="sector" defaultValue={query.sector ?? ""}><option value="">Todos los sectores</option><option value="educacion">Educación</option></select></label>
@@ -344,6 +347,11 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
       <p><strong>{query.bbox ? "Consulta por área" : "Todo el catálogo"}</strong> · {query.bbox ? "Solo obras con ubicación aprobada que intersecta la zona consultada." : "Sin filtro de área. Incluye obras con y sin ubicación aprobada."}</p>
       {query.territorioEsquema && <p>Municipio PBA: código {query.municipioCodigo}. Este filtro territorial no equivale al área del mapa. <a href={explorerHref(clearLegacy, view, showBoundaries)}>Quitar este filtro y elegir entre los 135 partidos</a>.</p>}
       {query.partidoId && <p><strong>Partido informado por la fuente: {selectedParty?.nombre ?? "identidad territorial seleccionada"}.</strong> La asociación reportada por la fuente no acredita ubicación espacial verificada ni gestión municipal.</p>}
+      {query.partidoVerificadoId && <p><strong>Ubicación territorial verificada: {partyCatalog?.items.find(party => party.partidoId === query.partidoVerificadoId)?.nombre ?? "partido del padrón no disponible"}.</strong> Requiere una asociación espacial verificada publicada para la revisión.</p>}
+      {query.gestionMunicipalId && <p><strong>Gestión municipal verificada: {partyCatalog?.items.find(party => party.partidoId === query.gestionMunicipalId)?.nombre ?? "partido del padrón no disponible"}.</strong> Requiere un rol municipal de promotor, contratante, ejecutor o financiador; no se deduce de la ubicación.</p>}
+      {query.organizacionId && <p>Organización institucional: {institutionalCatalog?.items.find(organization => organization.id === query.organizacionId)?.nombre ?? "organización no disponible en el catálogo actual"}.</p>}
+      {query.rolInstitucional && <p>Rol institucional verificado: {INSTITUTIONAL_ROLES[query.rolInstitucional]}.</p>}
+      {query.periodoDesde && query.periodoHasta && <p>Solapamiento de vigencia del rol: {query.periodoDesde} a {query.periodoHasta}. Organización, rol, gestión municipal y período deben corresponder al mismo rol publicado. La búsqueda no transforma las fechas desconocidas en vigencias ilimitadas.</p>}
       {partyCatalog?.limites.estado === "PENDING_LICENSE_AND_VALIDATION" && <p>Límites de partidos pendientes de licencia y validación. La selección territorial está disponible; el mapa conserva las ubicaciones aprobadas de obras.</p>}
       {query.bbox && <><p>Las obras publicadas sin ubicación no aparecen en una consulta por área porque no se puede determinar si están dentro de esta zona.</p><p><a href={explorerHref(clearArea, view, showBoundaries)}>Quitar área y ver todo el catálogo</a> · <a href={unlocatedListHref(query)}>Ver obras sin ubicación en el mapa</a></p></>}
     </div>
@@ -404,7 +412,8 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
           <div className="work-card-meta"><span className="status-badge">{work.estado ? STATES[work.estado] : "Estado no informado"}</span><MapAvailability hasGeometry={work.tieneGeometria} /></div>
           <div className="work-card-identity"><span className="result-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><h3><a href={`/obras/${work.obraId}?revisionId=${work.revisionId}`}>{work.nombre}</a></h3></div>
           {selection?.id === work.obraId && <p className="selection-label">Obra seleccionada</p>}
-          <p>{work.territorios.map(t => t.nombre ?? t.codigo).join(" · ") || "Territorio no informado"}</p>
+          <p><strong>Territorio informado por la fuente:</strong> {work.territorios.map(t => t.nombre ?? t.codigo).join(" · ") || "No informado"}</p>
+          <WorkAssociationSummary work={work} partyCatalog={partyCatalog} />
           <p><SourceBadge sources={work.fuentes} /></p>
           {!work.tieneGeometria && <p className="map-availability-note">Esta publicación no tiene una ubicación aprobada para dibujar. Podés consultar su resumen y su ficha.</p>}
           <div className="card-actions">{work.tieneGeometria && <button type="button" className="button secondary" disabled={!hydrated} onClick={() => locateWork(work.obraId, work.revisionId)}>Ver en mapa<span className="sr-only">: {work.nombre}</span></button>}<button type="button" className="button secondary" disabled={!hydrated} onClick={() => select(work.obraId, work.revisionId, true, selection?.id === work.obraId && selection.revisionId === work.revisionId ? selectedLocationId : undefined)}>Ver resumen<span className="sr-only"> de {work.nombre}</span></button><a href={`/obras/${work.obraId}?revisionId=${work.revisionId}`}>Ver ficha<span className="sr-only"> de {work.nombre}</span> <span aria-hidden="true">↗</span></a></div>
@@ -417,7 +426,7 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
       <div className="panel-toolbar"><h2 id="summary-title">Resumen de la obra</h2><button type="button" className="button secondary" onClick={() => setExpanded(!expanded)}>{expanded ? "Reducir panel" : "Ampliar panel"}</button><button type="button" className="button secondary" onClick={() => setSummaryOpen(false)} autoFocus>Cerrar resumen</button></div>
       {!selectedDetail && !detailError && <p role="status">Cargando la revisión seleccionada…</p>}
       {detailError && <p role="alert" className="notice error">{detailError}</p>}
-      {selectedDetail && <><WorkDetailContent work={selectedDetail} compact /><a className="button" href={`/obras/${selectedDetail.obraId}?revisionId=${selectedDetail.revisionId}`}>Abrir ficha completa</a></>}
+      {selectedDetail && <><WorkDetailContent work={selectedDetail} compact partyCatalog={partyCatalog} /><a className="button" href={`/obras/${selectedDetail.obraId}?revisionId=${selectedDetail.revisionId}`}>Abrir ficha completa</a></>}
     </dialog>
   </div>;
 }

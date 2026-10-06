@@ -1,11 +1,12 @@
 /** @file Comprueba SEO y recuperación 404 de fichas con datos sintéticos; conserva descripciones, UUID y errores de servicio sin red. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ReactElement } from "react";
 import examples from "../contracts/examples.json" with { type: "json" };
 import { PublicApiError, type WorkDetail } from "../src/api/client";
 import { parsePublicResponse } from "../src/api/contract";
 import { stateLabel } from "../src/lib/presentation";
 
-const api = vi.hoisted(() => ({ detail: vi.fn() }));
+const api = vi.hoisted(() => ({ detail: vi.fn(), parties: vi.fn() }));
 const seo = vi.hoisted(() => ({ origin: null as URL | null }));
 vi.mock("../src/lib/public-api.js", () => ({ publicApi: () => api }));
 vi.mock("../src/lib/config", () => ({ indexableSiteUrl: () => seo.origin, reportEmail: () => null }));
@@ -16,6 +17,15 @@ const props = (query: Record<string, string | string[] | undefined> = {}, id = w
 beforeEach(() => { vi.resetAllMocks(); seo.origin = null; api.detail.mockResolvedValue(work); });
 
 describe("metadatos de ficha", () => {
+  it("una falla de la nómina conserva la ficha de asociaciones y sus identidades publicadas", async () => {
+    api.detail.mockResolvedValue({ ...work, schemaVersion: "obra@3", asociacionesEspaciales: [{ ubicacionClave: work.ubicaciones[0]!.clave, partidoId: "aaaaaaaa-0000-4000-8000-000000000001", condicion: "VERIFIED", relacion: "INTERIOR", evidencia: { geometriaSha256: "a".repeat(64), limitesVersion: "limites-sinteticos-verificacion@1", limitesSha256: "b".repeat(64), metodo: "POSTGIS_INTERSECTION", metodoVersion: "pba-spatial@1", decisionId: "60000000-0000-4000-8000-000000000001" } }], rolesInstitucionales: [] });
+    api.parties.mockRejectedValue(new TypeError("private-diagnostic"));
+    const page = await WorkPage(props());
+    const content = (page as ReactElement<{ children: ReactElement[] }>).props.children[1] as ReactElement<{ work: WorkDetail; partyCatalog: unknown }>;
+    expect(content.props.work.obraId).toBe(work.obraId);
+    expect(content.props.partyCatalog).toBeNull();
+    expect(api.parties).toHaveBeenCalledTimes(1);
+  });
   it("conserva la descripción y agrega sólo territorio informado al título", async () => {
     const metadata = await generateMetadata(props());
     expect(metadata.description).toBe(`${work.nombre}. ${stateLabel(work.estado)}. Consultá la información disponible, sus fechas y fuentes en Obras Transparentes.`);

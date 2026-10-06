@@ -10,7 +10,7 @@ export type MapProperties = Pick<WorkGeoJSON["features"][number]["properties"], 
 /** Colección de figuras reales con identidad de obra, revisión y ubicación preservada. */
 export type MapCollection = FeatureCollection<Geometry, MapProperties>;
 
-/** Preserve the requested public revision; only approved, real locations can be drawn. */
+/** Conserva revisión e identidades reales; sólo dibuja ubicaciones aprobadas y lleva sus asociaciones publicadas sin inferir otras. */
 export function detailMapFeatures(work: WorkDetail): WorkGeoJSON["features"] {
   const features: WorkGeoJSON["features"] = [];
   const seen = new Set<string>();
@@ -29,6 +29,8 @@ export function detailMapFeatures(work: WorkDetail): WorkGeoJSON["features"] {
         estado: work.estado,
         clasificaciones: work.clasificaciones,
         fuentes: work.fuentes,
+        asociacionesEspaciales: work.asociacionesEspaciales.filter(association => association.ubicacionClave === location.clave),
+        rolesInstitucionales: work.rolesInstitucionales,
         calidad: {
           condicion: location.condicion,
           controles: location.controles,

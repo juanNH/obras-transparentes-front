@@ -14,6 +14,8 @@ export type WorkGeoJSON = components["schemas"]["PublicGeoFeatureCollection"];
 export type PartyCatalog = components["schemas"]["PublicPartyCatalogResponse"];
 /** Límites versionados para representación territorial; no prueban ubicación de obras. */
 export type PartyBoundaries = components["schemas"]["PublicPartyBoundaryFeatureCollection"];
+/** Organizaciones con roles verificados en publicaciones actuales; sus identidades son independientes de las organizaciones de seguridad. */
+export type InstitutionalOrganizationCatalog = paths["/api/v1/organizaciones-institucionales"]["get"]["responses"][200]["content"]["application/json"];
 /** Sobre público de error que permite conservar código e identificador de solicitud. */
 type ErrorEnvelope = components["schemas"]["PublicApiError"];
 /** Área WGS84 en orden oeste, sur, este, norte; no admite cruce del antimeridiano. */
@@ -110,6 +112,12 @@ function queryParameters(
     "territorioEsquema",
     "municipioCodigo",
     "partidoId",
+    "partidoVerificadoId",
+    "gestionMunicipalId",
+    "organizacionId",
+    "rolInstitucional",
+    "periodoDesde",
+    "periodoHasta",
   ] as const) {
     const value = query[key];
     if (value !== undefined) params.set(key, value);
@@ -124,6 +132,10 @@ function queryParameters(
     if (query.territorioEsquema !== undefined || query.municipioCodigo !== undefined)
       throw new TypeError("Elegí un partido o el filtro territorial anterior, sin combinarlos.");
   }
+  for (const key of ["partidoVerificadoId", "gestionMunicipalId", "organizacionId"] as const) {
+    if (query[key] !== undefined) params.set(key, identifier(query[key]));
+  }
+  if (Boolean(query.periodoDesde) !== Boolean(query.periodoHasta)) throw new TypeError("El período de vigencia requiere ambas fechas.");
   if (
     query.municipioCodigo !== undefined &&
     !/^[0-9]{1,32}$/.test(query.municipioCodigo)
@@ -210,6 +222,10 @@ export function createPublicApi(
     return parsePublicResponse<T>(schema, body);
   }
   return {
+    /** Lee sólo identidades institucionales con roles verificados en revisiones actualmente publicadas, sin filtros de obras. */
+    organizations(requestOptions: RequestOptions = {}): Promise<InstitutionalOrganizationCatalog> {
+      return read("/organizaciones-institucionales", "PublicInstitutionalOrganizationCatalogResponse", requestOptions);
+    },
     /** Lee la nómina territorial independiente del catálogo de obras y de sus geometrías. */
     parties(requestOptions: RequestOptions = {}): Promise<PartyCatalog> {
       return read("/territorios/pba/partidos", "PublicPartyCatalogResponse", requestOptions);

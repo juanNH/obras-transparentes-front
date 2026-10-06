@@ -190,6 +190,8 @@ Aplicar estos criterios a futuras interfaces dinámicas: declarar alcance y sele
 
 ## 6. Accesibilidad verificable
 
+Las asociaciones de obras reutilizan la sección de ficha, el `details` para evidencia y los controles nativos existentes. Mantener rótulos separados para territorio reportado, ubicación territorial verificada, gestión municipal y roles institucionales. La ausencia de evidencia publicada se expresa con texto; no se comunica sólo por color. Los filtros institucionales se agrupan en un `fieldset` con `legend`, nombres de organización obtenidos del catálogo y fechas etiquetadas como vigencia del rol. Los hashes y referencias largas deben refluir sin desplazar el ancho de lectura. Su semántica y verificación se registran en [asociaciones-obras.md](asociaciones-obras.md).
+
 Objetivo: WCAG 2.2 AA y los requisitos táctiles del proyecto. Estos criterios guían el trabajo; no acreditan que toda la app ya los cumpla.
 
 - Contraste de texto y señales esenciales según los pares anteriores. Nunca comunicar selección, error, estado o avance sólo con color.

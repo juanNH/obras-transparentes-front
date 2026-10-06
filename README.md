@@ -122,6 +122,7 @@ La exportación compila el backend sin iniciarlo, cargar `.env` ni conectar su b
 - [Etapa 2: decisiones, límites y validación](docs/etapa-2.md).
 - [Etapa 1: contrato e integración](docs/etapa-1.md).
 - [Documentación del código: JSDoc y comprobación automática](docs/documentacion-codigo.md).
+- [Asociaciones espaciales y roles institucionales publicados](docs/asociaciones-obras.md).
 - [Documentación original y fuentes primarias](docs/referencias.md).
 - [Skill local de contexto](.agents/skills/project-context/SKILL.md).
 

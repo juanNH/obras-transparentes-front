@@ -60,6 +60,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizaciones-institucionales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar organizaciones con roles verificados publicados
+         * @description Lectura anónima sin parámetros. Catálogo completo de identidades referidas por roles VERIFIED en revisiones actualmente publicadas; máximo 1000 identidades y 512 KiB. Si excede el presupuesto responde 503, sin truncar. La ausencia de una institución no demuestra ausencia de actividad. No requiere sesión, permisos, Origin o CSRF.
+         */
+        get: operations["PublicInstitutionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/territorios/pba/partidos": {
         parameters: {
             query?: never;
@@ -149,6 +169,26 @@ export interface components {
                  */
                 id: string;
                 properties: {
+                    asociacionesEspaciales: {
+                        /** @enum {string} */
+                        condicion: "VERIFIED";
+                        evidencia: {
+                            /** Format: uuid */
+                            decisionId: string;
+                            geometriaSha256: string;
+                            limitesSha256: string;
+                            limitesVersion: string;
+                            /** @enum {string} */
+                            metodo: "POSTGIS_INTERSECTION";
+                            /** @enum {string} */
+                            metodoVersion: "pba-spatial@1";
+                        };
+                        /** Format: uuid */
+                        partidoId: string;
+                        /** @enum {string} */
+                        relacion: "INTERIOR" | "CROSSING";
+                        ubicacionClave: string;
+                    }[];
                     calidad: {
                         /** @enum {string} */
                         condicion: "ACCEPTED";
@@ -201,6 +241,101 @@ export interface components {
                     obraId: string;
                     /** Format: uuid */
                     revisionId: string;
+                    rolesInstitucionales: {
+                        /** @enum {string} */
+                        condicion: "VERIFIED";
+                        /** Format: uuid */
+                        decisionId: string;
+                        evidencias: ({
+                            columna: string;
+                            localizador: {
+                                byteEndExclusive: number;
+                                byteStart: number;
+                                dataOrdinal: number;
+                                /** @enum {string} */
+                                format: "CSV";
+                                lineEnd: number;
+                                lineStart: number;
+                            } | {
+                                cells: string[];
+                                date1904: boolean;
+                                /** @enum {string} */
+                                format: "XLSX";
+                                part: string;
+                                row: number;
+                                worksheet: string;
+                            };
+                            posicion: number;
+                            /** Format: uuid */
+                            recursoId: string;
+                            /** Format: uuid */
+                            registroOrigenId: string;
+                            /** Format: uuid */
+                            resultadoRegistroId: string;
+                            /** @enum {string} */
+                            tipo: "SOURCE_CELL";
+                        } | {
+                            clave: string;
+                            /** Format: uuid */
+                            recursoId: string;
+                            referencia: {
+                                /** Format: date-time */
+                                consultadoEn: string;
+                                sha256: string;
+                                /** Format: uri */
+                                url: string;
+                                version: string;
+                            };
+                            /** @enum {string} */
+                            tipo: "CATALOG_METADATA";
+                            valor: string;
+                        } | {
+                            campo: string;
+                            /** Format: uuid */
+                            obraId: string;
+                            /** Format: uuid */
+                            revisionId: string;
+                            /** @enum {string} */
+                            tipo: "BASE_REVISION";
+                        } | {
+                            campo: string;
+                            /** Format: uuid */
+                            decisionId: string;
+                            /** @enum {string} */
+                            tipo: "REVIEW_DECISION";
+                        })[];
+                        organizacion: {
+                            /** Format: uuid */
+                            id: string;
+                            /** @enum {string} */
+                            nivel: "MUNICIPAL" | "PROVINCIAL" | "NACIONAL" | "OTRO";
+                            nombre: string;
+                            /** Format: uuid */
+                            partidoId: string | null;
+                        };
+                        /** @enum {string} */
+                        rol: "PROMOTOR" | "CONTRATANTE" | "EJECUTOR" | "FINANCIADOR" | "CONTRATISTA";
+                        vigencia: {
+                            fin: ({
+                                /** @enum {string} */
+                                precision: "DAY";
+                                valor: string & (string);
+                            } | {
+                                /** @enum {string} */
+                                precision: "YEAR";
+                                valor: string;
+                            }) | null;
+                            inicio: ({
+                                /** @enum {string} */
+                                precision: "DAY";
+                                valor: string & (string);
+                            } | {
+                                /** @enum {string} */
+                                precision: "YEAR";
+                                valor: string;
+                            }) | null;
+                        };
+                    }[];
                     /** Format: uuid */
                     ubicacionId: string;
                 };
@@ -210,6 +345,17 @@ export interface components {
             nextCursor: string | null;
             /** @enum {string} */
             type: "FeatureCollection";
+        };
+        PublicInstitutionalOrganizationCatalogResponse: {
+            items: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                nivel: "MUNICIPAL" | "PROVINCIAL" | "NACIONAL" | "OTRO";
+                nombre: string;
+                /** Format: uuid */
+                partidoId: string | null;
+            }[];
         };
         PublicPartyBoundaryFeatureCollection: {
             features: {
@@ -350,6 +496,26 @@ export interface components {
             version: "pba-partidos@1";
         };
         PublicWorkDetail: {
+            asociacionesEspaciales: {
+                /** @enum {string} */
+                condicion: "VERIFIED";
+                evidencia: {
+                    /** Format: uuid */
+                    decisionId: string;
+                    geometriaSha256: string;
+                    limitesSha256: string;
+                    limitesVersion: string;
+                    /** @enum {string} */
+                    metodo: "POSTGIS_INTERSECTION";
+                    /** @enum {string} */
+                    metodoVersion: "pba-spatial@1";
+                };
+                /** Format: uuid */
+                partidoId: string;
+                /** @enum {string} */
+                relacion: "INTERIOR" | "CROSSING";
+                ubicacionClave: string;
+            }[];
             atributosFuente?: {
                 gestion: string | null;
                 subfuente: string | null;
@@ -593,8 +759,103 @@ export interface components {
             publicadaActualmente: boolean;
             /** Format: uuid */
             revisionId: string;
+            rolesInstitucionales: {
+                /** @enum {string} */
+                condicion: "VERIFIED";
+                /** Format: uuid */
+                decisionId: string;
+                evidencias: ({
+                    columna: string;
+                    localizador: {
+                        byteEndExclusive: number;
+                        byteStart: number;
+                        dataOrdinal: number;
+                        /** @enum {string} */
+                        format: "CSV";
+                        lineEnd: number;
+                        lineStart: number;
+                    } | {
+                        cells: string[];
+                        date1904: boolean;
+                        /** @enum {string} */
+                        format: "XLSX";
+                        part: string;
+                        row: number;
+                        worksheet: string;
+                    };
+                    posicion: number;
+                    /** Format: uuid */
+                    recursoId: string;
+                    /** Format: uuid */
+                    registroOrigenId: string;
+                    /** Format: uuid */
+                    resultadoRegistroId: string;
+                    /** @enum {string} */
+                    tipo: "SOURCE_CELL";
+                } | {
+                    clave: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    referencia: {
+                        /** Format: date-time */
+                        consultadoEn: string;
+                        sha256: string;
+                        /** Format: uri */
+                        url: string;
+                        version: string;
+                    };
+                    /** @enum {string} */
+                    tipo: "CATALOG_METADATA";
+                    valor: string;
+                } | {
+                    campo: string;
+                    /** Format: uuid */
+                    obraId: string;
+                    /** Format: uuid */
+                    revisionId: string;
+                    /** @enum {string} */
+                    tipo: "BASE_REVISION";
+                } | {
+                    campo: string;
+                    /** Format: uuid */
+                    decisionId: string;
+                    /** @enum {string} */
+                    tipo: "REVIEW_DECISION";
+                })[];
+                organizacion: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @enum {string} */
+                    nivel: "MUNICIPAL" | "PROVINCIAL" | "NACIONAL" | "OTRO";
+                    nombre: string;
+                    /** Format: uuid */
+                    partidoId: string | null;
+                };
+                /** @enum {string} */
+                rol: "PROMOTOR" | "CONTRATANTE" | "EJECUTOR" | "FINANCIADOR" | "CONTRATISTA";
+                vigencia: {
+                    fin: ({
+                        /** @enum {string} */
+                        precision: "DAY";
+                        valor: string & (string);
+                    } | {
+                        /** @enum {string} */
+                        precision: "YEAR";
+                        valor: string;
+                    }) | null;
+                    inicio: ({
+                        /** @enum {string} */
+                        precision: "DAY";
+                        valor: string & (string);
+                    } | {
+                        /** @enum {string} */
+                        precision: "YEAR";
+                        valor: string;
+                    }) | null;
+                };
+            }[];
             /** @enum {string} */
-            schemaVersion: "obra@1" | "obra@2";
+            schemaVersion: "obra@1" | "obra@2" | "obra@3";
             territorios: {
                 codigo: string;
                 /** @enum {string} */
@@ -714,6 +975,26 @@ export interface components {
             nextCursor: string | null;
         };
         PublicWorkSummary: {
+            asociacionesEspaciales: {
+                /** @enum {string} */
+                condicion: "VERIFIED";
+                evidencia: {
+                    /** Format: uuid */
+                    decisionId: string;
+                    geometriaSha256: string;
+                    limitesSha256: string;
+                    limitesVersion: string;
+                    /** @enum {string} */
+                    metodo: "POSTGIS_INTERSECTION";
+                    /** @enum {string} */
+                    metodoVersion: "pba-spatial@1";
+                };
+                /** Format: uuid */
+                partidoId: string;
+                /** @enum {string} */
+                relacion: "INTERIOR" | "CROSSING";
+                ubicacionClave: string;
+            }[];
             clasificaciones: {
                 codigo: string;
                 esquema: string;
@@ -749,6 +1030,101 @@ export interface components {
             programas: string[];
             /** Format: uuid */
             revisionId: string;
+            rolesInstitucionales: {
+                /** @enum {string} */
+                condicion: "VERIFIED";
+                /** Format: uuid */
+                decisionId: string;
+                evidencias: ({
+                    columna: string;
+                    localizador: {
+                        byteEndExclusive: number;
+                        byteStart: number;
+                        dataOrdinal: number;
+                        /** @enum {string} */
+                        format: "CSV";
+                        lineEnd: number;
+                        lineStart: number;
+                    } | {
+                        cells: string[];
+                        date1904: boolean;
+                        /** @enum {string} */
+                        format: "XLSX";
+                        part: string;
+                        row: number;
+                        worksheet: string;
+                    };
+                    posicion: number;
+                    /** Format: uuid */
+                    recursoId: string;
+                    /** Format: uuid */
+                    registroOrigenId: string;
+                    /** Format: uuid */
+                    resultadoRegistroId: string;
+                    /** @enum {string} */
+                    tipo: "SOURCE_CELL";
+                } | {
+                    clave: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    referencia: {
+                        /** Format: date-time */
+                        consultadoEn: string;
+                        sha256: string;
+                        /** Format: uri */
+                        url: string;
+                        version: string;
+                    };
+                    /** @enum {string} */
+                    tipo: "CATALOG_METADATA";
+                    valor: string;
+                } | {
+                    campo: string;
+                    /** Format: uuid */
+                    obraId: string;
+                    /** Format: uuid */
+                    revisionId: string;
+                    /** @enum {string} */
+                    tipo: "BASE_REVISION";
+                } | {
+                    campo: string;
+                    /** Format: uuid */
+                    decisionId: string;
+                    /** @enum {string} */
+                    tipo: "REVIEW_DECISION";
+                })[];
+                organizacion: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @enum {string} */
+                    nivel: "MUNICIPAL" | "PROVINCIAL" | "NACIONAL" | "OTRO";
+                    nombre: string;
+                    /** Format: uuid */
+                    partidoId: string | null;
+                };
+                /** @enum {string} */
+                rol: "PROMOTOR" | "CONTRATANTE" | "EJECUTOR" | "FINANCIADOR" | "CONTRATISTA";
+                vigencia: {
+                    fin: ({
+                        /** @enum {string} */
+                        precision: "DAY";
+                        valor: string & (string);
+                    } | {
+                        /** @enum {string} */
+                        precision: "YEAR";
+                        valor: string;
+                    }) | null;
+                    inicio: ({
+                        /** @enum {string} */
+                        precision: "DAY";
+                        valor: string & (string);
+                    } | {
+                        /** @enum {string} */
+                        precision: "YEAR";
+                        valor: string;
+                    }) | null;
+                };
+            }[];
             territorios: {
                 codigo: string;
                 /** @enum {string} */
@@ -786,11 +1162,23 @@ export interface operations {
                 cursor?: string;
                 estado?: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED";
                 fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras";
+                /** @description Partido de una institución municipal con rol VERIFIED PROMOTOR, CONTRATANTE, EJECUTOR o FINANCIADOR. No incluye CONTRATISTA ni deduce responsabilidades de la fuente. */
+                gestionMunicipalId?: string;
                 limit?: number;
                 /** @description Texto con ceros conservados, acompañado por territorioEsquema=pba.municipio. */
                 municipioCodigo?: string;
+                /** @description Identidad del catálogo institucional público; debe cumplir los demás filtros institucionales en la misma relación de esta revisión. */
+                organizacionId?: string;
                 /** @description UUID del padrón GET /api/v1/territorios/pba/partidos. Selecciona el territorio canónico indec.departamento REPORTED de la revisión publicada, una equivalencia pba.municipio REPORTED documentada por su par exacto código/nombre en 95 partidos del CSV escolar auditado, o el par nacional histórico REPORTED nacion.provincia=BUENOS_AIRES y nacion.departamento=VICENTE_LOPEZ únicamente para Vicente López. Los otros 40 partidos no reciben equivalencias PBA legacy inferidas y no hay equivalencias nacionales históricas para otros partidos. No acredita gestión municipal ni pertenencia espacial; no infiere por fuente o coordenadas. Incompatible con territorioEsquema y municipioCodigo. El cursor incorpora la versión del padrón cuando se usa este filtro. */
                 partidoId?: string;
+                /** @description Partido con asociación espacial VERIFIED en la revisión publicada; usa sólo geometrías aceptadas y límites originales auditados. Independiente de partidoId REPORTED. */
+                partidoVerificadoId?: string;
+                /** @description Inicio civil YYYY-MM-DD, inclusivo, de solapamiento con vigencia institucional. Requiere periodoHasta. YEAR se expande sólo para búsqueda; una única fecha conocida usa su propio intervalo y ambas desconocidas se excluyen. No consulta fechas de obra, períodos educativos, publicación ni actualización de fuente. */
+                periodoDesde?: string & (string);
+                /** @description Fin civil YYYY-MM-DD inclusivo y no anterior a periodoDesde; todos los filtros institucionales coinciden en el mismo rol. */
+                periodoHasta?: string & (string);
+                /** @description Rol verificado; organización, gestión municipal y período se aplican a la misma fila. */
+                rolInstitucional?: "PROMOTOR" | "CONTRATANTE" | "EJECUTOR" | "FINANCIADOR" | "CONTRATISTA";
                 sector?: "educacion";
                 /** @description Requerido junto con municipioCodigo. Código reportado por PBA; no implica equivalencia nacional. */
                 territorioEsquema?: "pba.municipio";
@@ -945,11 +1333,23 @@ export interface operations {
                 cursor?: string;
                 estado?: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED";
                 fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras";
+                /** @description Partido de una institución municipal con rol VERIFIED PROMOTOR, CONTRATANTE, EJECUTOR o FINANCIADOR. No incluye CONTRATISTA ni deduce responsabilidades de la fuente. */
+                gestionMunicipalId?: string;
                 limit?: number;
                 /** @description Texto con ceros conservados, acompañado por territorioEsquema=pba.municipio. */
                 municipioCodigo?: string;
+                /** @description Identidad del catálogo institucional público; debe cumplir los demás filtros institucionales en la misma relación de esta revisión. */
+                organizacionId?: string;
                 /** @description UUID del padrón GET /api/v1/territorios/pba/partidos. Selecciona el territorio canónico indec.departamento REPORTED de la revisión publicada, una equivalencia pba.municipio REPORTED documentada por su par exacto código/nombre en 95 partidos del CSV escolar auditado, o el par nacional histórico REPORTED nacion.provincia=BUENOS_AIRES y nacion.departamento=VICENTE_LOPEZ únicamente para Vicente López. Los otros 40 partidos no reciben equivalencias PBA legacy inferidas y no hay equivalencias nacionales históricas para otros partidos. No acredita gestión municipal ni pertenencia espacial; no infiere por fuente o coordenadas. Incompatible con territorioEsquema y municipioCodigo. El cursor incorpora la versión del padrón cuando se usa este filtro. */
                 partidoId?: string;
+                /** @description Partido con asociación espacial VERIFIED en la revisión publicada; usa sólo geometrías aceptadas y límites originales auditados. Independiente de partidoId REPORTED. */
+                partidoVerificadoId?: string;
+                /** @description Inicio civil YYYY-MM-DD, inclusivo, de solapamiento con vigencia institucional. Requiere periodoHasta. YEAR se expande sólo para búsqueda; una única fecha conocida usa su propio intervalo y ambas desconocidas se excluyen. No consulta fechas de obra, períodos educativos, publicación ni actualización de fuente. */
+                periodoDesde?: string & (string);
+                /** @description Fin civil YYYY-MM-DD inclusivo y no anterior a periodoDesde; todos los filtros institucionales coinciden en el mismo rol. */
+                periodoHasta?: string & (string);
+                /** @description Rol verificado; organización, gestión municipal y período se aplican a la misma fila. */
+                rolInstitucional?: "PROMOTOR" | "CONTRATANTE" | "EJECUTOR" | "FINANCIADOR" | "CONTRATISTA";
                 sector?: "educacion";
                 /** @description Requerido junto con municipioCodigo. Código reportado por PBA; no implica equivalencia nacional. */
                 territorioEsquema?: "pba.municipio";
@@ -1017,6 +1417,66 @@ export interface operations {
             };
             /** @description Error interno sin detalles privados. */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
+    };
+    PublicInstitutionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Catálogo institucional completo publicado. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicInstitutionalOrganizationCatalogResponse"];
+                };
+            };
+            /** @description La consulta no admite parámetros. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+            /** @description INSTITUTION_CATALOG_UNAVAILABLE: catálogo excede presupuesto; no se entregan identidades parciales. */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
