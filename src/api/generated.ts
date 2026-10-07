@@ -60,6 +60,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/obras/conteos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Contar publicaciones por filtros y presencia en el mapa
+         * @description Lectura anónima en un único snapshot REPEATABLE READ. Aplica los mismos filtros no espaciales de listado/GeoJSON, incluido tieneGeometria si se envía. No admite limit ni cursor. totalPublicadas=totalConGeometria+totalSinGeometria cuenta obras distintas de la revisión vigente, sin depender de páginas o bbox. Sin bbox, area=null; con bbox, area.obrasEnMapa cuenta cada obra con al menos una ubicación aceptada que intersecta el área (incluido borde) y obrasFueraDelArea cuenta las obras con geometría sin intersección. La suma de ambas es totalConGeometria. Las obras sin geometría no se atribuyen al área; deben consultarse en listado sin bbox. No cuenta propuestas privadas ni acredita gestión o territorio por fuente. catalogoVersion permite detectar que lista y mapa consultaron cortes diferentes; conservarlo como texto exacto.
+         */
+        get: operations["WorksController_counts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/obras/geojson": {
         parameters: {
             query?: never;
@@ -576,6 +596,18 @@ export interface components {
                 tipo: "PROVINCIA" | "CIUDAD_AUTONOMA";
             }[];
             version: string;
+        };
+        PublicWorkCounts: {
+            area: {
+                bbox: (number)[];
+                obrasEnMapa: number;
+                obrasFueraDelArea: number;
+            } | null;
+            /** @description Versión decimal exacta del catálogo; conservar como string, nunca convertir a Number. */
+            catalogoVersion: string;
+            totalConGeometria: number;
+            totalPublicadas: number;
+            totalSinGeometria: number;
         };
         PublicWorkDetail: {
             asociacionesEspaciales: {
@@ -1478,6 +1510,96 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicMunicipalCoverage"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+            /** @description Error interno sin detalles privados. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
+    };
+    WorksController_counts: {
+        parameters: {
+            query?: {
+                /** @description west,south,east,north WGS84; finitos y crecientes sin antimeridiano. Contextualiza sólo las obras con geometría, conservando los totales de filtros no espaciales. */
+                bbox?: string;
+                estado?: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED";
+                fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
+                /** @description Partido de una institución municipal con rol VERIFIED PROMOTOR, CONTRATANTE, EJECUTOR o FINANCIADOR. No incluye CONTRATISTA ni deduce responsabilidades de la fuente. */
+                gestionMunicipalId?: string;
+                /** @description Texto con ceros conservados, acompañado por territorioEsquema=pba.municipio. */
+                municipioCodigo?: string;
+                /** @description Identidad del catálogo institucional público; debe cumplir los demás filtros institucionales en la misma relación de esta revisión. */
+                organizacionId?: string;
+                /** @description UUID del padrón GET /api/v1/territorios/pba/partidos. Selecciona el territorio canónico indec.departamento REPORTED de la revisión publicada, una equivalencia pba.municipio REPORTED documentada por su par exacto código/nombre en 95 partidos del CSV escolar auditado, o el par nacional histórico REPORTED nacion.provincia=BUENOS_AIRES y nacion.departamento=VICENTE_LOPEZ únicamente para Vicente López. Los otros 40 partidos no reciben equivalencias PBA legacy inferidas y no hay equivalencias nacionales históricas para otros partidos. No acredita gestión municipal ni pertenencia espacial; no infiere por fuente o coordenadas. Incompatible con partidos, territorioEsquema y municipioCodigo. El cursor incorpora la versión del padrón cuando se usa este filtro. */
+                partidoId?: string;
+                /** @description UUID repetible del padrón PBA; máximo 135 valores brutos. Se convierte a minúsculas, deduplica y ordena. OR entre partidos, AND con provinciaCodigo y otros filtros; sin partidos no restringe partidos. Cada identidad conserva la semántica REPORTED de partidoId: territorio canónico indec.departamento, uno de los 95 pares pba.municipio exactos auditados, o únicamente el par nacional histórico de Vicente López. No usa relaciones VERIFIED ni infiere equivalencias nuevas. Incompatible con partidoId, territorioEsquema y municipioCodigo. El cursor incorpora el conjunto canónico y la versión del padrón. */
+                partidos?: string[];
+                /** @description Partido con asociación espacial VERIFIED en la revisión publicada; usa sólo geometrías aceptadas y límites originales auditados. Independiente de partidoId REPORTED. */
+                partidoVerificadoId?: string;
+                /** @description Inicio civil YYYY-MM-DD, inclusivo, de solapamiento con vigencia institucional. Requiere periodoHasta. YEAR se expande sólo para búsqueda; una única fecha conocida usa su propio intervalo y ambas desconocidas se excluyen. No consulta fechas de obra, períodos educativos, publicación ni actualización de fuente. */
+                periodoDesde?: string & (string);
+                /** @description Fin civil YYYY-MM-DD inclusivo y no anterior a periodoDesde; todos los filtros institucionales coinciden en el mismo rol. */
+                periodoHasta?: string & (string);
+                /** @description Código INDEC provincial repetible del catálogo GET /api/v1/territorios/provincias: 02 (CABA) y 06 (Buenos Aires). Admite un valor o parámetros repetidos, máximo 24 valores brutos; deduplica y ordena. Sin este filtro conserva el alcance global, incluidas obras con territorio vacío. OR entre provincias y AND con los demás filtros. PBA exige nacion.provincia=BUENOS_AIRES REPORTED, partido canónico o par legacy exacto REPORTED del padrón, o asociación espacial VERIFIED publicada. CABA exige nacion.provincia=CABA REPORTED; no existe caba.comuna soportado. Para cada provincia veta cualquier código provincial REPORTED distinto o texto nacional crudo no compatible tras NFD, acentos, espacios y caso. Los únicos aliases crudos CABA son CABA, CIUDAD AUTONOMA DE BUENOS AIRES y CAPITAL FEDERAL; PBA admite BUENOS AIRES. Para CABA también veta partido PBA REPORTED reconocido o asociación VERIFIED PBA. Texto provincial desconocido, vacío, múltiple o contradictorio veta. No atribuye por fuente, editor, institución, candidata, coordenadas, corroboración CRS ni bbox. El cursor incluye catálogos provincial/de partidos y versión de relaciones. */
+                provinciaCodigo?: string[];
+                /** @description Rol verificado; organización, gestión municipal y período se aplican a la misma fila. */
+                rolInstitucional?: "PROMOTOR" | "CONTRATANTE" | "EJECUTOR" | "FINANCIADOR" | "CONTRATISTA";
+                sector?: "educacion";
+                /** @description Requerido junto con municipioCodigo. Código reportado por PBA; no implica equivalencia nacional. */
+                territorioEsquema?: "pba.municipio";
+                /** @description Presencia de una ubicación aprobada en la revisión publicada. */
+                tieneGeometria?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Totales completos y área contextual opcional del mismo catálogo, sin paginación. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicWorkCounts"];
+                };
+            };
+            /** @description Filtros, códigos provinciales o UUID fuera de catálogos, listas vacías o excesivas, combinación territorial, límite o cursor no válidos. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
                 };
             };
             /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */

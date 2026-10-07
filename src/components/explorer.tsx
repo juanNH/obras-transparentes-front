@@ -4,7 +4,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { BoundingBox, InstitutionalOrganizationCatalog, ListQuery, PartyBoundaries, PartyCatalog, ProvinceCatalog, WorkDetail, WorkGeoJSON, WorkList } from "../api/client";
+import type { BoundingBox, InstitutionalOrganizationCatalog, ListQuery, MunicipalCoverage, PartyBoundaries, PartyCatalog, ProvinceCatalog, WorkCounts, WorkDetail, WorkGeoJSON, WorkList } from "../api/client";
 import { BrowserApiError, readPublic } from "../lib/browser-api";
 import { DEFAULT_BBOX, INSTITUTIONAL_ROLES, MAP_READ_BBOX, SOURCES, STATES, explorerHref, parseExplorerQuery, queryParams, unlocatedListHref } from "../lib/explorer-query";
 import type { ExplorerQuery } from "../lib/explorer-query";
@@ -19,6 +19,9 @@ import { PartyFilter } from "./party-filter";
 import { ProvinceFilter } from "./province-filter";
 import { InstitutionalFilter } from "./institutional-filter";
 import { WorkAssociationSummary } from "./work-associations";
+import { WorkCountsPanel } from "./work-counts";
+import { MunicipalNavigation } from "./municipal-navigation";
+import { MunicipalCoveragePanel } from "./municipal-coverage";
 import "./explorer.css";
 
 const WorkMap = dynamic(() => import("./work-map"), { ssr: false, loading: () => <p className="notice" role="status">Cargando el mapa… La lista sigue disponible.</p> });
@@ -31,7 +34,7 @@ type Selection = { id: string; revisionId?: string; locationId?: string };
  * @param props - Página inicial, estado validado de URL y estilo cartográfico configurado.
  * @returns Explorador que conserva filtros al alternar presentación y confirma área sólo por acción explícita.
  */
-export function Explorer({ initial, initialError, state, styleUrl, partyCatalog = null, provinceCatalog = null, institutionalCatalog = null }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string; partyCatalog?: PartyCatalog | null; provinceCatalog?: ProvinceCatalog | null; institutionalCatalog?: InstitutionalOrganizationCatalog | null }) {
+export function Explorer({ initial, initialError, state, styleUrl, partyCatalog = null, provinceCatalog = null, institutionalCatalog = null, counts = null, countsError = null, municipalCoverage = null, municipalCoverageError = null }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string; partyCatalog?: PartyCatalog | null; provinceCatalog?: ProvinceCatalog | null; institutionalCatalog?: InstitutionalOrganizationCatalog | null; counts?: WorkCounts | null; countsError?: "UNAVAILABLE" | "CATALOG_CHANGED" | null; municipalCoverage?: MunicipalCoverage | null; municipalCoverageError?: "UNAVAILABLE" | "CATALOG_CHANGED" | null }) {
   const router = useRouter();
   const { query } = state;
   const selectedPartyIds = useMemo(() => query.partidos ?? (query.partidoId ? [query.partidoId] : []), [query.partidos, query.partidoId]);
@@ -346,6 +349,9 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
   const resetHref = explorerHref({ limit: 20 }, view);
 
   return <div className="explorer">
+    <MunicipalCoveragePanel coverage={mismatch ? null : municipalCoverage} error={mismatch ? "CATALOG_CHANGED" : municipalCoverageError} />
+    <MunicipalNavigation query={query} view={view} showBoundaries={showBoundaries} />
+    <WorkCountsPanel counts={mismatch ? null : counts} error={mismatch ? "CATALOG_CHANGED" : countsError} query={query} />
     <div className="consultation-header">
     <div className="explorer-toolbar">
       <div className="view-switch" role="group" aria-label="Forma de explorar">

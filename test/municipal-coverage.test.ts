@@ -6,7 +6,7 @@ import examples from "../contracts/examples.json" with { type: "json" };
 import { createPublicApi, PublicApiError, type MunicipalCoverage } from "../src/api/client";
 import { MunicipalCoveragePanel } from "../src/components/municipal-coverage";
 
-const api = vi.hoisted(() => ({ list: vi.fn(), parties: vi.fn(), provinces: vi.fn(), organizations: vi.fn(), municipalCoverage: vi.fn() }));
+const api = vi.hoisted(() => ({ list: vi.fn(), parties: vi.fn(), provinces: vi.fn(), organizations: vi.fn(), municipalCoverage: vi.fn(), counts: vi.fn() }));
 vi.mock("../src/lib/public-api", () => ({ publicApi: () => api }));
 vi.mock("../src/lib/config", () => ({ mapStyleUrl: () => "https://example.test/style.json", indexableSiteUrl: () => null }));
 vi.mock("../src/components/explorer", () => ({ Explorer: () => null }));
@@ -18,12 +18,13 @@ const coverage: MunicipalCoverage = { catalogoVersion: examples.listPopulated.ca
   { fuenteId: "70000000-0000-4000-8000-000000000002", codigo: "olavarria-obras", nombre: "EJEMPLO SINTÉTICO — Olavarría", obrasPublicadas: 0, obrasConGeometria: 0, obrasSinGeometria: 0 },
   { fuenteId: "70000000-0000-4000-8000-000000000003", codigo: "pergamino-obras", nombre: "EJEMPLO SINTÉTICO — Pergamino", obrasPublicadas: 2, obrasConGeometria: 0, obrasSinGeometria: 2 },
 ] };
-beforeEach(() => { vi.resetAllMocks(); api.list.mockResolvedValue(examples.listPopulated); api.municipalCoverage.mockResolvedValue(coverage); });
+beforeEach(() => { vi.resetAllMocks(); api.list.mockResolvedValue(examples.listPopulated); api.municipalCoverage.mockResolvedValue(coverage); api.counts.mockRejectedValue(new Error("Synthetic independent counts unavailable")); });
 
 /** Recupera el panel HTML de la página sin ejecutar navegación ni clientes de mapa. */
 function panel(page: ReactElement) {
-  const heading = (page.props as { children: ReactElement[] }).children[0]!;
-  return (heading.props as { children: ReactElement[] }).children.at(-1)! as ReactElement<Parameters<typeof MunicipalCoveragePanel>[0]>;
+  const explorer = (page.props as { children: ReactElement[] }).children[1]!;
+  const props = explorer.props as { municipalCoverage: MunicipalCoverage | null; municipalCoverageError: "UNAVAILABLE" | "CATALOG_CHANGED" | null };
+  return { props: { coverage: props.municipalCoverage, error: props.municipalCoverageError } };
 }
 
 describe("cobertura municipal pública", () => {

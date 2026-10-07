@@ -8,6 +8,16 @@ import { MAX_INSTITUTIONAL_CATALOG_BYTES } from "../src/lib/institutional-organi
 
 afterEach(() => vi.unstubAllGlobals());
 describe("presupuesto independiente de nómina", () => {
+  it("cancela conteos filtrados de más de 32 KiB sin asignarles el presupuesto cartográfico", async () => {
+    const cancelled = vi.fn();
+    const body = new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new Uint8Array(32 * 1024 + 1)); }, cancel: cancelled });
+    const request = vi.fn<typeof fetch>().mockResolvedValue(new Response(body));
+    vi.stubGlobal("fetch", request);
+    await expect(publicApi().counts({ fuente: "pergamino-obras", bbox: [-61, -35, -60, -33] })).rejects.toMatchObject({ status: 413, code: "RESPONSE_BUDGET" });
+    expect(cancelled).toHaveBeenCalledOnce();
+    expect(String(request.mock.calls[0]![0])).toMatch(/\/obras\/conteos\?/);
+    expect(request.mock.calls[0]![1]?.cache).toBe("no-store");
+  });
   it("cancela totales municipales de más de 32 KiB sin usar el presupuesto de obras", async () => {
     const cancelled = vi.fn();
     const body = new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new Uint8Array(32 * 1024 + 1)); }, cancel: cancelled });

@@ -138,6 +138,18 @@ export function unlocatedListHref(query: ListQuery): string {
   return explorerHref({ ...filters, tieneGeometria: false }, "lista");
 }
 
+/** Consulta el desglose completo de los filtros activos; el área aporta contexto, sin paginación ni filtro de disponibilidad de ubicación. */
+export function countsQuery(query: ListQuery): Omit<ListQuery, "cursor" | "limit" | "tieneGeometria"> {
+  const { cursor: _cursor, limit: _limit, tieneGeometria: _geometry, ...filters } = query;
+  return filters;
+}
+
+/** Cambia la fuente de procedencia manteniendo los demás filtros y la vista; inicia la primera página sin trasladar una selección ajena. */
+export function municipalSourceHref(query: ListQuery, fuente: "bahia-obras" | "pergamino-obras" | "olavarria-obras", view: "lista" | "mapa", showBoundaries = false): string {
+  const { cursor: _cursor, ...filters } = query;
+  return explorerHref({ ...filters, fuente }, view, showBoundaries);
+}
+
 /** Convierte searchParams de App Router conservando valores repetidos para validar arrays y rechazar escalares ambiguos. */
 export function searchParamsOf(values: Record<string, string | string[] | undefined>) {
   const params = new URLSearchParams();

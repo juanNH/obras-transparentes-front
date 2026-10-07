@@ -20,6 +20,8 @@ export type PartyBoundaries = components["schemas"]["PublicPartyBoundaryFeatureC
 export type InstitutionalOrganizationCatalog = paths["/api/v1/organizaciones-institucionales"]["get"]["responses"][200]["content"]["application/json"];
 /** Totales globales de las tres fuentes piloto en una versión del catálogo público; no son conteos de filtros ni gestión municipal. */
 export type MunicipalCoverage = components["schemas"]["PublicMunicipalCoverage"];
+/** Totales de obras por filtros sin paginación; el área particiona sólo publicaciones con geometría aprobada. */
+export type WorkCounts = components["schemas"]["PublicWorkCounts"];
 /** Sobre público de error que permite conservar código e identificador de solicitud. */
 type ErrorEnvelope = components["schemas"]["PublicApiError"];
 /** Área WGS84 en orden oeste, sur, este, norte; no admite cruce del antimeridiano. */
@@ -240,6 +242,18 @@ export function createPublicApi(
     return parsePublicResponse<T>(schema, body);
   }
   return {
+    /** Lee conteos por filtros sin limitar la población por bbox; verifica las particiones y el área solicitada antes de presentarlos. */
+    async counts(query: Omit<ListQuery, "cursor" | "limit"> = {}, requestOptions: RequestOptions = {}): Promise<WorkCounts> {
+      const params = queryParameters(query, 200, 20);
+      params.delete("limit");
+      params.delete("cursor");
+      const counts = await read<WorkCounts>("/obras/conteos?" + params, "PublicWorkCounts", requestOptions);
+      if (counts.totalPublicadas !== counts.totalConGeometria + counts.totalSinGeometria ||
+        Boolean(counts.area) !== Boolean(query.bbox) ||
+        (counts.area && (counts.area.obrasEnMapa + counts.area.obrasFueraDelArea !== counts.totalConGeometria || counts.area.bbox.join(",") !== query.bbox?.join(","))))
+        throw new ApiContractError("Los conteos de obras no son consistentes con la consulta.");
+      return counts;
+    },
     /** Lee publicaciones actuales y disponibilidad de geometría por fuente, sin filtros, ubicación candidata ni datos privados. */
     async municipalCoverage(requestOptions: RequestOptions = {}): Promise<MunicipalCoverage> {
       const coverage = await read<MunicipalCoverage>("/obras/cobertura-municipal", "PublicMunicipalCoverage", requestOptions);

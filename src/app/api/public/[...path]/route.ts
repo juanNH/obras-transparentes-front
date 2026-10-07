@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store" };
 const allowed = new Set(["fuente", "estado", "sector", "provinciaCodigo", "partidos", "territorioEsquema", "municipioCodigo", "partidoId", "partidoVerificadoId", "gestionMunicipalId", "organizacionId", "rolInstitucional", "periodoDesde", "periodoHasta", "tieneGeometria", "bbox", "cursor"]);
 /**
- * Acepta lista, GeoJSON, ficha, cobertura municipal y catálogos públicos; los totales/catálogos no admiten filtros y usan presupuestos independientes.
+ * Acepta lista, GeoJSON, ficha, conteos filtrados, cobertura municipal y catálogos públicos; conteos no admite paginación y usa presupuesto independiente.
  * @param request - GET de mismo origen; su señal cancela la lectura upstream.
  * @param params - Segmentos de la ruta pública resueltos por App Router.
  * @returns JSON validado sin caché o un error público que no revela URLs internas.
@@ -20,7 +20,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
   try {
     const api = publicApi();
     let result: unknown;
-    if (path.length === 2 && path.join("/") === "obras/cobertura-municipal") {
+    if (path.length === 2 && path.join("/") === "obras/conteos") {
+      if ([...url.searchParams.keys()].some(key => !allowed.has(key) || key === "cursor")) throw new TypeError("Los conteos reciben filtros, sin paginación.");
+      const countParams = new URLSearchParams(url.searchParams);
+      const unlocatedArea = countParams.get("tieneGeometria") === "false" && countParams.has("bbox");
+      if (unlocatedArea) {
+        if (countParams.getAll("tieneGeometria").length !== 1) throw new TypeError("Filtro de ubicación repetido.");
+        countParams.delete("tieneGeometria");
+      }
+      const { query } = parseExplorerQuery(countParams);
+      if (unlocatedArea) query.tieneGeometria = false;
+      const { limit: _limit, cursor: _cursor, ...filters } = query;
+      validated = true;
+      result = await api.counts(filters, { signal: request.signal });
+    } else if (path.length === 2 && path.join("/") === "obras/cobertura-municipal") {
       if (url.searchParams.size) throw new TypeError("Los totales municipales no reciben filtros de obras.");
       validated = true;
       result = await api.municipalCoverage({ signal: request.signal });
@@ -64,7 +77,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
     const status = error instanceof PublicApiError ? error.status : !validated && error instanceof TypeError ? 400 : 503;
     const code = error instanceof PublicApiError ? error.code : status === 400 ? "INVALID_QUERY" : "UNAVAILABLE";
     // Do not expose internal addresses or upstream diagnostic payloads.
-    const message = code === "CATALOG_CHANGED" ? "El catálogo cambió. Reiniciá la consulta." : code === "RESPONSE_BUDGET" ? path.join("/") === "obras/cobertura-municipal" ? "No se pudieron cargar los totales municipales dentro del límite de lectura." : path[0] === "organizaciones-institucionales" ? "No se pudo cargar el catálogo institucional dentro del límite de lectura." : path[0] === "territorios" ? "No se pudo cargar la referencia territorial dentro del límite de lectura." : "Esta zona contiene demasiados datos. Acercá el mapa o ajustá los filtros." : status === 400 ? "Revisá los filtros del enlace." : status === 404 ? "No encontramos esa publicación." : "El catálogo no está disponible en este momento. Intentá nuevamente.";
+    const message = code === "CATALOG_CHANGED" ? "El catálogo cambió. Reiniciá la consulta." : code === "RESPONSE_BUDGET" ? path.join("/") === "obras/conteos" ? "No se pudieron cargar los conteos dentro del límite de lectura." : path.join("/") === "obras/cobertura-municipal" ? "No se pudieron cargar los totales municipales dentro del límite de lectura." : path[0] === "organizaciones-institucionales" ? "No se pudo cargar el catálogo institucional dentro del límite de lectura." : path[0] === "territorios" ? "No se pudo cargar la referencia territorial dentro del límite de lectura." : "Esta zona contiene demasiados datos. Acercá el mapa o ajustá los filtros." : status === 400 ? "Revisá los filtros del enlace." : status === 404 ? "No encontramos esa publicación." : "El catálogo no está disponible en este momento. Intentá nuevamente.";
     return Response.json({ error: { code, message } }, { status, headers });
   }
 }
