@@ -17,6 +17,15 @@ El sitio ya tiene dos recorridos con cursores. No se agregó otra paginación: n
 
 Mover/acercar el mapa, geolocalizar para centrarlo y encuadrar una obra **no generan otra consulta de lista/GeoJSON**. «Buscar en esta zona» confirma `bbox` y crea una consulta nueva. Aplicar filtros también crea una consulta nueva. La ausencia de geometría no elimina publicaciones del listado; `tieneGeometria=false` evita por completo la lectura GeoJSON.
 
+El recorrido actual también lee las nóminas de provincias y partidos y el
+catálogo institucional al renderizar cada consulta nueva. El medidor separa
+esas rutas y sus bytes: entrada, confirmación de área y aplicación de fuente
+suman tres lecturas por cada nómina, además de cuatro listas, tres GeoJSON y una
+ficha. Son 17 lecturas upstream sintéticas en total; las ocho lecturas de obras
+conservan su conteo anterior. Alternar vistas, mover el mapa y reutilizar la
+selección no vuelve a leer esas nóminas. Las mediciones históricas que siguen
+corresponden al contrato y recorrido que estaba disponible en cada entrega.
+
 El estado mantiene el GeoJSON y la ficha completados en memoria durante la consulta. Alternar vistas conserva páginas y selección; no hay caché HTTP del catálogo ni persistencia de consultas en almacenamiento del navegador. Una carga GeoJSON interrumpida al pasar a lista se cancela; si se vuelve a abrir antes de haberla completado, se inicia otra lectura. Una respuesta ya recibida por el BFF puede haber consumido tráfico upstream aunque el navegador la cancele: los informes separan intentos, cancelaciones y lecturas completadas.
 
 Un cursor repetido, cambio de `catalogoVersion` o presupuesto excedido termina el recorrido sin un bucle ilimitado. El mapa parcial ofrece acercar el área o seguir la lista; no acredita cobertura completa ni un total de obras.

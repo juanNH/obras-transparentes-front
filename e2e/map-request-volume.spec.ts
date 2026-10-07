@@ -46,12 +46,14 @@ function observeBrowser(page: Page): BrowserRequest[] {
   return records;
 }
 
-/** Resume lecturas upstream del fixture separando obras, nómina territorial y catálogo institucional independientes. */
+/** Resume lecturas upstream del fixture separando obras, nóminas provinciales y de partidos y catálogo institucional independientes. */
 function counts(records: readonly FixtureRequest[]) {
   return {
     list: records.filter(record => record.path === "/api/v1/obras").length,
     geojson: records.filter(record => record.path === "/api/v1/obras/geojson").length,
     detail: records.filter(record => /^\/api\/v1\/obras\/[a-f0-9-]+$/.test(record.path)).length,
+    provinces: records.filter(record => record.path === "/api/v1/territorios/provincias").length,
+    provinceJSONBytes: records.filter(record => record.path === "/api/v1/territorios/provincias").reduce((sum, record) => sum + record.responseBytes, 0),
     parties: records.filter(record => record.path === "/api/v1/territorios/pba/partidos").length,
     partyJSONBytes: records.filter(record => record.path === "/api/v1/territorios/pba/partidos").reduce((sum, record) => sum + record.responseBytes, 0),
     organizations: records.filter(record => record.path === "/api/v1/organizaciones-institucionales").length,
@@ -98,6 +100,7 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   await expect(page.getByRole("link", { name: /^Ver ficha/ })).toHaveCount(20);
   await checkpoint("entrada en lista", { list: 1, geojson: 0, detail: 0 });
   expect(counts((await fixtureRequests(request)).slice(baseline)).parties).toBe(1);
+  expect(counts((await fixtureRequests(request)).slice(baseline)).provinces).toBe(1);
   expect(counts((await fixtureRequests(request)).slice(baseline)).organizations).toBe(1);
   expect(browser).toHaveLength(0);
 
@@ -131,6 +134,7 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   }
   await checkpoint("resumen, misma selección y dos alternancias completas", { list: 2, geojson: 1, detail: 1 });
   expect(counts((await fixtureRequests(request)).slice(baseline)).parties).toBe(1);
+  expect(counts((await fixtureRequests(request)).slice(baseline)).provinces).toBe(1);
   expect(browser.filter(record => record.path.startsWith("/styles/"))).toHaveLength(3);
 
   await page.getByRole("button", { name: "Buscar en esta zona", exact: true }).click();
@@ -141,15 +145,18 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   expect(confirmed.filter(record => record.path === "/api/v1/obras").at(-1)!.query.bbox).toBe(area);
   expect(confirmed.filter(record => record.path === "/api/v1/obras/geojson").at(-1)!.query.bbox).toBe(area);
 
-  await page.getByText("Filtrar obras", { exact: true }).click();
+  const filterSummary = page.locator(".filter-group > summary");
+  await expect(filterSummary).toContainText("filtro activo");
+  await filterSummary.click();
   await page.getByRole("combobox", { name: "Fuente", exact: true }).selectOption("nacion-obras");
   await page.getByRole("button", { name: "Aplicar filtros", exact: true }).click();
   await expect(page).toHaveURL(/fuente=nacion-obras/);
   const filtered = await checkpoint("aplicar fuente conservando área", { list: 4, geojson: 3, detail: 1 });
   expect(filtered.filter(record => record.path.startsWith("/api/v1/obras"))).toHaveLength(8);
   expect(counts(filtered).parties).toBe(3);
+  expect(counts(filtered).provinces).toBe(3);
   expect(counts(filtered).organizations).toBe(3);
-  expect(filtered).toHaveLength(14);
+  expect(filtered).toHaveLength(17);
   expect(filtered.at(-1)!.query.fuente).toBe("nacion-obras");
   expect(browser.filter(record => record.path === "/api/public/geojson")).toHaveLength(3);
   expect(browser.filter(record => record.path === `/api/public/obras/${firstId}`)).toHaveLength(1);

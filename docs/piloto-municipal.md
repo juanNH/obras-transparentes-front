@@ -87,3 +87,21 @@ en `artifacts/local-validation/revision-municipal/`, fuera de Git. La prueba UI
 comprueba el consumo del snapshot publicado; la conservación frente a una
 decisión de licencia posterior se valida también en el backend. La validación
 no realizó ingestas, aprobaciones ni publicaciones del entorno operativo.
+
+### Corrección del chequeo de CI
+
+El [primer chequeo del PR #7](https://github.com/juanNH/obras-transparentes-front/actions/runs/37559381486/job/112592959084)
+pasó 171 de 176 escenarios. Cinco fallos provenían del explorador ya presente
+en `main`: expectativas del texto anterior de alcance, apertura de filtros
+por texto exacto que ya incluía un contador y un título institucional que
+desbordaba con texto al 200 %. Al reparar los selectores apareció otra
+expectativa anterior del medidor que omitía tres lecturas provinciales.
+
+Los summaries avanzados admiten ahora ajuste de palabras y el E2E comprueba el
+ancho tanto de la página como de cada control. El medidor cuenta provincias
+por separado y conserva las ocho lecturas exactas de obras, sumando 17 rutas
+upstream del fixture. La corrida enfocada inicial aprobó 54 de 56 casos; los
+dos casos restantes de medición aprobaron tras incorporar esa nómina. Quedan
+verificados los 56 casos distintos de explorador, volumen y sitio público en
+Chromium de escritorio y móvil. TypeScript, `docs:check` y build aislado pasan;
+el nuevo chequeo completo en Ubuntu corresponde al siguiente head del PR.

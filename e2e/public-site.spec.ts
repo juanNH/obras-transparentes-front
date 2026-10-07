@@ -89,7 +89,7 @@ test("landing, filtros y ficha conservan reflow a 320 px con texto al 200 %", as
   for (const path of ["/", "/mapa", detailHref]) {
     await page.goto(path);
     await expect(page.locator("main h1")).toBeVisible();
-    if (path === "/mapa") await page.getByText("Filtrar obras", { exact: true }).click();
+    if (path === "/mapa") await page.locator(".filter-group > summary").click();
     if (path === detailHref) {
       await page.getByText("Identificación del recurso fuente", { exact: true }).first().click();
       await page.getByText("Procedencia de los datos", { exact: true }).click();
@@ -103,6 +103,13 @@ test("landing, filtros y ficha conservan reflow a 320 px con texto al 200 %", as
     await expect.poll(() => paragraph.evaluate(element => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(initialFontSize * 1.95);
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     if (path === "/mapa") {
+      // Native summaries must reflow inside their controls, even when the word
+      // "institucionales" becomes wider than the nested filter content area.
+      for (const selector of [".territorial-advanced > summary", ".institutional-options > summary"]) {
+        const summary = page.locator(selector);
+        await expect(summary).toBeVisible();
+        expect(await summary.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+      }
       await page.getByRole("combobox", { name: "Ubicación", exact: true }).selectOption("false");
       await page.getByRole("button", { name: "Aplicar filtros", exact: true }).click();
       await expect(page).toHaveURL(/tieneGeometria=false/);
