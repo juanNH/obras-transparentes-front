@@ -8,6 +8,7 @@ import { SourceBadge } from "./source-origin";
 import { MapAvailability } from "./map-availability";
 import { WorkAssociations } from "./work-associations";
 import { Evidence } from "./work-evidence";
+import { WorkSourceLicenses } from "./work-source-licenses";
 
 /** Presenta sólo URLs HTTP(S) sin credenciales como enlace; una referencia inválida permanece como texto. */
 function SourceLink({ url, children }: { url: string; children: ReactNode }) {
@@ -90,6 +91,8 @@ export function WorkDetailContent({ work, compact = false, partyCatalog = null }
       <p>La fuente de datos no es necesariamente el organismo responsable de la obra.</p>
       <ul>{work.fuentes.map((source, index) => <li key={source.recursoId + index}><SourceLink url={source.urlCatalogo}>{sourceLabel(source.codigo)}</SourceLink><details><summary>Identificación del recurso fuente</summary><p>Recurso: <span className="technical-id">{source.recursoId}</span></p><p>Huella SHA-256: <span className="technical-id">{source.sha256}</span></p></details></li>)}</ul>
     </section>
+
+    <WorkSourceLicenses work={work} compact={compact} />
 
     <details className="detail-section"><summary>Calidad y datos faltantes</summary>
       {Object.keys(work.calidadCampos).length ? <dl className="detail-grid">{Object.entries(work.calidadCampos).map(([field, quality]) => <div key={field}><dt>{fieldLabel(field)}</dt><dd>{qualityLabel(quality.estado)}{quality.motivo && <p>{quality.motivo}</p>}</dd></div>)}</dl> : <p>No se informaron evaluaciones de calidad por campo.</p>}

@@ -40,7 +40,8 @@ test("la entrada conserva todo el catálogo y alternar vistas conserva páginas 
   await page.goto("/mapa");
   await geo;
   await expect(page.getByRole("button", { name: "Mapa", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator(".scope-note")).toContainText("Todo el catálogo");
+  await expect(page.locator(".scope-note")).toContainText("Todas las obras publicadas");
+  await expect(page.locator(".scope-note")).toContainText("Sin filtro de área. Incluye obras con y sin ubicación aprobada.");
   await expect(page.getByRole("link", { name: /^Ver ficha/ })).toHaveCount(20);
   await expect(page.locator(".unlocated-notice")).toContainText("5 obras cargadas no aparecen en el mapa.");
   expect(new URL(page.url()).searchParams.has("bbox")).toBe(false);

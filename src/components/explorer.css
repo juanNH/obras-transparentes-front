@@ -915,6 +915,7 @@
   font-weight: 700;
   cursor: pointer;
   align-content: center;
+  overflow-wrap: anywhere;
 }
 
 .explorer .party-picker-content,

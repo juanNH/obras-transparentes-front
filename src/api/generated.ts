@@ -676,6 +676,37 @@ export interface components {
                 moneda: "ARS" | "USD" | null;
                 valor: string;
             })[];
+            /** @description Evidencia de licencia y atribución congelada al publicar esta revisión; ausencia no declara una licencia nueva para publicaciones históricas. */
+            licenciasFuentes?: {
+                /** @enum {string} */
+                alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                atribucion: string;
+                /** Format: date-time */
+                capturadaEn: string;
+                codigo: string;
+                codigoLicencia: string;
+                /** @enum {string} */
+                contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                distribucionBase: {
+                    aviso: string;
+                    licencia: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                /** Format: uri */
+                evidenciaUrl: string;
+                /** Format: uuid */
+                fuenteId: string;
+                licenciaContenidos: {
+                    codigo: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                recursoVersionIds: string[];
+                /** Format: uri */
+                urlLicencia: string;
+                version: number;
+            }[];
             metadata: {
                 /**
                  * Format: date-time
