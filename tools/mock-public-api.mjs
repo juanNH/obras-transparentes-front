@@ -106,6 +106,18 @@ const jurisdictionItems = [false, true].map((hasReportedProvince, index) => {
   return item;
 });
 
+// Sólo esta ficha sintética adicional tiene licencia; no cambia conteos ni filtros del catálogo base.
+const licensedDetail = { ...structuredClone(examples.detailPartial), obraId: id("1", 27), revisionId: id("2", 27), nombre: "EJEMPLO SINTÉTICO — Obra municipal con licencia registrada", publicadaActualmente: true, catalogoVersion, territorios: [], asociacionesEspaciales: [], rolesInstitucionales: [] };
+licensedDetail.fuentes[0].codigo = "olavarria-obras";
+licensedDetail.licenciasFuentes = [{
+  fuenteId: id("7", 27), codigo: "olavarria-obras", version: 2, codigoLicencia: "ODbL-1.0", urlLicencia: "https://opendatacommons.org/licenses/odbl/1-0/",
+  atribucion: "Atribución sintética exacta — Municipalidad de Olavarría.\nBase de datos de ejemplo, con revisión publicada.",
+  evidenciaUrl: "https://example.invalid/evidencia-licencia-olavarria", capturadaEn: "2026-10-06T12:00:00Z", alcance: "DATABASE", recursoVersionIds: [licensedDetail.fuentes[0].recursoId],
+  distribucionBase: { licencia: "ODbL-1.0", url: "https://opendatacommons.org/licenses/odbl/1-0/", aviso: "Aviso sintético: la base derivada de esta revisión se distribuye bajo ODbL-1.0." },
+  contenidosIndividuales: "EXCLUDED", licenciaContenidos: null,
+}];
+details.set(licensedDetail.obraId, validate("PublicWorkDetail", licensedDetail));
+
 /** Aplica intersección por extensión de figuras sintéticas; no simula ni acredita las reglas topológicas PostGIS. */
 function inArea(item, area) {
   if (!area) return true;

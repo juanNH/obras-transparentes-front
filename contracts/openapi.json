@@ -3191,6 +3191,127 @@
       "PublicWorkDetail": {
         "type": "object",
         "properties": {
+          "licenciasFuentes": {
+            "description": "Evidencia de licencia y atribución congelada al publicar esta revisión; ausencia no declara una licencia nueva para publicaciones históricas.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fuenteId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "codigo": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991
+                },
+                "codigoLicencia": {
+                  "type": "string"
+                },
+                "urlLicencia": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "atribucion": {
+                  "type": "string"
+                },
+                "evidenciaUrl": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "capturadaEn": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "alcance": {
+                  "type": "string",
+                  "enum": [
+                    "RESOURCE",
+                    "DATABASE",
+                    "CONTENTS"
+                  ]
+                },
+                "recursoVersionIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  }
+                },
+                "distribucionBase": {
+                  "nullable": true,
+                  "type": "object",
+                  "properties": {
+                    "licencia": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "aviso": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "licencia",
+                    "url",
+                    "aviso"
+                  ],
+                  "additionalProperties": false
+                },
+                "contenidosIndividuales": {
+                  "type": "string",
+                  "enum": [
+                    "EXCLUDED",
+                    "LICENSED"
+                  ]
+                },
+                "licenciaContenidos": {
+                  "nullable": true,
+                  "type": "object",
+                  "properties": {
+                    "codigo": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "codigo",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "fuenteId",
+                "codigo",
+                "version",
+                "codigoLicencia",
+                "urlLicencia",
+                "atribucion",
+                "evidenciaUrl",
+                "capturadaEn",
+                "alcance",
+                "recursoVersionIds",
+                "distribucionBase",
+                "contenidosIndividuales",
+                "licenciaContenidos"
+              ],
+              "additionalProperties": false
+            }
+          },
           "schemaVersion": {
             "type": "string",
             "enum": [
