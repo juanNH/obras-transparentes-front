@@ -27,6 +27,7 @@ export default function ProjectPage() {
       <h2>Qué cobertura tiene el catálogo</h2>
       <p>El explorador abre todas las obras publicadas, incluidas las de fuentes de CABA y de Buenos Aires. Los 135 partidos bonaerenses son opciones de búsqueda; el padrón completo no indica que cada partido ya tenga obras publicadas.</p>
       <p>Un original cargado o una propuesta pendiente de revisión todavía no aparece en el catálogo público. Algunas fuentes municipales están preparadas y esperan su carga y revisión. Una publicación sin ubicación aprobada permanece en la lista y la ficha, aunque no tenga un punto en el mapa.</p>
+      <p>La incorporación editorial se hace por etapas: se revisan identidad y duplicados, se contrasta la ubicación con su evidencia, se resuelven advertencias, se aprueba una revisión y recién después se publica. El padrón de 135 partidos permite ordenar la cobertura nominal; no afirma que cada partido tenga obras publicadas ni que una obra ubicada allí sea gestionada por su municipio.</p>
       <p>Los filtros de jurisdicción y partido usan el territorio informado o verificado que esté publicado. Algunas obras tienen ese dato incompleto: podés encontrarlas quitando el filtro territorial o eligiendo su fuente. «Datos de CABA» identifica la fuente y conserva su diferencia con una ubicación territorial verificada.</p>
       <p><a href="/mapa?vista=lista">Ver todas las obras publicadas</a> · <a href="/mapa?fuente=caba-actualizado&vista=lista">Ver publicaciones de la fuente CABA</a></p>
     </section>
