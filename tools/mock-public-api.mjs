@@ -254,6 +254,17 @@ const server = createServer((request, response) => {
     const { page, limit, nextCursor } = pageOf(filtered(url.searchParams), url.searchParams, 20);
     return send(200, { items: page, limit, nextCursor, catalogoVersion });
   }
+  if (url.pathname === "/api/v1/obras/conteos") {
+    if (url.searchParams.has("cursor") || url.searchParams.has("limit")) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic counts have no pagination", requestId: null } });
+    if (municipalFixtureState.failed) return send(503, { error: { code: "UNAVAILABLE", message: "Synthetic independent counts unavailable", requestId: null } });
+    const filters = new URLSearchParams(url.searchParams);
+    filters.delete("bbox");
+    const population = filtered(filters);
+    const totalConGeometria = population.filter(item => item.tieneGeometria).length;
+    const bbox = url.searchParams.has("bbox") ? url.searchParams.get("bbox").split(",").map(Number) : null;
+    const obrasEnMapa = bbox ? population.filter(item => item.tieneGeometria && inArea(item, bbox)).length : 0;
+    return send(200, validate("PublicWorkCounts", { catalogoVersion: municipalFixtureState.changed ? "8" : catalogoVersion, totalPublicadas: population.length, totalConGeometria, totalSinGeometria: population.length - totalConGeometria, area: bbox ? { bbox, obrasEnMapa, obrasFueraDelArea: totalConGeometria - obrasEnMapa } : null }));
+  }
   if (url.pathname === "/api/v1/obras/cobertura-municipal") {
     if (url.searchParams.size) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic municipal coverage has no filters", requestId: null } });
     if (municipalFixtureState.failed) return send(503, { error: { code: "UNAVAILABLE", message: "Synthetic independent coverage unavailable", requestId: null } });
