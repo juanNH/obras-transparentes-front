@@ -57,6 +57,7 @@ function counts(records: readonly FixtureRequest[]) {
     parties: records.filter(record => record.path === "/api/v1/territorios/pba/partidos").length,
     partyJSONBytes: records.filter(record => record.path === "/api/v1/territorios/pba/partidos").reduce((sum, record) => sum + record.responseBytes, 0),
     organizations: records.filter(record => record.path === "/api/v1/organizaciones-institucionales").length,
+    municipalCoverage: records.filter(record => record.path === "/api/v1/obras/cobertura-municipal").length,
     organizationJSONBytes: records.filter(record => record.path === "/api/v1/organizaciones-institucionales").reduce((sum, record) => sum + record.responseBytes, 0),
     decodedJSONBytes: records.reduce((sum, record) => sum + record.responseBytes, 0),
   };
@@ -102,6 +103,7 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   expect(counts((await fixtureRequests(request)).slice(baseline)).parties).toBe(1);
   expect(counts((await fixtureRequests(request)).slice(baseline)).provinces).toBe(1);
   expect(counts((await fixtureRequests(request)).slice(baseline)).organizations).toBe(1);
+  expect(counts((await fixtureRequests(request)).slice(baseline)).municipalCoverage).toBe(1);
   expect(browser).toHaveLength(0);
 
   await page.getByRole("button", { name: "Cargar más obras", exact: true }).click();
@@ -152,11 +154,12 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   await page.getByRole("button", { name: "Aplicar filtros", exact: true }).click();
   await expect(page).toHaveURL(/fuente=nacion-obras/);
   const filtered = await checkpoint("aplicar fuente conservando área", { list: 4, geojson: 3, detail: 1 });
-  expect(filtered.filter(record => record.path.startsWith("/api/v1/obras"))).toHaveLength(8);
+  expect(filtered.filter(record => record.path.startsWith("/api/v1/obras") && record.path !== "/api/v1/obras/cobertura-municipal")).toHaveLength(8);
   expect(counts(filtered).parties).toBe(3);
   expect(counts(filtered).provinces).toBe(3);
   expect(counts(filtered).organizations).toBe(3);
-  expect(filtered).toHaveLength(17);
+  expect(counts(filtered).municipalCoverage).toBe(3);
+  expect(filtered).toHaveLength(20);
   expect(filtered.at(-1)!.query.fuente).toBe("nacion-obras");
   expect(browser.filter(record => record.path === "/api/public/geojson")).toHaveLength(3);
   expect(browser.filter(record => record.path === `/api/public/obras/${firstId}`)).toHaveLength(1);

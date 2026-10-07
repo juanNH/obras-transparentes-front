@@ -18,6 +18,8 @@ export type ProvinceCatalog = components["schemas"]["PublicProvinceCatalog"];
 export type PartyBoundaries = components["schemas"]["PublicPartyBoundaryFeatureCollection"];
 /** Organizaciones con roles verificados en publicaciones actuales; sus identidades son independientes de las organizaciones de seguridad. */
 export type InstitutionalOrganizationCatalog = paths["/api/v1/organizaciones-institucionales"]["get"]["responses"][200]["content"]["application/json"];
+/** Totales globales de las tres fuentes piloto en una versión del catálogo público; no son conteos de filtros ni gestión municipal. */
+export type MunicipalCoverage = components["schemas"]["PublicMunicipalCoverage"];
 /** Sobre público de error que permite conservar código e identificador de solicitud. */
 type ErrorEnvelope = components["schemas"]["PublicApiError"];
 /** Área WGS84 en orden oeste, sur, este, norte; no admite cruce del antimeridiano. */
@@ -238,6 +240,13 @@ export function createPublicApi(
     return parsePublicResponse<T>(schema, body);
   }
   return {
+    /** Lee publicaciones actuales y disponibilidad de geometría por fuente, sin filtros, ubicación candidata ni datos privados. */
+    async municipalCoverage(requestOptions: RequestOptions = {}): Promise<MunicipalCoverage> {
+      const coverage = await read<MunicipalCoverage>("/obras/cobertura-municipal", "PublicMunicipalCoverage", requestOptions);
+      if (new Set(coverage.fuentes.map(source => source.codigo)).size !== 3 || coverage.fuentes.some(source => source.obrasPublicadas !== source.obrasConGeometria + source.obrasSinGeometria))
+        throw new ApiContractError("Los totales de cobertura municipal no son consistentes.");
+      return coverage;
+    },
     /** Lee sólo identidades institucionales con roles verificados en revisiones actualmente publicadas, sin filtros de obras. */
     organizations(requestOptions: RequestOptions = {}): Promise<InstitutionalOrganizationCatalog> {
       return read("/organizaciones-institucionales", "PublicInstitutionalOrganizationCatalogResponse", requestOptions);

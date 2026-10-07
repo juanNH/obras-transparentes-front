@@ -33,6 +33,7 @@ const requests = [];
 const territorialFailures = { parties: false, provinces: false };
 const details = new Map();
 const features = [];
+const municipalFixtureState = { enabled: false, failed: false, changed: false };
 const institutionalParty = partyCatalog.items.find(party => party.codigos.indecDepartamento === "06861");
 const institutionalOrganization = { id: id("5", 1), nombre: "EJEMPLO SINTÉTICO — Organización municipal revisada", nivel: "MUNICIPAL", partidoId: institutionalParty.partidoId };
 const institutionalCatalog = { items: [institutionalOrganization] };
@@ -91,6 +92,28 @@ const items = Array.from({ length: 24 }, (_, index) => {
 validate("PublicWorkListResponse", { items, nextCursor: null, limit: 24, catalogoVersion });
 validate("PublicGeoFeatureCollection", { type: "FeatureCollection", features, nextCursor: null, catalogoVersion });
 validate("PublicInstitutionalOrganizationCatalogResponse", institutionalCatalog);
+/** Tres publicaciones municipales sintéticas: una ubicación aceptada y dos omisiones explícitas; no son evidencia de datos reales. */
+const municipalItems = [31, 32, 33].map(number => {
+  const located = number === 31;
+  const code = located ? "bahia-obras" : "pergamino-obras";
+  const obraId = id("1", number);
+  const revisionId = id("2", number);
+  const nombre = `EJEMPLO SINTÉTICO — ${located ? "Bahía Blanca con ubicación revisada" : "Pergamino publicada sin ubicación " + number}`;
+  const fuentes = [{ ...structuredClone(examples.listPopulated.items[0].fuentes[0]), codigo: code }];
+  const item = { ...structuredClone(examples.listPopulated.items[0]), obraId, revisionId, nombre, fuentes, territorios: [], asociacionesEspaciales: [], rolesInstitucionales: [], tieneGeometria: located };
+  const detail = { ...structuredClone(located ? examples.detailPopulated : examples.detailPartial), obraId, revisionId, nombre, fuentes, territorios: [], asociacionesEspaciales: [], rolesInstitucionales: [], publicadaActualmente: true, catalogoVersion };
+  if (located) {
+    const feature = structuredClone(examples.geojsonPopulated.features[0]);
+    feature.id = id("4", number);
+    feature.geometry = { type: "Point", coordinates: [-62.27, -38.72] };
+    feature.properties = { ...feature.properties, obraId, revisionId, nombre, fuentes, ubicacionId: feature.id, asociacionesEspaciales: [], rolesInstitucionales: [] };
+    detail.ubicaciones = [{ ...detail.ubicaciones[0], ubicacionId: feature.id, geometria: feature.geometry, ...feature.properties.calidad }];
+    features.push(feature);
+  }
+  details.set(obraId, validate("PublicWorkDetail", detail));
+  validate("PublicWorkListResponse", { items: [item], nextCursor: null, limit: 1, catalogoVersion });
+  return item;
+});
 let jurisdictionFixturesEnabled = false;
 /** Publicaciones CABA sintéticas para el escenario explícito; no modifican la nómina estándar de otras pruebas. */
 const jurisdictionItems = [false, true].map((hasReportedProvince, index) => {
@@ -142,7 +165,7 @@ function filtered(params) {
   const area = params.has("bbox") ? params.get("bbox").split(",").map(Number) : null;
   const partyIds = params.has("partidos") ? params.getAll("partidos") : params.has("partidoId") ? [params.get("partidoId")] : [];
   const parties = partyCatalog.items.filter(party => partyIds.includes(party.partidoId));
-  const available = jurisdictionFixturesEnabled ? [...jurisdictionItems, ...items] : items;
+  const available = [...items, ...(jurisdictionFixturesEnabled ? jurisdictionItems : []), ...(municipalFixtureState.enabled ? municipalItems : [])];
   return available.filter(item =>
     (!params.has("provinciaCodigo") || params.getAll("provinciaCodigo").some(code => code === "06"
       ? item.territorios.some(territory => territory.esquema === "indec.departamento" && territory.condicion === "REPORTED" && partyCatalog.items.some(party => party.codigos.indecDepartamento === territory.codigo))
@@ -189,6 +212,12 @@ const server = createServer((request, response) => {
   };
   if (request.method !== "GET") return send(405, { error: { code: "METHOD_NOT_ALLOWED", message: "Read-only fixture server", requestId: null } });
   if (url.pathname === "/__health") return send(200, { fixture: "synthetic-e2e-only" });
+  if (url.pathname === "/__municipal-fixtures" && port === 4100) {
+    if ([...url.searchParams.keys()].some(key => !["enabled", "failed", "changed"].includes(key)) || ["enabled", "failed", "changed"].some(key => url.searchParams.getAll(key).length !== 1 || !["0", "1"].includes(url.searchParams.get(key))))
+      return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic municipal switches require enabled/failed/changed=0 or 1", requestId: null } });
+    for (const key of ["enabled", "failed", "changed"]) municipalFixtureState[key] = url.searchParams.get(key) === "1";
+    return send(200, { fixture: "synthetic-e2e-only", ...municipalFixtureState });
+  }
   if (url.pathname === "/__requests") return send(200, { fixture: "synthetic-e2e-only", requests });
   if (url.pathname === "/__jurisdiction-fixtures" && port === 4100) {
     if (url.searchParams.size !== 1 || !["0", "1"].includes(url.searchParams.get("enabled"))) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic jurisdiction switch requires enabled=0 or 1", requestId: null } });
@@ -224,6 +253,15 @@ const server = createServer((request, response) => {
   if (url.pathname === "/api/v1/obras") {
     const { page, limit, nextCursor } = pageOf(filtered(url.searchParams), url.searchParams, 20);
     return send(200, { items: page, limit, nextCursor, catalogoVersion });
+  }
+  if (url.pathname === "/api/v1/obras/cobertura-municipal") {
+    if (url.searchParams.size) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic municipal coverage has no filters", requestId: null } });
+    if (municipalFixtureState.failed) return send(503, { error: { code: "UNAVAILABLE", message: "Synthetic independent coverage unavailable", requestId: null } });
+    const fuentes = ["bahia-obras", "olavarria-obras", "pergamino-obras"].map((codigo, index) => {
+      const sourceItems = municipalFixtureState.enabled ? municipalItems.filter(item => item.fuentes.some(source => source.codigo === codigo)) : [];
+      return { fuenteId: id("7", 31 + index), codigo, nombre: `EJEMPLO SINTÉTICO — ${["Bahía Blanca", "Olavarría", "Pergamino"][index]}`, obrasPublicadas: sourceItems.length, obrasConGeometria: sourceItems.filter(item => item.tieneGeometria).length, obrasSinGeometria: sourceItems.filter(item => !item.tieneGeometria).length };
+    });
+    return send(200, validate("PublicMunicipalCoverage", { catalogoVersion: municipalFixtureState.changed ? "8" : catalogoVersion, fuentes }));
   }
   if (url.pathname === "/api/v1/obras/geojson") {
     const allowed = new Set(filtered(url.searchParams).map(item => item.obraId));

@@ -370,6 +370,16 @@ input[type="checkbox"], input[type="radio"] { min-width: 22px; min-height: 22px;
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+.municipal-coverage { margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--color-border); border-radius: 1rem; background: var(--color-surface); }
+.municipal-coverage h2 { margin: 0 0 0.5rem; font-size: 1.125rem; }
+.municipal-coverage-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+.municipal-coverage-list li { min-width: 0; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: 0.75rem; background: var(--color-bg); }
+.municipal-coverage-list h3 { margin: 0 0 0.75rem; font-size: 1rem; overflow-wrap: anywhere; }
+.municipal-coverage-list dl { margin: 0; font-size: 0.875rem; }
+.municipal-coverage-list dl div { display: flex; justify-content: space-between; gap: 1rem; }
+.municipal-coverage-list dd { margin: 0; font-weight: 700; }
+.municipal-coverage-list p { margin: 0.75rem 0; font-size: 0.875rem; }
+.municipal-coverage-list a { display: inline-flex; align-items: center; min-height: 44px; }
 @media (forced-colors: active) {
   :focus-visible { outline-color: Highlight; box-shadow: none; }
   .button, .status-badge, .notice, .work-card, .detail-panel, .view-switch, .map-canvas, input, select, textarea { border-color: CanvasText; }
