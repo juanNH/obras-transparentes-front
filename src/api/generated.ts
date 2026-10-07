@@ -40,6 +40,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/obras/cobertura-municipal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar cobertura publicada del piloto municipal
+         * @description Lectura anónima de Bahía Blanca, Olavarría y Pergamino en un único corte REPEATABLE READ y versión exacta de catálogo. Cuenta obras distintas de la revisión actualmente publicada, por cada fuente presente en su snapshot. obrasConGeometria exige ubicación aceptada persistida para esa revisión; varias ubicaciones cuentan una sola obra. obrasSinGeometria conserva publicaciones consultables en lista y ficha. Son totales completos por fuente: no se aplican filtros, bbox o paginación y no se publican cantidades privadas de propuestas, incidencias o licencias. La procedencia no prueba gestión municipal ni pertenencia territorial.
+         */
+        get: operations["WorksController_municipalCoverage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/obras/geojson": {
         parameters: {
             query?: never;
@@ -382,6 +402,20 @@ export interface components {
                 nombre: string;
                 /** Format: uuid */
                 partidoId: string | null;
+            }[];
+        };
+        PublicMunicipalCoverage: {
+            /** @description Versión decimal exacta del catálogo; conservar como string, nunca convertir a Number. */
+            catalogoVersion: string;
+            fuentes: {
+                /** @enum {string} */
+                codigo: "bahia-obras" | "olavarria-obras" | "pergamino-obras";
+                /** Format: uuid */
+                fuenteId: string;
+                nombre: string;
+                obrasConGeometria: number;
+                obrasPublicadas: number;
+                obrasSinGeometria: number;
             }[];
         };
         PublicPartyBoundaryFeatureCollection: {
@@ -1393,6 +1427,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+            /** @description Error interno sin detalles privados. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
+    };
+    WorksController_municipalCoverage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Versión de catálogo y totales de obras publicadas, con geometría aceptada y sin ella, por cada fuente del piloto. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicMunicipalCoverage"];
                 };
             };
             /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */

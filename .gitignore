@@ -8,6 +8,7 @@ coverage/
 .next/
 .next-piloto-municipal/
 .next-filtros-territoriales/
+.next-coverage-qa/
 out/
 test-results/
 playwright-report/
