@@ -165,7 +165,7 @@ function filtered(params) {
   const area = params.has("bbox") ? params.get("bbox").split(",").map(Number) : null;
   const partyIds = params.has("partidos") ? params.getAll("partidos") : params.has("partidoId") ? [params.get("partidoId")] : [];
   const parties = partyCatalog.items.filter(party => partyIds.includes(party.partidoId));
-  const available = [...items, ...(jurisdictionFixturesEnabled ? jurisdictionItems : []), ...(municipalFixtureState.enabled ? municipalItems : [])];
+  const available = [...(jurisdictionFixturesEnabled ? jurisdictionItems : []), ...items, ...(municipalFixtureState.enabled ? municipalItems : [])];
   return available.filter(item =>
     (!params.has("provinciaCodigo") || params.getAll("provinciaCodigo").some(code => code === "06"
       ? item.territorios.some(territory => territory.esquema === "indec.departamento" && territory.condicion === "REPORTED" && partyCatalog.items.some(party => party.codigos.indecDepartamento === territory.codigo))
