@@ -1,10 +1,11 @@
-/** @file Comprueba el contrato, alcance global, fallo independiente y consistencia de catálogo de cobertura municipal con fixtures sintéticos. */
+/** @file Comprueba conteos de las siete fuentes, versiones compartidas y lecturas municipales sintéticas sin consultar el catálogo activo. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import examples from "../contracts/examples.json" with { type: "json" };
-import { createPublicApi, PublicApiError, type MunicipalCoverage } from "../src/api/client";
-import { MunicipalCoveragePanel } from "../src/components/municipal-coverage";
+import { createPublicApi, PublicApiError, type MunicipalCoverage, type WorkCounts } from "../src/api/client";
+import { SourceCoveragePanel } from "../src/components/source-coverage";
+import type { PublicSourceCoverage } from "../src/lib/source-coverage";
 
 const api = vi.hoisted(() => ({ list: vi.fn(), parties: vi.fn(), provinces: vi.fn(), organizations: vi.fn(), municipalCoverage: vi.fn(), counts: vi.fn() }));
 vi.mock("../src/lib/public-api", () => ({ publicApi: () => api }));
@@ -13,22 +14,33 @@ vi.mock("../src/components/explorer", () => ({ Explorer: () => null }));
 import MapPage from "../src/app/mapa/page";
 import { GET } from "../src/app/api/public/[...path]/route";
 
-const coverage: MunicipalCoverage = { catalogoVersion: examples.listPopulated.catalogoVersion, fuentes: [
+const version = examples.listPopulated.catalogoVersion;
+const coverage: MunicipalCoverage = { catalogoVersion: version, fuentes: [
   { fuenteId: "70000000-0000-4000-8000-000000000001", codigo: "bahia-obras", nombre: "EJEMPLO SINTÉTICO — Bahía Blanca", obrasPublicadas: 1, obrasConGeometria: 1, obrasSinGeometria: 0 },
   { fuenteId: "70000000-0000-4000-8000-000000000002", codigo: "olavarria-obras", nombre: "EJEMPLO SINTÉTICO — Olavarría", obrasPublicadas: 0, obrasConGeometria: 0, obrasSinGeometria: 0 },
   { fuenteId: "70000000-0000-4000-8000-000000000003", codigo: "pergamino-obras", nombre: "EJEMPLO SINTÉTICO — Pergamino", obrasPublicadas: 2, obrasConGeometria: 0, obrasSinGeometria: 2 },
 ] };
-beforeEach(() => { vi.resetAllMocks(); api.list.mockResolvedValue(examples.listPopulated); api.municipalCoverage.mockResolvedValue(coverage); api.counts.mockRejectedValue(new Error("Synthetic independent counts unavailable")); });
+const workCounts: WorkCounts = { catalogoVersion: version, totalPublicadas: 3, totalConGeometria: 1, totalSinGeometria: 2, area: null };
+const perSource: Record<string, WorkCounts> = {
+  "pba-edificios": { ...workCounts, totalPublicadas: 4, totalConGeometria: 3, totalSinGeometria: 1 },
+  "nacion-obras": { ...workCounts, totalPublicadas: 5, totalConGeometria: 4, totalSinGeometria: 1 },
+  "caba-actualizado": { ...workCounts, totalPublicadas: 0, totalConGeometria: 0, totalSinGeometria: 0 },
+  "vl-obras": { ...workCounts, totalPublicadas: 2, totalConGeometria: 0, totalSinGeometria: 2 },
+};
+beforeEach(() => {
+  vi.resetAllMocks();
+  api.list.mockResolvedValue(examples.listPopulated);
+  api.municipalCoverage.mockResolvedValue(coverage);
+  api.counts.mockImplementation(async (query: Record<string, string> = {}) => Object.keys(query).length === 1 && query.fuente ? perSource[query.fuente] : workCounts);
+});
 
-/** Recupera el panel HTML de la página sin ejecutar navegación ni clientes de mapa. */
-function panel(page: ReactElement) {
-  const explorer = (page.props as { children: ReactElement[] }).children[1]!;
-  const props = explorer.props as { municipalCoverage: MunicipalCoverage | null; municipalCoverageError: "UNAVAILABLE" | "CATALOG_CHANGED" | null };
-  return { props: { coverage: props.municipalCoverage, error: props.municipalCoverageError } };
+/** Recupera props del explorador sin montar el mapa ni crear conexiones reales. */
+function explorer(page: ReactElement) {
+  return (page.props as { children: ReactElement[] }).children[1]! as ReactElement<{ sourceCoverage: readonly PublicSourceCoverage[]; initial: { catalogoVersion: string } | null }>;
 }
 
-describe("cobertura municipal pública", () => {
-  it("lee totales sin filtros ni credenciales y valida el esquema del backend", async () => {
+describe("cobertura pública por fuente", () => {
+  it("valida el contrato municipal existente y mantiene su lectura anónima", async () => {
     const request = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify(coverage)));
     const controller = new AbortController();
     await expect(createPublicApi({ fetch: request }).municipalCoverage({ signal: controller.signal })).resolves.toEqual(coverage);
@@ -38,36 +50,57 @@ describe("cobertura municipal pública", () => {
       await expect(createPublicApi({ fetch: request }).municipalCoverage()).rejects.toMatchObject({ name: "ApiContractError" });
     }
   });
-  it("conserva el alcance global aunque lista tenga filtros por área, estado y fuente", async () => {
+
+  it("presenta las siete fuentes en el mismo corte y consulta conteos globales por fuente", async () => {
     const page = await MapPage({ searchParams: Promise.resolve({ fuente: "pergamino-obras", estado: "IN_PROGRESS", bbox: "-61,-35,-60,-33", vista: "lista" }) });
+    const props = explorer(page).props;
+    expect(props.sourceCoverage).toHaveLength(7);
+    expect(props.sourceCoverage.every(source => source.estado === "AVAILABLE")).toBe(true);
+    expect(props.sourceCoverage.map(source => source.codigo).slice(0, 2)).toEqual(["pba-edificios", "nacion-obras"]);
     expect(api.municipalCoverage).toHaveBeenCalledExactlyOnceWith();
-    expect(panel(page).props.coverage).toEqual(coverage);
-    expect(panel(page).props.error).toBeNull();
-    const html = renderToStaticMarkup(MunicipalCoveragePanel(panel(page).props));
-    expect(html).toContain("no cambian con los filtros ni el área");
-    expect(html).toContain("fuente=pergamino-obras&amp;vista=lista");
+    for (const fuente of ["pba-edificios", "nacion-obras", "caba-actualizado", "vl-obras"]) expect(api.counts).toHaveBeenCalledWith({ fuente });
+    const html = renderToStaticMarkup(SourceCoveragePanel({ coverage: props.sourceCoverage, catalogoVersion: props.initial!.catalogoVersion }));
+    expect(html).toContain("globales del catálogo público");
+    expect(html).toContain("comparten corte con el listado y las fichas");
+    expect(html).toContain("Provincia de Buenos Aires · edificios escolares");
+    expect(html).toContain("Nación · obras");
+    expect(html).toContain("Fuente sin publicaciones");
+    expect(html).toContain("Publicadas; sin ubicación en el mapa");
+    expect(html).toContain("Las publicaciones siguen disponibles en lista y ficha");
+    for (const source of props.sourceCoverage) expect(html).toContain(`href="/mapa?fuente=${source.codigo}&amp;vista=lista"`);
     expect(html).not.toContain("bbox=");
-    expect(html).toContain("todavía no tiene obras publicadas");
-    expect(html).toContain("Sus obras están publicadas");
   });
-  it("no mezcla cifras de distintas publicaciones y conserva las obras iniciales", async () => {
-    api.municipalCoverage.mockResolvedValue({ ...coverage, catalogoVersion: "987654321" });
+
+  it("marca como desconocida una fuente cuyo conteo no coincide con el listado", async () => {
+    api.counts.mockImplementation(async (query: Record<string, string> = {}) => {
+      if (Object.keys(query).length === 1 && query.fuente === "nacion-obras") return { ...perSource[query.fuente], catalogoVersion: "987654321" };
+      return Object.keys(query).length === 1 && query.fuente ? perSource[query.fuente] : workCounts;
+    });
     const page = await MapPage({ searchParams: Promise.resolve({ vista: "lista" }) });
-    expect(panel(page).props).toEqual({ coverage: null, error: "CATALOG_CHANGED" });
-    const explorer = (page.props as { children: ReactElement[] }).children[1]!;
-    expect((explorer.props as { initial: unknown }).initial).toEqual(examples.listPopulated);
-    expect(renderToStaticMarkup(MunicipalCoveragePanel(panel(page).props))).toContain("El catálogo cambió");
+    const items = explorer(page).props.sourceCoverage;
+    expect(items.find(source => source.codigo === "nacion-obras")).toMatchObject({ estado: "UNKNOWN", obrasPublicadas: null });
+    expect(items.find(source => source.codigo === "pba-edificios")).toMatchObject({ estado: "AVAILABLE", obrasPublicadas: 4 });
+    const html = renderToStaticMarkup(SourceCoveragePanel({ coverage: items, catalogoVersion: version }));
+    expect(html).toContain("No hay un conteo verificable para el mismo corte");
+    const nationCard = html.split("<li>").find(card => card.includes("Nación · obras"))!;
+    expect(nationCard).not.toContain("<dd>");
   });
-  it("conserva la exploración ante fallo de totales sin convertir desconocido en cero", async () => {
-    api.municipalCoverage.mockRejectedValue(new TypeError("private-internal-diagnostic"));
-    const page = await MapPage({ searchParams: Promise.resolve({}) });
-    expect(panel(page).props).toEqual({ coverage: null, error: "UNAVAILABLE" });
-    const html = renderToStaticMarkup(MunicipalCoveragePanel(panel(page).props));
-    expect(html).toContain("no significa que sean cero");
+
+  it("distingue una diferencia de versión del error de lectura y conserva la lista", async () => {
+    api.municipalCoverage.mockResolvedValue({ ...coverage, catalogoVersion: "987654321" });
+    api.counts.mockRejectedValue(new TypeError("private-internal-diagnostic"));
+    const page = await MapPage({ searchParams: Promise.resolve({ vista: "lista" }) });
+    const props = explorer(page).props;
+    expect(props.initial).toEqual(examples.listPopulated);
+    expect(props.sourceCoverage.filter(source => ["bahia-obras", "olavarria-obras", "pergamino-obras"].includes(source.codigo)).every(source => source.estado === "UNKNOWN")).toBe(true);
+    expect(props.sourceCoverage.filter(source => ["pba-edificios", "nacion-obras", "caba-actualizado", "vl-obras"].includes(source.codigo)).every(source => source.estado === "ERROR")).toBe(true);
+    const html = renderToStaticMarkup(SourceCoveragePanel({ coverage: props.sourceCoverage, catalogoVersion: version }));
+    expect(html).toContain("Desconocido");
+    expect(html).toContain("Error de lectura");
     expect(html).not.toContain("private-internal-diagnostic");
-    expect(html).not.toContain("<dd>");
   });
-  it("admite cobertura BFF anónima, sin caché y rechaza todos los filtros", async () => {
+
+  it("admite cobertura municipal BFF anónima, sin caché y rechaza filtros", async () => {
     const input = new Request("https://example.test/api/public/obras/cobertura-municipal", { headers: { Cookie: "private-session=secret", Authorization: "Bearer secret" } });
     const context = { params: Promise.resolve({ path: ["obras", "cobertura-municipal"] }) };
     const response = await GET(input, context);

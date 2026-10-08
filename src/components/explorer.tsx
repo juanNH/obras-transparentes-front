@@ -4,10 +4,11 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { BoundingBox, InstitutionalOrganizationCatalog, ListQuery, MunicipalCoverage, PartyBoundaries, PartyCatalog, ProvinceCatalog, WorkCounts, WorkDetail, WorkGeoJSON, WorkList } from "../api/client";
+import type { BoundingBox, InstitutionalOrganizationCatalog, ListQuery, PartyBoundaries, PartyCatalog, ProvinceCatalog, WorkCounts, WorkDetail, WorkGeoJSON, WorkList } from "../api/client";
 import { BrowserApiError, readPublic } from "../lib/browser-api";
 import { DEFAULT_BBOX, INSTITUTIONAL_ROLES, MAP_READ_BBOX, SOURCES, STATES, explorerHref, parseExplorerQuery, queryParams, unlocatedListHref } from "../lib/explorer-query";
 import type { ExplorerQuery } from "../lib/explorer-query";
+import type { PublicSourceCoverage } from "../lib/source-coverage";
 import { limitMapFeatures, limitMapLayers, MAX_MAP_FEATURES } from "../lib/map-budget";
 import { detailMapFeatures } from "../lib/map-data";
 import { readPartyBoundaries } from "../lib/party-boundaries";
@@ -20,8 +21,7 @@ import { ProvinceFilter } from "./province-filter";
 import { InstitutionalFilter } from "./institutional-filter";
 import { WorkAssociationSummary } from "./work-associations";
 import { WorkCountsPanel } from "./work-counts";
-import { MunicipalNavigation } from "./municipal-navigation";
-import { MunicipalCoveragePanel } from "./municipal-coverage";
+import { SourceCoveragePanel } from "./source-coverage";
 import "./explorer.css";
 
 const WorkMap = dynamic(() => import("./work-map"), { ssr: false, loading: () => <p className="notice" role="status">Cargando el mapa… La lista sigue disponible.</p> });
@@ -30,11 +30,11 @@ const WorkDetailContent = dynamic(() => import("./work-detail").then(module => m
 type Selection = { id: string; revisionId?: string; locationId?: string };
 
 /**
- * Mantiene lista/mapa y selección dentro de una sola versión del catálogo con alternativa textual HTML.
+ * Mantiene lista/mapa, conteos por fuente y selección dentro de una versión común del catálogo con alternativa textual HTML.
  * @param props - Página inicial, estado validado de URL y estilo cartográfico configurado.
  * @returns Explorador que conserva filtros al alternar presentación y confirma área sólo por acción explícita.
  */
-export function Explorer({ initial, initialError, state, styleUrl, partyCatalog = null, provinceCatalog = null, institutionalCatalog = null, counts = null, countsError = null, municipalCoverage = null, municipalCoverageError = null }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string; partyCatalog?: PartyCatalog | null; provinceCatalog?: ProvinceCatalog | null; institutionalCatalog?: InstitutionalOrganizationCatalog | null; counts?: WorkCounts | null; countsError?: "UNAVAILABLE" | "CATALOG_CHANGED" | null; municipalCoverage?: MunicipalCoverage | null; municipalCoverageError?: "UNAVAILABLE" | "CATALOG_CHANGED" | null }) {
+export function Explorer({ initial, initialError, state, styleUrl, partyCatalog = null, provinceCatalog = null, institutionalCatalog = null, counts = null, countsError = null, sourceCoverage = [] }: { initial: WorkList | null; initialError: string | null; state: ExplorerQuery; styleUrl: string; partyCatalog?: PartyCatalog | null; provinceCatalog?: ProvinceCatalog | null; institutionalCatalog?: InstitutionalOrganizationCatalog | null; counts?: WorkCounts | null; countsError?: "UNAVAILABLE" | "CATALOG_CHANGED" | null; sourceCoverage: readonly PublicSourceCoverage[] }) {
   const router = useRouter();
   const { query } = state;
   const selectedPartyIds = useMemo(() => query.partidos ?? (query.partidoId ? [query.partidoId] : []), [query.partidos, query.partidoId]);
@@ -349,8 +349,13 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
   const resetHref = explorerHref({ limit: 20 }, view);
 
   return <div className="explorer">
-    <MunicipalCoveragePanel coverage={mismatch ? null : municipalCoverage} error={mismatch ? "CATALOG_CHANGED" : municipalCoverageError} />
-    <MunicipalNavigation query={query} view={view} showBoundaries={showBoundaries} />
+    <SourceCoveragePanel coverage={sourceCoverage} catalogoVersion={mismatch ? null : version ?? null} stale={mismatch} />
+    <form className="source-switch" action="/mapa" method="get" aria-label="Consultar por fuente">
+      <label htmlFor="public-source">Fuente pública<select id="public-source" name="fuente" defaultValue={query.fuente ?? ""}><option value="">Todas las fuentes</option>{Object.entries(SOURCES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <input type="hidden" name="vista" value="lista" />
+      <button type="submit" className="button secondary">Ver listado</button>
+      <p>Cambiar la fuente abre su listado completo y quita los filtros, el área y la selección de la consulta anterior.</p>
+    </form>
     <WorkCountsPanel counts={mismatch ? null : counts} error={mismatch ? "CATALOG_CHANGED" : countsError} query={query} />
     <div className="consultation-header">
     <div className="explorer-toolbar">
@@ -368,10 +373,10 @@ export function Explorer({ initial, initialError, state, styleUrl, partyCatalog 
       {view === "lista" && <input type="hidden" name="vista" value="lista" />}
       {showBoundaries && <input type="hidden" name="limites" value="mostrar" />}
       {query.territorioEsquema && <><input type="hidden" name="territorioEsquema" value={query.territorioEsquema} /><input type="hidden" name="municipioCodigo" value={query.municipioCodigo} /></>}
+      {query.fuente && <input type="hidden" name="fuente" value={query.fuente} />}
       <ProvinceFilter catalog={provinceCatalog} provinciaCodigo={query.provinciaCodigo} />
       <PartyFilter catalog={partyCatalog} partidos={selectedPartyIds} partidoVerificadoId={query.partidoVerificadoId} gestionMunicipalId={query.gestionMunicipalId} showReported={!query.territorioEsquema} />
       <details className="advanced-filter institutional-options" open={Boolean(query.organizacionId || query.rolInstitucional || query.periodoDesde)}><summary>Filtros institucionales</summary><InstitutionalFilter catalog={institutionalCatalog} query={query} /></details>
-      <label>Fuente<select name="fuente" defaultValue={query.fuente ?? ""}><option value="">Todas las fuentes</option>{Object.entries(SOURCES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label>Estado informado<select name="estado" defaultValue={query.estado ?? ""}><option value="">Todos los estados</option>{Object.entries(STATES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label>Sector<select name="sector" defaultValue={query.sector ?? ""}><option value="">Todos los sectores</option><option value="educacion">Educación</option></select></label>
       {!query.bbox && <label>Ubicación<select name="tieneGeometria" defaultValue={query.tieneGeometria === undefined ? "" : String(query.tieneGeometria)}><option value="">Con y sin ubicación</option><option value="true">Con ubicación aprobada</option><option value="false">Sin ubicación aprobada</option></select></label>}

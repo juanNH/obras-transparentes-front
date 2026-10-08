@@ -4,7 +4,7 @@ import type { ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import examples from "../contracts/examples.json" with { type: "json" };
 import { createPublicApi, type WorkCounts } from "../src/api/client";
-import { countsQuery, municipalSourceHref } from "../src/lib/explorer-query";
+import { countsQuery, sourceListHref } from "../src/lib/explorer-query";
 import { WorkCountsPanel } from "../src/components/work-counts";
 
 const api = vi.hoisted(() => ({ list: vi.fn(), parties: vi.fn(), provinces: vi.fn(), organizations: vi.fn(), municipalCoverage: vi.fn(), counts: vi.fn() }));
@@ -20,11 +20,13 @@ beforeEach(() => { vi.resetAllMocks(); api.list.mockResolvedValue(examples.listP
 /** Recupera props del explorador sin montar el mapa o crear conexiones reales. */
 function explorer(page: ReactElement) { return (page.props as { children: ReactElement[] }).children[1]! as ReactElement<{ counts: WorkCounts | null; countsError: string | null }> ; }
 
-describe("conteos y navegación municipal públicos", () => {
-  it("conserva filtros y área para el contexto y quita paginación/disponibilidad de ubicación", () => {
+describe("conteos y navegación por fuente públicos", () => {
+  it("abre un listado directo por fuente sin filtros incompatibles", () => {
     const query = { fuente: "pergamino-obras", estado: "IN_PROGRESS", bbox: [-59, -35, -58, -34], tieneGeometria: true, cursor: "synthetic-page", limit: 20 } as const;
     expect(countsQuery(query)).toEqual({ fuente: "pergamino-obras", estado: "IN_PROGRESS", bbox: query.bbox });
-    expect(municipalSourceHref(query, "bahia-obras", "lista", true)).toBe("/mapa?fuente=bahia-obras&estado=IN_PROGRESS&bbox=-59%2C-35%2C-58%2C-34&tieneGeometria=true&vista=lista&limites=mostrar");
+    expect(sourceListHref("bahia-obras")).toBe("/mapa?fuente=bahia-obras&vista=lista");
+    expect(sourceListHref("nacion-obras")).toBe("/mapa?fuente=nacion-obras&vista=lista");
+    expect(sourceListHref()).toBe("/mapa?vista=lista");
     expect(query.cursor).toBe("synthetic-page");
   });
   it("valida totales y partición por obras únicas, sin credenciales ni paginación", async () => {
@@ -42,7 +44,9 @@ describe("conteos y navegación municipal públicos", () => {
   it("SSR consulta los demás filtros y oculta cifras si su catálogo difiere de la lista", async () => {
     const input = { fuente: "pergamino-obras", tieneGeometria: "true", bbox: "-59,-35,-58,-34", cursor: "synthetic-page" };
     const page = await MapPage({ searchParams: Promise.resolve(input) });
-    expect(api.counts).toHaveBeenCalledExactlyOnceWith({ fuente: "pergamino-obras", bbox: [-59, -35, -58, -34] });
+    expect(api.counts).toHaveBeenCalledTimes(5);
+    expect(api.counts).toHaveBeenCalledWith({ fuente: "pergamino-obras", bbox: [-59, -35, -58, -34] });
+    for (const fuente of ["pba-edificios", "nacion-obras", "caba-actualizado", "vl-obras"]) expect(api.counts).toHaveBeenCalledWith({ fuente });
     expect(explorer(page).props.counts).toEqual(counts);
     api.counts.mockResolvedValue({ ...counts, catalogoVersion: "9876" });
     expect(explorer(await MapPage({ searchParams: Promise.resolve(input) })).props).toMatchObject({ counts: null, countsError: "CATALOG_CHANGED" });

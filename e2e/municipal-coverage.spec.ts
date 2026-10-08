@@ -13,17 +13,17 @@ test.afterEach(async ({ request }) => {
   expect((await request.get("http://127.0.0.1:4100/__municipal-fixtures?enabled=0&failed=0&changed=0")).ok()).toBe(true);
 });
 
-test("explica publicados sin ubicación y fuente vacía con totales globales y acceso completo a lista", async ({ page }, info) => {
+test("explica publicaciones sin ubicación y fuente vacía en la cobertura global de fuentes", async ({ page }, info) => {
   await page.goto("/mapa?fuente=pergamino-obras&tieneGeometria=true&bbox=-61,-35,-60,-33&vista=lista");
-  const panel = page.getByRole("region", { name: "Fuentes municipales piloto: publicaciones y mapa", exact: true });
+  const panel = page.getByRole("region", { name: "Publicaciones por fuente y disponibilidad en el mapa", exact: true });
   const pergamino = panel.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "EJEMPLO SINTÉTICO — Pergamino", exact: true }) });
-  await expect(pergamino).toContainText("Sus obras están publicadas y se consultan en lista y ficha");
+  await expect(pergamino).toContainText("Las publicaciones siguen disponibles en lista y ficha");
   await expect(pergamino.locator("dd")).toHaveText(["2", "0", "2"]);
   const olavarria = panel.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "EJEMPLO SINTÉTICO — Olavarría", exact: true }) });
-  await expect(olavarria).toContainText("todavía no tiene obras publicadas");
-  await expect(panel).toContainText("no cambian con los filtros ni el área");
+  await expect(olavarria).toContainText("Esta fuente no tiene publicaciones en este corte del catálogo");
+  await expect(panel).toContainText("no cambian con filtros, área o paginación");
   await expect(page.locator(".work-card")).toHaveCount(0);
-  const listLink = pergamino.getByRole("link", { name: /^Ver publicaciones de esta fuente/ });
+  const listLink = pergamino.getByRole("link", { name: /^Ver listado de esta fuente/ });
   await expect(listLink).toHaveAttribute("href", "/mapa?fuente=pergamino-obras&vista=lista");
   await listLink.click();
   await expect(page.locator(".work-card")).toHaveCount(2);
@@ -43,7 +43,7 @@ test("explica publicados sin ubicación y fuente vacía con totales globales y a
 test("una geometría aceptada conserva identidad y se dibuja como marcador municipal Canvas", async ({ page, request }, info) => {
   await page.goto("/mapa?fuente=bahia-obras");
   await expect(page.locator(".work-card")).toHaveCount(1);
-  const panel = page.getByRole("region", { name: "Fuentes municipales piloto: publicaciones y mapa", exact: true });
+  const panel = page.getByRole("region", { name: "Publicaciones por fuente y disponibilidad en el mapa", exact: true });
   const bahia = panel.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "EJEMPLO SINTÉTICO — Bahía Blanca", exact: true }) });
   await expect(bahia.locator("dd")).toHaveText(["1", "1", "0"]);
   await expectCanvasMap(page);
@@ -63,10 +63,10 @@ test("una geometría aceptada conserva identidad y se dibuja como marcador munic
 });
 
 test("fallas o cortes de catálogo diferentes ocultan cifras y preservan publicaciones", async ({ page, request }) => {
-  for (const [failed, changed, expectedText] of [["1", "0", "no significa que sean cero"], ["0", "1", "El catálogo cambió durante la lectura"]]) {
+  for (const [failed, changed, expectedText] of [["1", "0", "Error de lectura"], ["0", "1", "No hay un conteo verificable para el mismo corte"]]) {
     expect((await request.get(`http://127.0.0.1:4100/__municipal-fixtures?enabled=1&failed=${failed}&changed=${changed}`)).ok()).toBe(true);
     await page.goto("/mapa?fuente=pergamino-obras&vista=lista");
-    const panel = page.getByRole("region", { name: "Fuentes municipales piloto: publicaciones y mapa", exact: true });
+    const panel = page.getByRole("region", { name: "Publicaciones por fuente y disponibilidad en el mapa", exact: true });
     await expect(panel).toContainText(expectedText!);
     await expect(panel.locator("dd")).toHaveCount(0);
     await expect(page.locator(".work-card")).toHaveCount(2);
@@ -80,10 +80,10 @@ test("los totales y enlaces por fuente se consultan sin JavaScript con reflow m�
     const page = await context.newPage();
     await isolateMapNetwork(page);
     await page.goto("http://127.0.0.1:3102/mapa?fuente=pergamino-obras&vista=lista");
-    const panel = page.getByRole("region", { name: "Fuentes municipales piloto: publicaciones y mapa", exact: true });
-    await expect(panel).toContainText("Sus obras están publicadas");
+    const panel = page.getByRole("region", { name: "Publicaciones por fuente y disponibilidad en el mapa", exact: true });
+    await expect(panel).toContainText("Las publicaciones siguen disponibles en lista y ficha");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-    await panel.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "EJEMPLO SINTÉTICO — Bahía Blanca", exact: true }) }).getByRole("link", { name: /^Ver publicaciones de esta fuente/ }).click();
+    await panel.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "EJEMPLO SINTÉTICO — Bahía Blanca", exact: true }) }).getByRole("link", { name: /^Ver listado de esta fuente/ }).click();
     await expect(page.locator(".work-card")).toHaveCount(1);
     await page.locator(".work-card").getByRole("link", { name: /^Ver ficha/ }).click();
     await expect(page.getByRole("heading", { name: "EJEMPLO SINTÉTICO — Bahía Blanca con ubicación revisada", exact: true })).toBeVisible();

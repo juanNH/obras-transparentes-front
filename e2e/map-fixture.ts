@@ -57,12 +57,14 @@ export async function disableWebGL(page: Page) {
 export async function expectCanvasMap(page: Page) {
   await expect(page.getByRole("button", { name: "Acercar mapa", exact: true })).toBeEnabled();
   await expect(page.locator(".map-canvas canvas").first()).toBeVisible();
-  // At least one Canvas pixel must be painted by the synthetic vector layer.
+  // At least one Canvas pixel must be painted by the synthetic vector layer; markers need not land at the canvas center.
   await expect.poll(() => page.locator(".map-canvas canvas").evaluateAll(canvases => canvases.some(element => {
     const canvas = element as HTMLCanvasElement;
     if (!canvas.width || !canvas.height) return false;
-    const pixels = canvas.getContext("2d")?.getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1).data;
-    return Boolean(pixels && pixels[3] !== 0);
+    const pixels = canvas.getContext("2d")?.getImageData(0, 0, canvas.width, canvas.height).data;
+    if (!pixels) return false;
+    for (let alpha = 3; alpha < pixels.length; alpha += 4) if (pixels[alpha] !== 0) return true;
+    return false;
   }))).toBe(true);
   await expect(page.getByText(/No pudimos mostrar el mapa|No se pudo cargar una parte del mapa/)).toHaveCount(0);
 }

@@ -10,7 +10,7 @@ export const MAP_READ_BBOX: BoundingBox = [-180, -85.051129, 180, 85.051129];
 /** Jurisdicciones habilitadas para filtros explícitos; la entrada sin selección conserva todo el catálogo. */
 export const AVAILABLE_PROVINCE_CODES = ["02", "06"] as const;
 /** Fuentes de catálogo admitidas en filtros públicos; sus nombres no atribuyen responsabilidad de la obra. */
-export const SOURCES = { "pba-edificios": "PBA · edificios escolares", "caba-actualizado": "CABA · obras", "nacion-obras": "Nación · obras", "vl-obras": "Vicente López · obras", "bahia-obras": "Municipalidad de Bahía Blanca", "olavarria-obras": "Municipalidad de Olavarría", "pergamino-obras": "Municipalidad de Pergamino" } as const;
+export const SOURCES = { "pba-edificios": "Provincia de Buenos Aires · edificios escolares", "nacion-obras": "Nación · obras", "caba-actualizado": "CABA · obras", "vl-obras": "Vicente López · obras", "bahia-obras": "Municipalidad de Bahía Blanca", "olavarria-obras": "Municipalidad de Olavarría", "pergamino-obras": "Municipalidad de Pergamino" } as const;
 /** Traducciones de estados informados; no se infieren del avance ni de la ausencia de datos. */
 export const STATES = { COMPLETED: "Finalizada", IN_PROGRESS: "En ejecución", OTHER_REPORTED: "Otro estado informado" } as const;
 /** Roles institucionales publicados tras revisión; la fuente de datos no determina ninguno de estos roles. */
@@ -144,10 +144,9 @@ export function countsQuery(query: ListQuery): Omit<ListQuery, "cursor" | "limit
   return filters;
 }
 
-/** Cambia la fuente de procedencia manteniendo los demás filtros y la vista; inicia la primera página sin trasladar una selección ajena. */
-export function municipalSourceHref(query: ListQuery, fuente: "bahia-obras" | "pergamino-obras" | "olavarria-obras", view: "lista" | "mapa", showBoundaries = false): string {
-  const { cursor: _cursor, ...filters } = query;
-  return explorerHref({ ...filters, fuente }, view, showBoundaries);
+/** Abre el listado global de una fuente sin trasladar filtros, área, cursor o selección de otra consulta. */
+export function sourceListHref(fuente?: keyof typeof SOURCES): string {
+  return explorerHref(fuente ? { fuente, limit: 20 } : { limit: 20 }, "lista");
 }
 
 /** Convierte searchParams de App Router conservando valores repetidos para validar arrays y rechazar escalares ambiguos. */
