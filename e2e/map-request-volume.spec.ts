@@ -58,6 +58,7 @@ function counts(records: readonly FixtureRequest[]) {
     partyJSONBytes: records.filter(record => record.path === "/api/v1/territorios/pba/partidos").reduce((sum, record) => sum + record.responseBytes, 0),
     organizations: records.filter(record => record.path === "/api/v1/organizaciones-institucionales").length,
     municipalCoverage: records.filter(record => record.path === "/api/v1/obras/cobertura-municipal").length,
+    sourceCoverage: records.filter(record => record.path === "/api/v1/obras/cobertura-fuentes").length,
     workCounts: records.filter(record => record.path === "/api/v1/obras/conteos").length,
     organizationJSONBytes: records.filter(record => record.path === "/api/v1/organizaciones-institucionales").reduce((sum, record) => sum + record.responseBytes, 0),
     decodedJSONBytes: records.reduce((sum, record) => sum + record.responseBytes, 0),
@@ -105,7 +106,8 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   expect(counts((await fixtureRequests(request)).slice(baseline)).provinces).toBe(1);
   expect(counts((await fixtureRequests(request)).slice(baseline)).organizations).toBe(1);
   expect(counts((await fixtureRequests(request)).slice(baseline)).municipalCoverage).toBe(1);
-  expect(counts((await fixtureRequests(request)).slice(baseline)).workCounts).toBe(5);
+  expect(counts((await fixtureRequests(request)).slice(baseline)).workCounts).toBe(3);
+  expect(counts((await fixtureRequests(request)).slice(baseline)).sourceCoverage).toBe(1);
   expect(browser).toHaveLength(0);
 
   await page.getByRole("button", { name: "Cargar más obras", exact: true }).click();
@@ -153,13 +155,14 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   await page.getByRole("button", { name: "Ver listado", exact: true }).click();
   await expect(page).toHaveURL(/fuente=nacion-obras&vista=lista$/);
   const filtered = await checkpoint("cambiar fuente y abrir lista completa", { list: 4, geojson: 2, detail: 1 });
-  expect(filtered.filter(record => record.path.startsWith("/api/v1/obras") && !["/api/v1/obras/cobertura-municipal", "/api/v1/obras/conteos"].includes(record.path))).toHaveLength(7);
+  expect(filtered.filter(record => record.path.startsWith("/api/v1/obras") && !["/api/v1/obras/cobertura-municipal", "/api/v1/obras/cobertura-fuentes", "/api/v1/obras/conteos"].includes(record.path))).toHaveLength(7);
   expect(counts(filtered).parties).toBe(3);
   expect(counts(filtered).provinces).toBe(3);
   expect(counts(filtered).organizations).toBe(3);
   expect(counts(filtered).municipalCoverage).toBe(3);
-  expect(counts(filtered).workCounts).toBe(15);
-  expect(filtered).toHaveLength(34);
+  expect(counts(filtered).workCounts).toBe(9);
+  expect(counts(filtered).sourceCoverage).toBe(3);
+  expect(filtered).toHaveLength(31);
   expect(filtered.filter(record => record.path === "/api/v1/obras").at(-1)!.query).toMatchObject({ fuente: "nacion-obras" });
   expect(filtered.filter(record => record.path === "/api/v1/obras").at(-1)!.query).not.toHaveProperty("bbox");
   expect(browser.filter(record => record.path === "/api/public/geojson")).toHaveLength(2);

@@ -1615,6 +1615,140 @@
     ],
     "additionalProperties": false
   },
+  "PublicSourceCoverage": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "catalogoVersion": {
+        "type": "string",
+        "maxLength": 20,
+        "pattern": "^(?:0|[1-9][0-9]*)$",
+        "description": "Versión decimal exacta del catálogo; conservar como string, nunca convertir a Number."
+      },
+      "obrasPublicadasUnicas": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991
+      },
+      "obrasCompartidasEntreFuentes": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991
+      },
+      "fuentes": {
+        "minItems": 1,
+        "maxItems": 2,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "fuenteId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "codigo": {
+              "type": "string",
+              "enum": [
+                "pba-edificios",
+                "nacion-obras"
+              ]
+            },
+            "nombre": {
+              "type": "string",
+              "minLength": 1
+            },
+            "urlCatalogo": {
+              "type": "string",
+              "format": "uri"
+            },
+            "recursos": {
+              "minItems": 1,
+              "maxItems": 2,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rol": {
+                    "type": "string",
+                    "enum": [
+                      "principal",
+                      "geometrias"
+                    ]
+                  },
+                  "unidadDocumental": {
+                    "type": "string",
+                    "enum": [
+                      "WORK_RECORD",
+                      "COMPLETED_SCHOOL_BUILDING_RECORD",
+                      "SPATIAL_LOCATION_RECORD"
+                    ],
+                    "description": "WORK_RECORD describe registros de obra de MapaInversiones; COMPLETED_SCHOOL_BUILDING_RECORD describe registros de edificios escolares finalizados; SPATIAL_LOCATION_RECORD describe localizaciones vinculadas, nunca obras adicionales."
+                  }
+                },
+                "required": [
+                  "rol",
+                  "unidadDocumental"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "obrasPublicadas": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "obrasConUbicacionAprobada": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "obrasSinUbicacionAprobada": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "ubicacionesAprobadas": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "obrasConEvidenciaLicenciaPublicada": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "obrasSinEvidenciaLicenciaPublicada": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "fuenteId",
+            "codigo",
+            "nombre",
+            "urlCatalogo",
+            "recursos",
+            "obrasPublicadas",
+            "obrasConUbicacionAprobada",
+            "obrasSinUbicacionAprobada",
+            "ubicacionesAprobadas",
+            "obrasConEvidenciaLicenciaPublicada",
+            "obrasSinEvidenciaLicenciaPublicada"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "catalogoVersion",
+      "obrasPublicadasUnicas",
+      "obrasCompartidasEntreFuentes",
+      "fuentes"
+    ],
+    "additionalProperties": false
+  },
   "PublicWorkCounts": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",

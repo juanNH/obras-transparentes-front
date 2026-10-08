@@ -484,6 +484,145 @@
         ]
       }
     },
+    "/api/v1/obras/cobertura-fuentes": {
+      "get": {
+        "description": "Lee un único snapshot REPEATABLE READ de revisiones actualmente publicadas y devuelve catalogoVersion. Admite fuente repetida para PBA (pba-edificios) y Nación (nacion-obras); sin filtro incluye ambas. Es un inventario agregado completo, no se pagina ni acepta filtros territoriales o temporales; GET /api/v1/obras conserva filtros, cursor y paginación ligados a catalogoVersion. Por fuente, obrasPublicadas se cuenta una vez por obraId aunque se repita su procedencia; las ubicaciones aprobadas se cuentan aparte y particionan obras con/sin ubicación. Las obrasCompartidasEntreFuentes identifican solapamiento y los totales por fuente no deben sumarse para obtener obras únicas. Las unidades documentales describen los recursos originales: los edificios escolares PBA no equivalen automáticamente a intervenciones y las geometrías de Nación son localizaciones vinculadas, no obras. Las métricas de licencia usan sólo la evidencia congelada en la primera publicación de la revisión vigente; no revelan propuestas, filas de origen, IDs ni rutas de originales. La ficha pública conserva procedencia, licencia y ubicación aprobada de cada publicación.",
+        "operationId": "WorksController_sourceCoverage",
+        "parameters": [
+          {
+            "name": "fuente",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "pba-edificios",
+                  "nacion-obras"
+                ]
+              }
+            },
+            "style": "form",
+            "explode": true,
+            "description": "Repetible; acepta pba-edificios o nacion-obras. Sin valores devuelve ambas fuentes."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventario documental y particiones de obras, ubicaciones aprobadas y evidencia de licencia en el catálogo vigente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSourceCoverage"
+                },
+                "examples": {
+                  "ejemploSintetico": {
+                    "summary": "Conteos sintéticos; no representan datos del catálogo",
+                    "value": {
+                      "catalogoVersion": "9",
+                      "obrasPublicadasUnicas": 2,
+                      "obrasCompartidasEntreFuentes": 1,
+                      "fuentes": [
+                        {
+                          "fuenteId": "50000000-0000-4000-8000-000000000001",
+                          "codigo": "pba-edificios",
+                          "nombre": "PBA · Nuevos edificios escolares",
+                          "urlCatalogo": "https://example.test/catalogo/pba-edificios-sintetico",
+                          "recursos": [
+                            {
+                              "rol": "principal",
+                              "unidadDocumental": "COMPLETED_SCHOOL_BUILDING_RECORD"
+                            }
+                          ],
+                          "obrasPublicadas": 1,
+                          "obrasConUbicacionAprobada": 1,
+                          "obrasSinUbicacionAprobada": 0,
+                          "ubicacionesAprobadas": 1,
+                          "obrasConEvidenciaLicenciaPublicada": 1,
+                          "obrasSinEvidenciaLicenciaPublicada": 0
+                        },
+                        {
+                          "fuenteId": "50000000-0000-4000-8000-000000000002",
+                          "codigo": "nacion-obras",
+                          "nombre": "Nación · MapaInversiones",
+                          "urlCatalogo": "https://example.test/catalogo/nacion-obras-sintetico",
+                          "recursos": [
+                            {
+                              "rol": "principal",
+                              "unidadDocumental": "WORK_RECORD"
+                            },
+                            {
+                              "rol": "geometrias",
+                              "unidadDocumental": "SPATIAL_LOCATION_RECORD"
+                            }
+                          ],
+                          "obrasPublicadas": 2,
+                          "obrasConUbicacionAprobada": 1,
+                          "obrasSinUbicacionAprobada": 1,
+                          "ubicacionesAprobadas": 2,
+                          "obrasConEvidenciaLicenciaPublicada": 1,
+                          "obrasSinEvidenciaLicenciaPublicada": 1
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable.",
+            "headers": {
+              "Retry-After": {
+                "description": "Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "Cache-Control": {
+                "description": "El rechazo por cuota no se almacena en cachés compartidas.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                    "requestId": "10000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno sin detalles privados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar cobertura pública de Provincia y Nación",
+        "tags": [
+          "Obras publicadas"
+        ]
+      }
+    },
     "/api/v1/obras/conteos": {
       "get": {
         "description": "Lectura anónima en un único snapshot REPEATABLE READ. Aplica los mismos filtros no espaciales de listado/GeoJSON, incluido tieneGeometria si se envía. No admite limit ni cursor. totalPublicadas=totalConGeometria+totalSinGeometria cuenta obras distintas de la revisión vigente, sin depender de páginas o bbox. Sin bbox, area=null; con bbox, area.obrasEnMapa cuenta cada obra con al menos una ubicación aceptada que intersecta el área (incluido borde) y obrasFueraDelArea cuenta las obras con geometría sin intersección. La suma de ambas es totalConGeometria. Las obras sin geometría no se atribuyen al área; deben consultarse en listado sin bbox. No cuenta propuestas privadas ni acredita gestión o territorio por fuente. catalogoVersion permite detectar que lista y mapa consultaron cortes diferentes; conservarlo como texto exacto.",
@@ -3628,6 +3767,139 @@
         },
         "required": [
           "catalogoVersion",
+          "fuentes"
+        ],
+        "additionalProperties": false
+      },
+      "PublicSourceCoverage": {
+        "type": "object",
+        "properties": {
+          "catalogoVersion": {
+            "type": "string",
+            "maxLength": 20,
+            "pattern": "^(?:0|[1-9][0-9]*)$",
+            "description": "Versión decimal exacta del catálogo; conservar como string, nunca convertir a Number."
+          },
+          "obrasPublicadasUnicas": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "obrasCompartidasEntreFuentes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "fuentes": {
+            "minItems": 1,
+            "maxItems": 2,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fuenteId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "codigo": {
+                  "type": "string",
+                  "enum": [
+                    "pba-edificios",
+                    "nacion-obras"
+                  ]
+                },
+                "nombre": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "urlCatalogo": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "recursos": {
+                  "minItems": 1,
+                  "maxItems": 2,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "rol": {
+                        "type": "string",
+                        "enum": [
+                          "principal",
+                          "geometrias"
+                        ]
+                      },
+                      "unidadDocumental": {
+                        "type": "string",
+                        "enum": [
+                          "WORK_RECORD",
+                          "COMPLETED_SCHOOL_BUILDING_RECORD",
+                          "SPATIAL_LOCATION_RECORD"
+                        ],
+                        "description": "WORK_RECORD describe registros de obra de MapaInversiones; COMPLETED_SCHOOL_BUILDING_RECORD describe registros de edificios escolares finalizados; SPATIAL_LOCATION_RECORD describe localizaciones vinculadas, nunca obras adicionales."
+                      }
+                    },
+                    "required": [
+                      "rol",
+                      "unidadDocumental"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "obrasPublicadas": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "obrasConUbicacionAprobada": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "obrasSinUbicacionAprobada": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "ubicacionesAprobadas": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "obrasConEvidenciaLicenciaPublicada": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "obrasSinEvidenciaLicenciaPublicada": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "fuenteId",
+                "codigo",
+                "nombre",
+                "urlCatalogo",
+                "recursos",
+                "obrasPublicadas",
+                "obrasConUbicacionAprobada",
+                "obrasSinUbicacionAprobada",
+                "ubicacionesAprobadas",
+                "obrasConEvidenciaLicenciaPublicada",
+                "obrasSinEvidenciaLicenciaPublicada"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "catalogoVersion",
+          "obrasPublicadasUnicas",
+          "obrasCompartidasEntreFuentes",
           "fuentes"
         ],
         "additionalProperties": false
