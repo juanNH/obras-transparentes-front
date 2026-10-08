@@ -20,6 +20,15 @@ export type PartyBoundaries = components["schemas"]["PublicPartyBoundaryFeatureC
 export type InstitutionalOrganizationCatalog = paths["/api/v1/organizaciones-institucionales"]["get"]["responses"][200]["content"]["application/json"];
 /** Totales globales de las tres fuentes piloto en una versión del catálogo público; no son conteos de filtros ni gestión municipal. */
 export type MunicipalCoverage = components["schemas"]["PublicMunicipalCoverage"];
+/** Inventario público de Provincia/Nación con unidad documental, ubicaciones y evidencia de licencia del corte publicado. */
+export type SourceCoverage = components["schemas"]["PublicSourceCoverage"];
+/** Fuentes habilitadas para el agregado de cobertura, conservadas desde el contrato generado. */
+export type SourceCoverageCode = SourceCoverage["fuentes"][number]["codigo"];
+/** Pares documentales publicados por cada perfil vigente; una localización nunca ocupa el rol de registro principal de obra. */
+const sourceDocumentResources = {
+  "pba-edificios": [{ rol: "principal", unidadDocumental: "COMPLETED_SCHOOL_BUILDING_RECORD" }],
+  "nacion-obras": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }, { rol: "geometrias", unidadDocumental: "SPATIAL_LOCATION_RECORD" }],
+} as const satisfies Record<SourceCoverageCode, readonly SourceCoverage["fuentes"][number]["recursos"][number][]>;
 /** Totales de obras por filtros sin paginación; el área particiona sólo publicaciones con geometría aprobada. */
 export type WorkCounts = components["schemas"]["PublicWorkCounts"];
 /** Sobre público de error que permite conservar código e identificador de solicitud. */
@@ -242,6 +251,38 @@ export function createPublicApi(
     return parsePublicResponse<T>(schema, body);
   }
   return {
+    /**
+     * Lee cobertura provincial/nacional sin filtros de obras y comprueba las particiones que JSON Schema no expresa.
+     * @param fuentes - Hasta dos códigos del contrato; omitidos solicita ambas fuentes, sin sumar registros espaciales como obras.
+     * @param requestOptions - Señal de cancelación, sin credenciales de administración.
+     * @returns Inventario del mismo corte, con obras únicas separadas de los totales por fuente que pueden solaparse.
+     * @throws ApiContractError Si falta una fuente solicitada o los conteos de ubicaciones, licencias o solapamiento son inconsistentes.
+     */
+    async sourceCoverage(fuentes?: readonly SourceCoverageCode[], requestOptions: RequestOptions = {}): Promise<SourceCoverage> {
+      const codes = fuentes ?? ["pba-edificios", "nacion-obras"];
+      if (!Array.isArray(codes) || codes.length < 1 || codes.length > 2 || codes.some(code => code !== "pba-edificios" && code !== "nacion-obras"))
+        throw new TypeError("La cobertura admite hasta dos fuentes de Provincia o Nación.");
+      const expected = [...new Set(codes)].sort();
+      const params = new URLSearchParams();
+      if (fuentes) expected.forEach(code => params.append("fuente", code));
+      const coverage = await read<SourceCoverage>("/obras/cobertura-fuentes" + (params.size ? "?" + params : ""), "PublicSourceCoverage", requestOptions);
+      const received = coverage.fuentes.map(source => source.codigo).sort();
+      const totalBySource = coverage.fuentes.reduce((sum, source) => sum + source.obrasPublicadas, 0);
+      if (received.join(",") !== expected.join(",") ||
+        coverage.obrasCompartidasEntreFuentes > coverage.obrasPublicadasUnicas ||
+        (received.length === 1 && coverage.obrasCompartidasEntreFuentes !== 0) ||
+        totalBySource !== coverage.obrasPublicadasUnicas + coverage.obrasCompartidasEntreFuentes ||
+        coverage.fuentes.some(source =>
+          source.obrasPublicadas > coverage.obrasPublicadasUnicas ||
+          coverage.obrasCompartidasEntreFuentes > source.obrasPublicadas ||
+          source.obrasPublicadas !== source.obrasConUbicacionAprobada + source.obrasSinUbicacionAprobada ||
+          source.obrasPublicadas !== source.obrasConEvidenciaLicenciaPublicada + source.obrasSinEvidenciaLicenciaPublicada ||
+          source.ubicacionesAprobadas < source.obrasConUbicacionAprobada ||
+          source.recursos.length !== sourceDocumentResources[source.codigo].length ||
+          sourceDocumentResources[source.codigo].some(expected => !source.recursos.some(resource => resource.rol === expected.rol && resource.unidadDocumental === expected.unidadDocumental))))
+        throw new ApiContractError("El inventario de cobertura no es consistente con las fuentes solicitadas.");
+      return coverage;
+    },
     /** Lee conteos por filtros sin limitar la población por bbox; verifica las particiones y el área solicitada antes de presentarlos. */
     async counts(query: Omit<ListQuery, "cursor" | "limit"> = {}, requestOptions: RequestOptions = {}): Promise<WorkCounts> {
       const params = queryParameters(query, 200, 20);

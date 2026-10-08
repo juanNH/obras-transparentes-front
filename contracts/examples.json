@@ -340,6 +340,53 @@
     "nextCursor": null,
     "catalogoVersion": "0"
   },
+  "sourceCoverage": {
+    "catalogoVersion": "9",
+    "obrasPublicadasUnicas": 2,
+    "obrasCompartidasEntreFuentes": 1,
+    "fuentes": [
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000001",
+        "codigo": "pba-edificios",
+        "nombre": "PBA · Nuevos edificios escolares",
+        "urlCatalogo": "https://example.test/catalogo/pba-edificios-sintetico",
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "COMPLETED_SCHOOL_BUILDING_RECORD"
+          }
+        ],
+        "obrasPublicadas": 1,
+        "obrasConUbicacionAprobada": 1,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 1,
+        "obrasConEvidenciaLicenciaPublicada": 1,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000002",
+        "codigo": "nacion-obras",
+        "nombre": "Nación · MapaInversiones",
+        "urlCatalogo": "https://example.test/catalogo/nacion-obras-sintetico",
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "WORK_RECORD"
+          },
+          {
+            "rol": "geometrias",
+            "unidadDocumental": "SPATIAL_LOCATION_RECORD"
+          }
+        ],
+        "obrasPublicadas": 2,
+        "obrasConUbicacionAprobada": 1,
+        "obrasSinUbicacionAprobada": 1,
+        "ubicacionesAprobadas": 2,
+        "obrasConEvidenciaLicenciaPublicada": 1,
+        "obrasSinEvidenciaLicenciaPublicada": 1
+      }
+    ]
+  },
   "errorCatalogChanged": {
     "error": {
       "code": "CATALOG_CHANGED",

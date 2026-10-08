@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
 import examples from "../contracts/examples.json" with { type: "json" };
 
-const api = vi.hoisted(() => ({ list: vi.fn(), parties: vi.fn(), provinces: vi.fn(), organizations: vi.fn(), municipalCoverage: vi.fn(), counts: vi.fn() }));
+const api = vi.hoisted(() => ({ list: vi.fn(), parties: vi.fn(), provinces: vi.fn(), organizations: vi.fn(), municipalCoverage: vi.fn(), sourceCoverage: vi.fn(), counts: vi.fn() }));
 vi.mock("../src/lib/public-api", () => ({ publicApi: () => api }));
 vi.mock("../src/lib/config", () => ({ mapStyleUrl: () => "https://example.test/style.json", indexableSiteUrl: () => null }));
 vi.mock("../src/components/explorer", () => ({ Explorer: () => null }));
 import MapPage from "../src/app/mapa/page";
 
-beforeEach(() => { vi.resetAllMocks(); api.list.mockResolvedValue(examples.listPopulated); api.provinces.mockResolvedValue({ version: "synthetic-provinces@1", items: [{ codigo: "06", nombre: "Buenos Aires", tipo: "PROVINCIA" }] }); api.organizations.mockResolvedValue({ items: [] }); api.municipalCoverage.mockRejectedValue(new Error("Synthetic independent coverage unavailable")); api.counts.mockRejectedValue(new Error("Synthetic independent counts unavailable")); });
+beforeEach(() => { vi.resetAllMocks(); api.list.mockResolvedValue(examples.listPopulated); api.provinces.mockResolvedValue({ version: "synthetic-provinces@1", items: [{ codigo: "06", nombre: "Buenos Aires", tipo: "PROVINCIA" }] }); api.organizations.mockResolvedValue({ items: [] }); api.municipalCoverage.mockRejectedValue(new Error("Synthetic independent coverage unavailable")); api.sourceCoverage.mockRejectedValue(new Error("Synthetic independent source inventory unavailable")); api.counts.mockRejectedValue(new Error("Synthetic independent counts unavailable")); });
 describe("lecturas independientes de padrón y obras", () => {
   it("consulta todas las publicaciones por defecto sin filtro de jurisdicción o área", async () => {
     await MapPage({ searchParams: Promise.resolve({ vista: "lista" }) });

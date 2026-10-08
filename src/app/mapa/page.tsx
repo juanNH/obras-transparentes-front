@@ -28,10 +28,10 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
   let initialError: string | null = null;
   const api = publicApi();
   const [primaryReads, sourceCountReads] = await Promise.all([
-    Promise.allSettled([api.list(state.query), api.parties(), api.provinces(), api.organizations(), api.municipalCoverage(), api.counts(countsQuery(state.query))]),
+    Promise.allSettled([api.list(state.query), api.parties(), api.provinces(), api.organizations(), api.municipalCoverage(), api.counts(countsQuery(state.query)), api.sourceCoverage()]),
     Promise.allSettled(SOURCE_COUNT_CODES.map(fuente => api.counts({ fuente }))),
   ]);
-  const [works, parties, provinces, organizations, coverage, counts] = primaryReads;
+  const [works, parties, provinces, organizations, coverage, counts, sources] = primaryReads;
   if (works.status === "fulfilled") initial = works.value;
   else { initialError = works.reason instanceof PublicApiError && works.reason.requiresPaginationRestart ? "CATALOG_CHANGED" : "UNAVAILABLE"; }
   if (parties.status === "fulfilled") partyCatalog = parties.value;
@@ -39,7 +39,7 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
   if (organizations.status === "fulfilled") institutionalCatalog = organizations.value;
   if (counts.status === "fulfilled" && initial && counts.value.catalogoVersion === initial.catalogoVersion) workCounts = counts.value;
   else countsError = counts.status === "fulfilled" && initial ? "CATALOG_CHANGED" : "UNAVAILABLE";
-  sourceCoverage = buildSourceCoverage(initial?.catalogoVersion ?? null, coverage, sourceCountReads);
+  sourceCoverage = buildSourceCoverage(initial?.catalogoVersion ?? null, coverage, sources, sourceCountReads);
   return <section className="container explorer-page">
     <div className="page-heading"><p className="eyebrow">El catálogo público</p><h1>Las obras, en su territorio.</h1><p>Elegí una obra para ubicarla. Acercar el mapa no cambia los resultados.</p></div>
     <Explorer key={explorerHref(state.query) + ":" + (initial?.catalogoVersion ?? initialError)} initial={initial} initialError={initialError} state={state} styleUrl={mapStyleUrl()} partyCatalog={partyCatalog} provinceCatalog={provinceCatalog} institutionalCatalog={institutionalCatalog} counts={workCounts} countsError={countsError} sourceCoverage={sourceCoverage} />

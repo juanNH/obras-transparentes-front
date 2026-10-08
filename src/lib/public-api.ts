@@ -21,9 +21,10 @@ export function publicApi() {
       const partyBoundaries = String(input).includes("/territorios/pba/partidos/limites?");
       const institutionalCatalog = String(input).endsWith("/organizaciones-institucionales");
       const municipalCoverage = String(input).endsWith("/obras/cobertura-municipal");
+      const sourceCoverage = new URL(String(input)).pathname.endsWith("/obras/cobertura-fuentes");
       const counts = String(input).includes("/obras/conteos?");
-      const maxBytes = municipalCoverage || counts ? 32 * 1024 : partyCatalog || provinceCatalog ? MAX_PARTY_CATALOG_BYTES : partyBoundaries ? MAX_PARTY_BOUNDARY_BYTES : institutionalCatalog ? MAX_INSTITUTIONAL_CATALOG_BYTES : MAX_BYTES;
-      const timeout = AbortSignal.timeout(partyCatalog || provinceCatalog || institutionalCatalog || municipalCoverage || counts ? 5000 : 8000);
+      const maxBytes = municipalCoverage || sourceCoverage || counts ? 32 * 1024 : partyCatalog || provinceCatalog ? MAX_PARTY_CATALOG_BYTES : partyBoundaries ? MAX_PARTY_BOUNDARY_BYTES : institutionalCatalog ? MAX_INSTITUTIONAL_CATALOG_BYTES : MAX_BYTES;
+      const timeout = AbortSignal.timeout(partyCatalog || provinceCatalog || institutionalCatalog || municipalCoverage || sourceCoverage || counts ? 5000 : 8000);
       const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
       const response = await fetch(input, { ...init, cache: "no-store", signal });
       const reader = response.body?.getReader();
@@ -37,7 +38,7 @@ export function publicApi() {
           size += value.byteLength;
           if (size > maxBytes) {
             await reader.cancel();
-            throw new PublicApiError(413, { code: "RESPONSE_BUDGET", message: municipalCoverage || counts ? "No se pudieron cargar los conteos dentro del límite de lectura." : institutionalCatalog ? "No se pudo cargar el catálogo institucional dentro del límite de lectura." : partyCatalog || provinceCatalog || partyBoundaries ? "No se pudo cargar la referencia territorial dentro del límite de lectura." : "El área contiene demasiados datos; acercá el mapa o ajustá los filtros.", requestId: null });
+            throw new PublicApiError(413, { code: "RESPONSE_BUDGET", message: municipalCoverage || sourceCoverage || counts ? "No se pudieron cargar los conteos dentro del límite de lectura." : institutionalCatalog ? "No se pudo cargar el catálogo institucional dentro del límite de lectura." : partyCatalog || provinceCatalog || partyBoundaries ? "No se pudo cargar la referencia territorial dentro del límite de lectura." : "El área contiene demasiados datos; acercá el mapa o ajustá los filtros.", requestId: null });
           }
           chunks.push(value);
         }

@@ -40,6 +40,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/obras/cobertura-fuentes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar cobertura pública de Provincia y Nación
+         * @description Lee un único snapshot REPEATABLE READ de revisiones actualmente publicadas y devuelve catalogoVersion. Admite fuente repetida para PBA (pba-edificios) y Nación (nacion-obras); sin filtro incluye ambas. Es un inventario agregado completo, no se pagina ni acepta filtros territoriales o temporales; GET /api/v1/obras conserva filtros, cursor y paginación ligados a catalogoVersion. Por fuente, obrasPublicadas se cuenta una vez por obraId aunque se repita su procedencia; las ubicaciones aprobadas se cuentan aparte y particionan obras con/sin ubicación. Las obrasCompartidasEntreFuentes identifican solapamiento y los totales por fuente no deben sumarse para obtener obras únicas. Las unidades documentales describen los recursos originales: los edificios escolares PBA no equivalen automáticamente a intervenciones y las geometrías de Nación son localizaciones vinculadas, no obras. Las métricas de licencia usan sólo la evidencia congelada en la primera publicación de la revisión vigente; no revelan propuestas, filas de origen, IDs ni rutas de originales. La ficha pública conserva procedencia, licencia y ubicación aprobada de cada publicación.
+         */
+        get: operations["WorksController_sourceCoverage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/obras/cobertura-municipal": {
         parameters: {
             query?: never;
@@ -596,6 +616,36 @@ export interface components {
                 tipo: "PROVINCIA" | "CIUDAD_AUTONOMA";
             }[];
             version: string;
+        };
+        PublicSourceCoverage: {
+            /** @description Versión decimal exacta del catálogo; conservar como string, nunca convertir a Number. */
+            catalogoVersion: string;
+            fuentes: {
+                /** @enum {string} */
+                codigo: "pba-edificios" | "nacion-obras";
+                /** Format: uuid */
+                fuenteId: string;
+                nombre: string;
+                obrasConEvidenciaLicenciaPublicada: number;
+                obrasConUbicacionAprobada: number;
+                obrasPublicadas: number;
+                obrasSinEvidenciaLicenciaPublicada: number;
+                obrasSinUbicacionAprobada: number;
+                recursos: {
+                    /** @enum {string} */
+                    rol: "principal" | "geometrias";
+                    /**
+                     * @description WORK_RECORD describe registros de obra de MapaInversiones; COMPLETED_SCHOOL_BUILDING_RECORD describe registros de edificios escolares finalizados; SPATIAL_LOCATION_RECORD describe localizaciones vinculadas, nunca obras adicionales.
+                     * @enum {string}
+                     */
+                    unidadDocumental: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD" | "SPATIAL_LOCATION_RECORD";
+                }[];
+                ubicacionesAprobadas: number;
+                /** Format: uri */
+                urlCatalogo: string;
+            }[];
+            obrasCompartidasEntreFuentes: number;
+            obrasPublicadasUnicas: number;
         };
         PublicWorkCounts: {
             area: {
@@ -1459,6 +1509,60 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+            /** @description Error interno sin detalles privados. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
+    };
+    WorksController_sourceCoverage: {
+        parameters: {
+            query?: {
+                /** @description Repetible; acepta pba-edificios o nacion-obras. Sin valores devuelve ambas fuentes. */
+                fuente?: ("pba-edificios" | "nacion-obras")[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Inventario documental y particiones de obras, ubicaciones aprobadas y evidencia de licencia en el catálogo vigente. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicSourceCoverage"];
                 };
             };
             /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */

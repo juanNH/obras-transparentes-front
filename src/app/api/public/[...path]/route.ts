@@ -1,5 +1,5 @@
 /** @file Pasarela GET de mismo origen para rutas públicas admitidas; valida consultas y oculta detalles internos. */
-import { PublicApiError } from "../../../../api/client";
+import { PublicApiError, type SourceCoverageCode } from "../../../../api/client";
 import { parseExplorerQuery, isUUID } from "../../../../lib/explorer-query";
 import { publicApi } from "../../../../lib/public-api";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store" };
 const allowed = new Set(["fuente", "estado", "sector", "provinciaCodigo", "partidos", "territorioEsquema", "municipioCodigo", "partidoId", "partidoVerificadoId", "gestionMunicipalId", "organizacionId", "rolInstitucional", "periodoDesde", "periodoHasta", "tieneGeometria", "bbox", "cursor"]);
 /**
- * Acepta lista, GeoJSON, ficha, conteos filtrados, cobertura municipal y catálogos públicos; conteos no admite paginación y usa presupuesto independiente.
+ * Acepta lista, GeoJSON, ficha, conteos, coberturas y catálogos públicos; el inventario provincial/nacional recibe sólo hasta dos fuentes y usa presupuesto independiente.
  * @param request - GET de mismo origen; su señal cancela la lectura upstream.
  * @param params - Segmentos de la ruta pública resueltos por App Router.
  * @returns JSON validado sin caché o un error público que no revela URLs internas.
@@ -33,6 +33,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
       const { limit: _limit, cursor: _cursor, ...filters } = query;
       validated = true;
       result = await api.counts(filters, { signal: request.signal });
+    } else if (path.length === 2 && path.join("/") === "obras/cobertura-fuentes") {
+      const codes = url.searchParams.getAll("fuente");
+      if ([...url.searchParams.keys()].some(key => key !== "fuente") || codes.length > 2 || codes.some(code => code !== "pba-edificios" && code !== "nacion-obras"))
+        throw new TypeError("La cobertura recibe sólo fuentes de Provincia o Nación.");
+      validated = true;
+      result = await api.sourceCoverage(codes.length ? codes as SourceCoverageCode[] : undefined, { signal: request.signal });
     } else if (path.length === 2 && path.join("/") === "obras/cobertura-municipal") {
       if (url.searchParams.size) throw new TypeError("Los totales municipales no reciben filtros de obras.");
       validated = true;
@@ -77,7 +83,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
     const status = error instanceof PublicApiError ? error.status : !validated && error instanceof TypeError ? 400 : 503;
     const code = error instanceof PublicApiError ? error.code : status === 400 ? "INVALID_QUERY" : "UNAVAILABLE";
     // Do not expose internal addresses or upstream diagnostic payloads.
-    const message = code === "CATALOG_CHANGED" ? "El catálogo cambió. Reiniciá la consulta." : code === "RESPONSE_BUDGET" ? path.join("/") === "obras/conteos" ? "No se pudieron cargar los conteos dentro del límite de lectura." : path.join("/") === "obras/cobertura-municipal" ? "No se pudieron cargar los totales municipales dentro del límite de lectura." : path[0] === "organizaciones-institucionales" ? "No se pudo cargar el catálogo institucional dentro del límite de lectura." : path[0] === "territorios" ? "No se pudo cargar la referencia territorial dentro del límite de lectura." : "Esta zona contiene demasiados datos. Acercá el mapa o ajustá los filtros." : status === 400 ? "Revisá los filtros del enlace." : status === 404 ? "No encontramos esa publicación." : "El catálogo no está disponible en este momento. Intentá nuevamente.";
+    const message = code === "CATALOG_CHANGED" ? "El catálogo cambió. Reiniciá la consulta." : code === "RESPONSE_BUDGET" ? path.join("/") === "obras/conteos" ? "No se pudieron cargar los conteos dentro del límite de lectura." : path.join("/") === "obras/cobertura-fuentes" ? "No se pudo cargar el inventario de fuentes dentro del límite de lectura." : path.join("/") === "obras/cobertura-municipal" ? "No se pudieron cargar los totales municipales dentro del límite de lectura." : path[0] === "organizaciones-institucionales" ? "No se pudo cargar el catálogo institucional dentro del límite de lectura." : path[0] === "territorios" ? "No se pudo cargar la referencia territorial dentro del límite de lectura." : "Esta zona contiene demasiados datos. Acercá el mapa o ajustá los filtros." : status === 400 ? "Revisá los filtros del enlace." : status === 404 ? "No encontramos esa publicación." : "El catálogo no está disponible en este momento. Intentá nuevamente.";
     return Response.json({ error: { code, message } }, { status, headers });
   }
 }

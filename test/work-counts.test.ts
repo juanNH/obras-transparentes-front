@@ -7,7 +7,7 @@ import { createPublicApi, type WorkCounts } from "../src/api/client";
 import { countsQuery, sourceListHref } from "../src/lib/explorer-query";
 import { WorkCountsPanel } from "../src/components/work-counts";
 
-const api = vi.hoisted(() => ({ list: vi.fn(), parties: vi.fn(), provinces: vi.fn(), organizations: vi.fn(), municipalCoverage: vi.fn(), counts: vi.fn() }));
+const api = vi.hoisted(() => ({ list: vi.fn(), parties: vi.fn(), provinces: vi.fn(), organizations: vi.fn(), municipalCoverage: vi.fn(), sourceCoverage: vi.fn(), counts: vi.fn() }));
 vi.mock("../src/lib/public-api", () => ({ publicApi: () => api }));
 vi.mock("../src/lib/config", () => ({ mapStyleUrl: () => "https://example.test/style.json", indexableSiteUrl: () => null }));
 vi.mock("../src/components/explorer", () => ({ Explorer: () => null }));
@@ -15,7 +15,7 @@ import MapPage from "../src/app/mapa/page";
 import { GET } from "../src/app/api/public/[...path]/route";
 
 const counts: WorkCounts = { catalogoVersion: examples.listPopulated.catalogoVersion, totalPublicadas: 31, totalConGeometria: 21, totalSinGeometria: 10, area: { bbox: [-59, -35, -58, -34], obrasEnMapa: 7, obrasFueraDelArea: 14 } };
-beforeEach(() => { vi.resetAllMocks(); api.list.mockResolvedValue(examples.listPopulated); api.counts.mockResolvedValue(counts); api.municipalCoverage.mockRejectedValue(new Error("Synthetic coverage unavailable")); });
+beforeEach(() => { vi.resetAllMocks(); api.list.mockResolvedValue(examples.listPopulated); api.counts.mockResolvedValue(counts); api.municipalCoverage.mockRejectedValue(new Error("Synthetic coverage unavailable")); api.sourceCoverage.mockRejectedValue(new Error("Synthetic source inventory unavailable")); });
 
 /** Recupera props del explorador sin montar el mapa o crear conexiones reales. */
 function explorer(page: ReactElement) { return (page.props as { children: ReactElement[] }).children[1]! as ReactElement<{ counts: WorkCounts | null; countsError: string | null }> ; }
@@ -44,9 +44,9 @@ describe("conteos y navegación por fuente públicos", () => {
   it("SSR consulta los demás filtros y oculta cifras si su catálogo difiere de la lista", async () => {
     const input = { fuente: "pergamino-obras", tieneGeometria: "true", bbox: "-59,-35,-58,-34", cursor: "synthetic-page" };
     const page = await MapPage({ searchParams: Promise.resolve(input) });
-    expect(api.counts).toHaveBeenCalledTimes(5);
+    expect(api.counts).toHaveBeenCalledTimes(3);
     expect(api.counts).toHaveBeenCalledWith({ fuente: "pergamino-obras", bbox: [-59, -35, -58, -34] });
-    for (const fuente of ["pba-edificios", "nacion-obras", "caba-actualizado", "vl-obras"]) expect(api.counts).toHaveBeenCalledWith({ fuente });
+    for (const fuente of ["caba-actualizado", "vl-obras"]) expect(api.counts).toHaveBeenCalledWith({ fuente });
     expect(explorer(page).props.counts).toEqual(counts);
     api.counts.mockResolvedValue({ ...counts, catalogoVersion: "9876" });
     expect(explorer(await MapPage({ searchParams: Promise.resolve(input) })).props).toMatchObject({ counts: null, countsError: "CATALOG_CHANGED" });
