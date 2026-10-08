@@ -1,4 +1,4 @@
-/** @file Comprueba filtros municipales y evidencia JSON en UI con API y cartografía sintéticas aisladas, sin ingestas o publicaciones reales. */
+/** @file Comprueba navegación por cada fuente y evidencia JSON con API y cartografía sintéticas aisladas, sin publicaciones reales. */
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { isolateMapNetwork } from "./map-fixture";
@@ -7,27 +7,40 @@ test.beforeEach(async ({ page }) => {
   await isolateMapNetwork(page);
 });
 
-for (const [source, label] of [
-  ["bahia-obras", "Municipalidad de Bahía Blanca"],
-  ["olavarria-obras", "Municipalidad de Olavarría"],
-  ["pergamino-obras", "Municipalidad de Pergamino"],
+for (const [source, label, expectedCards] of [
+  ["pba-edificios", "Provincia de Buenos Aires · edificios escolares", 0],
+  ["nacion-obras", "Nación · obras", 16],
+  ["caba-actualizado", "CABA · obras", 8],
+  ["vl-obras", "Vicente López · obras", 0],
+  ["bahia-obras", "Municipalidad de Bahía Blanca", 0],
+  ["olavarria-obras", "Municipalidad de Olavarría", 0],
+  ["pergamino-obras", "Municipalidad de Pergamino", 0],
 ] as const)
-  test(`conserva el filtro ${source} en una consulta textual sin inventar cobertura`, async ({ page, request }) => {
+  test(`abre un listado limpio para ${source} sin inventar cobertura`, async ({ page, request }) => {
     const response = await request.get(`/mapa?fuente=${source}&vista=lista`);
     expect(response.ok()).toBe(true);
     expect(await response.text()).toContain(label);
     await page.goto(`/mapa?fuente=${source}&vista=lista`);
     await expect(page.locator("main h1")).toBeVisible();
-    await page.locator(".filter-group > summary").click();
-    const select = page.getByRole("combobox", { name: "Fuente", exact: true });
+    const select = page.getByRole("combobox", { name: "Fuente pública", exact: true });
     await expect(select).toHaveValue(source);
     await expect(select.getByRole("option", { name: label, exact: true })).toHaveCount(1);
-    await page.getByRole("button", { name: "Aplicar filtros", exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`fuente=${source}`));
-    await expect(page.locator(".work-card")).toHaveCount(0);
+    await page.getByRole("button", { name: "Ver listado", exact: true }).click();
+    await expect(page).toHaveURL(`/mapa?fuente=${source}&vista=lista`);
+    await expect(page.locator(".work-card")).toHaveCount(expectedCards);
     await expect(page.locator("main").getByRole("alert")).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
+
+test("la navegación principal ofrece listados directos de Provincia y Nación", async ({ page }) => {
+  await page.goto("/mapa?estado=IN_PROGRESS&bbox=-61,-35,-60,-33&vista=lista");
+  const navigation = page.getByRole("navigation", { name: "Navegación principal", exact: true });
+  await expect(navigation.getByRole("link", { name: "Provincia", exact: true })).toHaveAttribute("href", "/mapa?fuente=pba-edificios&vista=lista");
+  await expect(navigation.getByRole("link", { name: "Nación", exact: true })).toHaveAttribute("href", "/mapa?fuente=nacion-obras&vista=lista");
+  await navigation.getByRole("link", { name: "Provincia", exact: true }).click();
+  await expect(page).toHaveURL("/mapa?fuente=pba-edificios&vista=lista");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
 
 test("muestra referencia JSON y fuente municipal en un resumen sin ubicación aprobada", async ({ page }, testInfo) => {
   await page.route("**/api/public/obras/**", async route => {

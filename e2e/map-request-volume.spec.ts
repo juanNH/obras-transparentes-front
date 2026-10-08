@@ -105,7 +105,7 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   expect(counts((await fixtureRequests(request)).slice(baseline)).provinces).toBe(1);
   expect(counts((await fixtureRequests(request)).slice(baseline)).organizations).toBe(1);
   expect(counts((await fixtureRequests(request)).slice(baseline)).municipalCoverage).toBe(1);
-  expect(counts((await fixtureRequests(request)).slice(baseline)).workCounts).toBe(1);
+  expect(counts((await fixtureRequests(request)).slice(baseline)).workCounts).toBe(5);
   expect(browser).toHaveLength(0);
 
   await page.getByRole("button", { name: "Cargar más obras", exact: true }).click();
@@ -149,22 +149,20 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   expect(confirmed.filter(record => record.path === "/api/v1/obras").at(-1)!.query.bbox).toBe(area);
   expect(confirmed.filter(record => record.path === "/api/v1/obras/geojson").at(-1)!.query.bbox).toBe(area);
 
-  const filterSummary = page.locator(".filter-group > summary");
-  await expect(filterSummary).toContainText("filtro activo");
-  await filterSummary.click();
-  await page.getByRole("combobox", { name: "Fuente", exact: true }).selectOption("nacion-obras");
-  await page.getByRole("button", { name: "Aplicar filtros", exact: true }).click();
-  await expect(page).toHaveURL(/fuente=nacion-obras/);
-  const filtered = await checkpoint("aplicar fuente conservando área", { list: 4, geojson: 3, detail: 1 });
-  expect(filtered.filter(record => record.path.startsWith("/api/v1/obras") && !["/api/v1/obras/cobertura-municipal", "/api/v1/obras/conteos"].includes(record.path))).toHaveLength(8);
+  await page.getByRole("combobox", { name: "Fuente pública", exact: true }).selectOption("nacion-obras");
+  await page.getByRole("button", { name: "Ver listado", exact: true }).click();
+  await expect(page).toHaveURL(/fuente=nacion-obras&vista=lista$/);
+  const filtered = await checkpoint("cambiar fuente y abrir lista completa", { list: 4, geojson: 2, detail: 1 });
+  expect(filtered.filter(record => record.path.startsWith("/api/v1/obras") && !["/api/v1/obras/cobertura-municipal", "/api/v1/obras/conteos"].includes(record.path))).toHaveLength(7);
   expect(counts(filtered).parties).toBe(3);
   expect(counts(filtered).provinces).toBe(3);
   expect(counts(filtered).organizations).toBe(3);
   expect(counts(filtered).municipalCoverage).toBe(3);
-  expect(counts(filtered).workCounts).toBe(3);
-  expect(filtered).toHaveLength(23);
-  expect(filtered.at(-1)!.query.fuente).toBe("nacion-obras");
-  expect(browser.filter(record => record.path === "/api/public/geojson")).toHaveLength(3);
+  expect(counts(filtered).workCounts).toBe(15);
+  expect(filtered).toHaveLength(34);
+  expect(filtered.filter(record => record.path === "/api/v1/obras").at(-1)!.query).toMatchObject({ fuente: "nacion-obras" });
+  expect(filtered.filter(record => record.path === "/api/v1/obras").at(-1)!.query).not.toHaveProperty("bbox");
+  expect(browser.filter(record => record.path === "/api/public/geojson")).toHaveLength(2);
   expect(browser.filter(record => record.path === `/api/public/obras/${firstId}`)).toHaveLength(1);
   await attachReport(info, { checkpoints, upstream: filtered, browser, initialDocumentContentEncoding: initialResponse?.headers()["content-encoding"] ?? null });
 });

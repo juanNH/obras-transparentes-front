@@ -1,5 +1,6 @@
 /** @file Identidad del proyecto y navegación principal del sitio público. */
 import Link from "next/link";
+import { sourceListHref } from "../lib/explorer-query";
 
 /** Presenta la identidad del proyecto y los accesos principales con navegación semántica. */
 export function SiteHeader() {
@@ -17,6 +18,8 @@ export function SiteHeader() {
         </Link>
         <nav aria-label="Navegación principal" className="main-nav">
           <Link href="/proyecto" className="nav-project">El proyecto</Link>
+          <Link href={sourceListHref("pba-edificios")} prefetch={false}>Provincia</Link>
+          <Link href={sourceListHref("nacion-obras")} prefetch={false}>Nación</Link>
           <Link href="/mapa" prefetch={false} className="nav-explore">Explorar obras <span aria-hidden="true">↗</span></Link>
         </nav>
       </div>
