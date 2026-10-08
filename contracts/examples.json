@@ -357,6 +357,7 @@
           }
         ],
         "obrasPublicadas": 1,
+        "localidadesConObrasPublicadas": 0,
         "obrasConUbicacionAprobada": 1,
         "obrasSinUbicacionAprobada": 0,
         "ubicacionesAprobadas": 1,
@@ -379,6 +380,7 @@
           }
         ],
         "obrasPublicadas": 2,
+        "localidadesConObrasPublicadas": 1,
         "obrasConUbicacionAprobada": 1,
         "obrasSinUbicacionAprobada": 1,
         "ubicacionesAprobadas": 2,

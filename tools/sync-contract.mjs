@@ -1,7 +1,24 @@
 /** @file Exportación pública y generación de tipos con compilación temporal sólo en frontend, sin iniciar API ni acceder a su base. */
 import { execFileSync } from "node:child_process";
-import { copyFile, mkdtemp, readFile, writeFile, mkdir, realpath, rm, symlink, unlink } from "node:fs/promises";
-import { resolve, join, dirname, basename, relative, isAbsolute } from "node:path";
+import {
+  copyFile,
+  mkdtemp,
+  readFile,
+  writeFile,
+  mkdir,
+  realpath,
+  rm,
+  symlink,
+  unlink,
+} from "node:fs/promises";
+import {
+  resolve,
+  join,
+  dirname,
+  basename,
+  relative,
+  isAbsolute,
+} from "node:path";
 import openapiTS, { astToString } from "openapi-typescript";
 
 const root = resolve(import.meta.dirname, "..");
@@ -35,19 +52,29 @@ const repositoryPath = await realpath(root);
 async function frontendPath(path) {
   const physical = await realpath(path);
   const child = relative(repositoryPath, physical);
-  if (!child || child === ".." || child.startsWith("..\\") || child.startsWith("../") || isAbsolute(child))
+  if (
+    !child ||
+    child === ".." ||
+    child.startsWith("..\\") ||
+    child.startsWith("../") ||
+    isAbsolute(child)
+  )
     throw new Error("El destino temporal debe permanecer dentro del frontend.");
   return physical;
 }
 
 /** Crea un solo nivel cuyo padre ya se comprobó; un directorio existente también se valida físicamente. */
 async function temporaryDirectory(path) {
-  await mkdir(path).catch(error => { if (error.code !== "EEXIST") throw error; });
+  await mkdir(path).catch((error) => {
+    if (error.code !== "EEXIST") throw error;
+  });
   return frontendPath(path);
 }
 
 const artifacts = await temporaryDirectory(join(root, "artifacts"));
-const temporaryRoot = await temporaryDirectory(join(artifacts, "local-validation"));
+const temporaryRoot = await temporaryDirectory(
+  join(artifacts, "local-validation"),
+);
 const temporary = await mkdtemp(join(temporaryRoot, temporaryPrefix));
 const dependencyLink = join(temporary, "node_modules");
 try {
@@ -77,26 +104,33 @@ try {
   // El exporter conserva imports ../dist idénticos a su repositorio fuente.
   // El enlace permite resolver sus dependencias sin instalarlas/copiar su árbol.
   await writeFile(join(temporary, "package.json"), '{"type":"module"}\n');
-  await symlink(join(backend, "node_modules"), dependencyLink, process.platform === "win32" ? "junction" : "dir");
+  await symlink(
+    join(backend, "node_modules"),
+    dependencyLink,
+    process.platform === "win32" ? "junction" : "dir",
+  );
   execFileSync(
     process.execPath,
-    [
-      exporter,
-      openapiPath,
-      examplesPath,
-      schemasPath,
-    ],
+    [exporter, openapiPath, examplesPath, schemasPath],
     { cwd: temporary, stdio: "pipe", encoding: "utf8" },
   );
   const document = JSON.parse(await readFile(openapiPath, "utf8"));
-  const publicPaths = new Set(["/api/v1/obras", "/api/v1/obras/geojson", "/api/v1/obras/conteos", "/api/v1/obras/cobertura-municipal", "/api/v1/obras/cobertura-fuentes", "/api/v1/obras/{id}", "/api/v1/territorios/provincias", "/api/v1/territorios/pba/partidos", "/api/v1/territorios/pba/partidos/limites", "/api/v1/organizaciones-institucionales"]);
-  if (
-    Object.keys(document.paths).some(
-      (path) => !publicPaths.has(path),
-    )
-  ) {
+  const publicPaths = new Set([
+    "/api/v1/obras",
+    "/api/v1/obras/geojson",
+    "/api/v1/obras/conteos",
+    "/api/v1/obras/cobertura-municipal",
+    "/api/v1/obras/cobertura-fuentes",
+    "/api/v1/obras/{id}",
+    "/api/v1/territorios/provincias",
+    "/api/v1/territorios/localidades",
+    "/api/v1/territorios/pba/partidos",
+    "/api/v1/territorios/pba/partidos/limites",
+    "/api/v1/organizaciones-institucionales",
+  ]);
+  if (Object.keys(document.paths).some((path) => !publicPaths.has(path))) {
     throw new Error(
-      "La exportación debe contener exclusivamente rutas públicas de obras, provincias, partidos y organizaciones institucionales admitidas.",
+      "La exportación debe contener exclusivamente rutas públicas de obras, provincias, localidades, partidos y organizaciones institucionales admitidas.",
     );
   }
   const examples = JSON.parse(await readFile(examplesPath, "utf8"));
@@ -121,7 +155,9 @@ try {
       const current = await readFile(path, "utf8").catch(() => null);
       // Git may check out CRLF on Windows; line endings do not change this contract.
       // Compare normalized text while retaining all semantic and formatting checks.
-      if (current?.replaceAll("\r\n", "\n") !== content.replaceAll("\r\n", "\n"))
+      if (
+        current?.replaceAll("\r\n", "\n") !== content.replaceAll("\r\n", "\n")
+      )
         differences.push(relative);
     } else {
       await mkdir(dirname(path), { recursive: true });
@@ -142,8 +178,15 @@ try {
   // antes de borrar. Si unlink falla, se conserva el temporal: no se recorre el
   // enlace ni se arriesga el árbol de dependencias del backend.
   const physical = await frontendPath(temporary);
-  if (dirname(physical) !== temporaryRoot || !basename(physical).startsWith(temporaryPrefix))
-    throw new Error("No se puede eliminar un temporal fuera de su directorio/prefijo esperado.");
-  await unlink(dependencyLink).catch(error => { if (error.code !== "ENOENT") throw error; });
+  if (
+    dirname(physical) !== temporaryRoot ||
+    !basename(physical).startsWith(temporaryPrefix)
+  )
+    throw new Error(
+      "No se puede eliminar un temporal fuera de su directorio/prefijo esperado.",
+    );
+  await unlink(dependencyLink).catch((error) => {
+    if (error.code !== "ENOENT") throw error;
+  });
   await rm(temporary, { recursive: true, force: true });
 }

@@ -20,14 +20,35 @@ const mockedFetch = (body: unknown, status = 200) =>
 describe("Contrato público del consumidor", () => {
   it("acepta origen ADDRESS_GEOCODE con referencia de servicio y conserva la precisión de origen", () => {
     const detail = structuredClone(examples.detailPopulated);
-    const location = { ...detail.ubicaciones[0]!, origenGeometria: "ADDRESS_GEOCODE", crs: { codigo: "EPSG:4326", fundamento: "OFFICIAL_SERVICE", condicion: "SERVICE_REFERENCE" } };
+    const location = {
+      ...detail.ubicaciones[0]!,
+      origenGeometria: "ADDRESS_GEOCODE",
+      crs: {
+        codigo: "EPSG:4326",
+        fundamento: "OFFICIAL_SERVICE",
+        condicion: "SERVICE_REFERENCE",
+      },
+    };
     const publicDetail = { ...detail, ubicaciones: [location] };
-    expect(parsePublicResponse("PublicWorkDetail", publicDetail)).toEqual(publicDetail);
+    expect(parsePublicResponse("PublicWorkDetail", publicDetail)).toEqual(
+      publicDetail,
+    );
     const collection = structuredClone(examples.geojsonPopulated);
     const feature = collection.features[0]!;
-    const quality = { ...feature.properties.calidad, origenGeometria: "ADDRESS_GEOCODE", crs: location.crs };
-    const publicMap = { ...collection, features: [{ ...feature, properties: { ...feature.properties, calidad: quality } }] };
-    expect(parsePublicResponse("PublicGeoFeatureCollection", publicMap)).toEqual(publicMap);
+    const quality = {
+      ...feature.properties.calidad,
+      origenGeometria: "ADDRESS_GEOCODE",
+      crs: location.crs,
+    };
+    const publicMap = {
+      ...collection,
+      features: [
+        { ...feature, properties: { ...feature.properties, calidad: quality } },
+      ],
+    };
+    expect(
+      parsePublicResponse("PublicGeoFeatureCollection", publicMap),
+    ).toEqual(publicMap);
     expect(location.precision).toBe(detail.ubicaciones[0]!.precision);
     expect(quality.precision).toBe(feature.properties.calidad.precision);
   });
@@ -37,10 +58,39 @@ describe("Contrato público del consumidor", () => {
     const location = detail.ubicaciones[0]!;
     const collection = structuredClone(examples.geojsonPopulated);
     const feature = collection.features[0]!;
-    for (const privateField of ["geocodificacionDireccion", "corroboracionCrs"]) {
-      const privateReport = { estado: "COMPATIBLE", evidencias: [{ respuesta: { informacion: "EJEMPLO SINTÉTICO PRIVADO" } }] };
-      expect(() => parsePublicResponse("PublicWorkDetail", { ...detail, ubicaciones: [{ ...location, [privateField]: privateReport }] })).toThrow(ApiContractError);
-      expect(() => parsePublicResponse("PublicGeoFeatureCollection", { ...collection, features: [{ ...feature, properties: { ...feature.properties, calidad: { ...feature.properties.calidad, [privateField]: privateReport } } }] })).toThrow(ApiContractError);
+    for (const privateField of [
+      "geocodificacionDireccion",
+      "corroboracionCrs",
+    ]) {
+      const privateReport = {
+        estado: "COMPATIBLE",
+        evidencias: [
+          { respuesta: { informacion: "EJEMPLO SINTÉTICO PRIVADO" } },
+        ],
+      };
+      expect(() =>
+        parsePublicResponse("PublicWorkDetail", {
+          ...detail,
+          ubicaciones: [{ ...location, [privateField]: privateReport }],
+        }),
+      ).toThrow(ApiContractError);
+      expect(() =>
+        parsePublicResponse("PublicGeoFeatureCollection", {
+          ...collection,
+          features: [
+            {
+              ...feature,
+              properties: {
+                ...feature.properties,
+                calidad: {
+                  ...feature.properties.calidad,
+                  [privateField]: privateReport,
+                },
+              },
+            },
+          ],
+        }),
+      ).toThrow(ApiContractError);
     }
   });
 
@@ -122,14 +172,24 @@ describe("Cliente público", () => {
   it("envía provincias y partidos repetidos iguales a lista y mapa, con bbox separado y sin mutar los arrays", async () => {
     const first = "aaaaaaaa-0000-4000-8000-000000000001";
     const second = "bbbbbbbb-0000-4000-8000-000000000001";
-    const filters = { provinciaCodigo: ["06", "02", "06"], partidos: [second.toUpperCase(), first, second], partidoVerificadoId: second, gestionMunicipalId: first } as const;
+    const filters = {
+      provinciaCodigo: ["06", "02", "06"],
+      partidos: [second.toUpperCase(), first, second],
+      partidoVerificadoId: second,
+      gestionMunicipalId: first,
+    } as const;
     const request = mockedFetch(examples.listEmpty);
     const api = createPublicApi({ fetch: request });
     await api.list({ ...filters, cursor: "synthetic-page" });
     request.mockResolvedValue(json(examples.geojsonEmpty));
-    await api.geojson({ ...filters, bbox: [-59, -35, -58, -34], cursor: "synthetic-page" });
+    await api.geojson({
+      ...filters,
+      bbox: [-59, -35, -58, -34],
+      cursor: "synthetic-page",
+    });
     for (const [input] of request.mock.calls) {
-      const params = new URL(String(input), "https://example.test").searchParams;
+      const params = new URL(String(input), "https://example.test")
+        .searchParams;
       expect(params.getAll("provinciaCodigo")).toEqual(["02", "06"]);
       expect(params.getAll("partidos")).toEqual([first, second]);
       expect(params.get("cursor")).toBe("synthetic-page");
@@ -137,7 +197,12 @@ describe("Cliente público", () => {
       expect(params.get("gestionMunicipalId")).toBe(first);
       expect(params.has("partidoId")).toBe(false);
     }
-    expect(new URL(String(request.mock.calls[1]![0]), "https://example.test").searchParams.getAll("bbox")).toEqual(["-59,-35,-58,-34"]);
+    expect(
+      new URL(
+        String(request.mock.calls[1]![0]),
+        "https://example.test",
+      ).searchParams.getAll("bbox"),
+    ).toEqual(["-59,-35,-58,-34"]);
     expect(filters.partidos).toEqual([second.toUpperCase(), first, second]);
     expect(filters.provinciaCodigo).toEqual(["06", "02", "06"]);
   });
@@ -148,47 +213,175 @@ describe("Cliente público", () => {
     request.mockResolvedValue(json(examples.geojsonEmpty));
     await api.geojson({ bbox: [-59, -35, -58, -34] });
     for (const [input] of request.mock.calls) {
-      const params = new URL(String(input), "https://example.test").searchParams;
+      const params = new URL(String(input), "https://example.test")
+        .searchParams;
       expect(params.has("provinciaCodigo")).toBe(false);
       expect(params.has("partidos")).toBe(false);
     }
   });
   it("valida el catálogo provincial versionado en su ruta anónima y preserva cancelación", async () => {
-    const catalog = { version: "provincias@2", consultadoEn: "2026-10-06", fuentes: [{ nombre: "Fuente territorial sintética", url: "https://example.test/provincias", licencia: { nombre: "Licencia sintética", url: "https://example.test/licencia" } }], items: [{ codigo: "06", nombre: "Buenos Aires", tipo: "PROVINCIA" }, { codigo: "02", nombre: "Ciudad Autónoma de Buenos Aires", tipo: "CIUDAD_AUTONOMA" }] };
+    const catalog = {
+      version: "provincias@2",
+      consultadoEn: "2026-10-06",
+      fuentes: [
+        {
+          nombre: "Fuente territorial sintética",
+          url: "https://example.test/provincias",
+          licencia: {
+            nombre: "Licencia sintética",
+            url: "https://example.test/licencia",
+          },
+        },
+      ],
+      items: [
+        { codigo: "06", nombre: "Buenos Aires", tipo: "PROVINCIA" },
+        {
+          codigo: "02",
+          nombre: "Ciudad Autónoma de Buenos Aires",
+          tipo: "CIUDAD_AUTONOMA",
+        },
+      ],
+    };
     const request = mockedFetch(catalog);
     const controller = new AbortController();
     const api = createPublicApi({ fetch: request });
-    await expect(api.provinces({ signal: controller.signal })).resolves.toEqual(catalog);
-    expect(request).toHaveBeenCalledWith("/api/v1/territorios/provincias", expect.objectContaining({ signal: controller.signal, credentials: "omit", redirect: "error" }));
-    request.mockResolvedValue(json({ ...catalog, items: [{ codigo: "6", nombre: "Buenos Aires", tipo: "PROVINCIA" }] }));
+    await expect(api.provinces({ signal: controller.signal })).resolves.toEqual(
+      catalog,
+    );
+    expect(request).toHaveBeenCalledWith(
+      "/api/v1/territorios/provincias",
+      expect.objectContaining({
+        signal: controller.signal,
+        credentials: "omit",
+        redirect: "error",
+      }),
+    );
+    request.mockResolvedValue(
+      json({
+        ...catalog,
+        items: [{ codigo: "6", nombre: "Buenos Aires", tipo: "PROVINCIA" }],
+      }),
+    );
     await expect(api.provinces()).rejects.toBeInstanceOf(ApiContractError);
+  });
+  it("consulta el catálogo GeoRef por provincia y valida sus códigos jerárquicos", async () => {
+    const catalog = {
+      version: "georef-localidades@2.0-20261008",
+      consultadoEn: "2026-10-08",
+      fuentes: [
+        {
+          nombre: "GeoRef localidades",
+          url: "https://example.test/localidades",
+          licencia: {
+            nombre: "CC BY 4.0",
+            url: "https://creativecommons.org/licenses/by/4.0/",
+          },
+        },
+      ],
+      items: [
+        {
+          codigo: "06427010",
+          nombre: "La Plata",
+          provinciaCodigo: "06",
+          provinciaNombre: "Buenos Aires",
+          departamentoCodigo: "06427",
+          departamentoNombre: "La Plata",
+        },
+      ],
+    };
+    const request = mockedFetch(catalog);
+    const controller = new AbortController();
+    await expect(
+      createPublicApi({ fetch: request }).localities(["06"], {
+        signal: controller.signal,
+      }),
+    ).resolves.toEqual(catalog);
+    expect(request).toHaveBeenCalledWith(
+      "/api/v1/territorios/localidades?provinciaCodigo=06",
+      expect.objectContaining({
+        signal: controller.signal,
+        credentials: "omit",
+        redirect: "error",
+      }),
+    );
+    request.mockResolvedValue(
+      json({
+        ...catalog,
+        items: [{ ...catalog.items[0], provinciaCodigo: "02" }],
+      }),
+    );
+    await expect(
+      createPublicApi({ fetch: request }).localities(["06"]),
+    ).rejects.toBeInstanceOf(ApiContractError);
   });
   it("rechaza conjuntos excesivos, inválidos o mezclados antes de acceder a la red", async () => {
     const party = "aaaaaaaa-0000-4000-8000-000000000001";
     const request = mockedFetch(examples.listEmpty);
     const api = createPublicApi({ fetch: request });
     for (const filters of [
-      { partidos: Array(136).fill(party) }, { partidos: ["invalid"] }, { partidos: [] },
-      { partidos: [party], partidoId: party }, { partidos: [party], territorioEsquema: "pba.municipio" as const, municipioCodigo: "001" },
-      { provinciaCodigo: Array(25).fill("06") }, { provinciaCodigo: ["6"] }, { provinciaCodigo: ["07"] }, { provinciaCodigo: [] },
-    ]) expect(() => api.list(filters)).toThrow(TypeError);
+      { partidos: Array(136).fill(party) },
+      { partidos: ["invalid"] },
+      { partidos: [] },
+      { partidos: [party], partidoId: party },
+      {
+        partidos: [party],
+        territorioEsquema: "pba.municipio" as const,
+        municipioCodigo: "001",
+      },
+      { provinciaCodigo: Array(25).fill("06") },
+      { provinciaCodigo: ["6"] },
+      { provinciaCodigo: ["006"] },
+      { provinciaCodigo: [] },
+      { localidadCodigo: Array(101).fill("06427010") },
+      { localidadCodigo: ["unknown"] },
+      { localidadCodigo: [] },
+    ])
+      expect(() => api.list(filters)).toThrow(TypeError);
     expect(request).not.toHaveBeenCalled();
-    await api.list({ partidos: Array(135).fill(party), provinciaCodigo: Array(24).fill("06") });
-    const params = new URL(String(request.mock.calls[0]![0]), "https://example.test").searchParams;
+    await api.list({
+      partidos: Array(135).fill(party),
+      provinciaCodigo: Array(24).fill("06"),
+    });
+    const params = new URL(
+      String(request.mock.calls[0]![0]),
+      "https://example.test",
+    ).searchParams;
     expect(params.getAll("partidos")).toEqual([party]);
     expect(params.getAll("provinciaCodigo")).toEqual(["06"]);
+  });
+  it("serializa códigos provinciales de las jurisdicciones nacionales fuera del piloto", async () => {
+    const request = mockedFetch(examples.listEmpty);
+    const api = createPublicApi({ fetch: request });
+    await api.list({ provinciaCodigo: ["14", "94"] });
+    const params = new URL(
+      String(request.mock.calls[0]![0]),
+      "https://example.test",
+    ).searchParams;
+    expect(params.getAll("provinciaCodigo")).toEqual(["14", "94"]);
   });
   it("serializa asociaciones y vigencia del rol iguales para lista y mapa sin parámetros de UI", async () => {
     const request = mockedFetch(examples.listEmpty);
     const api = createPublicApi({ fetch: request });
-    const filters = { partidoVerificadoId: "AAAAAAAA-0000-4000-8000-000000000001", gestionMunicipalId: "bbbbbbbb-0000-4000-8000-000000000001", organizacionId: "cccccccc-0000-4000-8000-000000000001", rolInstitucional: "FINANCIADOR", periodoDesde: "2020-01-01", periodoHasta: "2026-12-31" } as const;
+    const filters = {
+      partidoVerificadoId: "AAAAAAAA-0000-4000-8000-000000000001",
+      gestionMunicipalId: "bbbbbbbb-0000-4000-8000-000000000001",
+      organizacionId: "cccccccc-0000-4000-8000-000000000001",
+      rolInstitucional: "FINANCIADOR",
+      periodoDesde: "2020-01-01",
+      periodoHasta: "2026-12-31",
+    } as const;
     await api.list(filters);
-    const list = new URL(String(request.mock.calls[0]![0]), "http://127.0.0.1").searchParams;
+    const list = new URL(String(request.mock.calls[0]![0]), "http://127.0.0.1")
+      .searchParams;
     request.mockResolvedValue(json(examples.geojsonEmpty));
     await api.geojson({ ...filters, bbox: [-59, -35, -58, -34] });
-    const map = new URL(String(request.mock.calls[1]![0]), "http://127.0.0.1").searchParams;
-    for (const key of Object.keys(filters)) expect(map.get(key)).toBe(list.get(key));
-    expect(list.get("partidoVerificadoId")).toBe(filters.partidoVerificadoId.toLowerCase());
+    const map = new URL(String(request.mock.calls[1]![0]), "http://127.0.0.1")
+      .searchParams;
+    for (const key of Object.keys(filters))
+      expect(map.get(key)).toBe(list.get(key));
+    expect(list.get("partidoVerificadoId")).toBe(
+      filters.partidoVerificadoId.toLowerCase(),
+    );
     expect(map.get("bbox")).toBe("-59,-35,-58,-34");
   });
   it("conserva cancelaciones y fallas de lectura después de recibir cabeceras", async () => {
