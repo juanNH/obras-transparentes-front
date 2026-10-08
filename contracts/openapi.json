@@ -21,7 +21,24 @@
             },
             "style": "form",
             "explode": true,
-            "description": "Código INDEC provincial repetible del catálogo GET /api/v1/territorios/provincias: 02 (CABA) y 06 (Buenos Aires). Admite un valor o parámetros repetidos, máximo 24 valores brutos; deduplica y ordena. Sin este filtro conserva el alcance global, incluidas obras con territorio vacío. OR entre provincias y AND con los demás filtros. PBA exige nacion.provincia=BUENOS_AIRES REPORTED, partido canónico o par legacy exacto REPORTED del padrón, o asociación espacial VERIFIED publicada. CABA exige nacion.provincia=CABA REPORTED; no existe caba.comuna soportado. Para cada provincia veta cualquier código provincial REPORTED distinto o texto nacional crudo no compatible tras NFD, acentos, espacios y caso. Los únicos aliases crudos CABA son CABA, CIUDAD AUTONOMA DE BUENOS AIRES y CAPITAL FEDERAL; PBA admite BUENOS AIRES. Para CABA también veta partido PBA REPORTED reconocido o asociación VERIFIED PBA. Texto provincial desconocido, vacío, múltiple o contradictorio veta. No atribuye por fuente, editor, institución, candidata, coordenadas, corroboración CRS ni bbox. El cursor incluye catálogos provincial/de partidos y versión de relaciones."
+            "description": "Código INDEC provincial repetible del catálogo GET /api/v1/territorios/provincias con las 24 jurisdicciones. Admite un valor o parámetros repetidos, máximo 24 valores brutos; deduplica y ordena. Sin este filtro conserva el alcance global, incluidas obras con territorio vacío. OR entre provincias y AND con los demás filtros. Nación actual registra la provincia resuelta como indec.provincia REPORTED; PBA conserva además nacion.provincia=BUENOS_AIRES, partido canónico o par legacy exacto REPORTED del padrón, o asociación espacial VERIFIED publicada. CABA admite la provincia INDEC resuelta y el namespace histórico nacion.provincia=CABA; no existe caba.comuna soportado. El nombre nacional debe ser compatible con la jurisdicción seleccionada y no puede tener códigos provinciales contradictorios. CABA también veta partido PBA REPORTED reconocido o asociación VERIFIED PBA. Texto provincial desconocido, vacío, múltiple o contradictorio veta. El filtro no infiere ubicación por fuente, editor, institución, candidata, coordenadas, corroboración CRS ni bbox. El cursor incluye catálogo provincial, padrón PBA y versión de relaciones."
+          },
+          {
+            "name": "localidadCodigo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 100,
+              "items": {
+                "type": "string",
+                "pattern": "^\\d{8,10}$"
+              }
+            },
+            "style": "form",
+            "explode": true,
+            "description": "Código exacto de una localidad GeoRef; admite hasta 100 valores repetidos del catálogo GET /api/v1/territorios/localidades. OR entre localidades y AND con los demás filtros. Sólo devuelve obras cuya revisión pública contiene indec.localidad REPORTED; no infiere localidad desde departamento, nombre, fuente o geometría. El cursor incorpora códigos y versión del catálogo de localidades."
           },
           {
             "name": "partidos",
@@ -343,7 +360,7 @@
             }
           },
           "422": {
-            "description": "Filtros, códigos provinciales o UUID fuera de catálogos, listas vacías o excesivas, combinación territorial, límite o cursor no válidos.",
+            "description": "Filtros, códigos provinciales o de localidad, UUID fuera de catálogos, listas vacías o excesivas, combinación territorial, límite o cursor no válidos.",
             "content": {
               "application/json": {
                 "schema": {
@@ -486,7 +503,7 @@
     },
     "/api/v1/obras/cobertura-fuentes": {
       "get": {
-        "description": "Lee un único snapshot REPEATABLE READ de revisiones actualmente publicadas y devuelve catalogoVersion. Admite fuente repetida para PBA (pba-edificios) y Nación (nacion-obras); sin filtro incluye ambas. Es un inventario agregado completo, no se pagina ni acepta filtros territoriales o temporales; GET /api/v1/obras conserva filtros, cursor y paginación ligados a catalogoVersion. Por fuente, obrasPublicadas se cuenta una vez por obraId aunque se repita su procedencia; las ubicaciones aprobadas se cuentan aparte y particionan obras con/sin ubicación. Las obrasCompartidasEntreFuentes identifican solapamiento y los totales por fuente no deben sumarse para obtener obras únicas. Las unidades documentales describen los recursos originales: los edificios escolares PBA no equivalen automáticamente a intervenciones y las geometrías de Nación son localizaciones vinculadas, no obras. Las métricas de licencia usan sólo la evidencia congelada en la primera publicación de la revisión vigente; no revelan propuestas, filas de origen, IDs ni rutas de originales. La ficha pública conserva procedencia, licencia y ubicación aprobada de cada publicación.",
+        "description": "Lee un único snapshot REPEATABLE READ de revisiones actualmente publicadas y devuelve catalogoVersion. Admite fuente repetida para PBA (pba-edificios) y Nación (nacion-obras); sin filtro incluye ambas. Es un inventario agregado completo, no se pagina ni acepta filtros territoriales o temporales; GET /api/v1/obras conserva filtros, cursor y paginación ligados a catalogoVersion. Por fuente, obrasPublicadas se cuenta una vez por obraId aunque se repita su procedencia; localidadesConObrasPublicadas cuenta códigos distintos indec.localidad REPORTED y ubicaciones aprobadas se cuentan aparte, particionando las obras con/sin ubicación. Las obrasCompartidasEntreFuentes identifican solapamiento y los totales por fuente no deben sumarse para obtener obras únicas. Las unidades documentales describen los recursos originales: los edificios escolares PBA no equivalen automáticamente a intervenciones y las geometrías de Nación son localizaciones vinculadas, no obras. Las métricas de licencia usan sólo la evidencia congelada en la primera publicación de la revisión vigente; no revelan propuestas, filas de origen, IDs ni rutas de originales. La ficha pública conserva procedencia, licencia y ubicación aprobada de cada publicación.",
         "operationId": "WorksController_sourceCoverage",
         "parameters": [
           {
@@ -510,7 +527,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Inventario documental y particiones de obras, ubicaciones aprobadas y evidencia de licencia en el catálogo vigente.",
+            "description": "Inventario documental y particiones de obras, localidades referidas, ubicaciones aprobadas y evidencia de licencia en el catálogo vigente.",
             "content": {
               "application/json": {
                 "schema": {
@@ -536,6 +553,7 @@
                             }
                           ],
                           "obrasPublicadas": 1,
+                          "localidadesConObrasPublicadas": 0,
                           "obrasConUbicacionAprobada": 1,
                           "obrasSinUbicacionAprobada": 0,
                           "ubicacionesAprobadas": 1,
@@ -558,6 +576,7 @@
                             }
                           ],
                           "obrasPublicadas": 2,
+                          "localidadesConObrasPublicadas": 1,
                           "obrasConUbicacionAprobada": 1,
                           "obrasSinUbicacionAprobada": 1,
                           "ubicacionesAprobadas": 2,
@@ -643,7 +662,24 @@
             },
             "style": "form",
             "explode": true,
-            "description": "Código INDEC provincial repetible del catálogo GET /api/v1/territorios/provincias: 02 (CABA) y 06 (Buenos Aires). Admite un valor o parámetros repetidos, máximo 24 valores brutos; deduplica y ordena. Sin este filtro conserva el alcance global, incluidas obras con territorio vacío. OR entre provincias y AND con los demás filtros. PBA exige nacion.provincia=BUENOS_AIRES REPORTED, partido canónico o par legacy exacto REPORTED del padrón, o asociación espacial VERIFIED publicada. CABA exige nacion.provincia=CABA REPORTED; no existe caba.comuna soportado. Para cada provincia veta cualquier código provincial REPORTED distinto o texto nacional crudo no compatible tras NFD, acentos, espacios y caso. Los únicos aliases crudos CABA son CABA, CIUDAD AUTONOMA DE BUENOS AIRES y CAPITAL FEDERAL; PBA admite BUENOS AIRES. Para CABA también veta partido PBA REPORTED reconocido o asociación VERIFIED PBA. Texto provincial desconocido, vacío, múltiple o contradictorio veta. No atribuye por fuente, editor, institución, candidata, coordenadas, corroboración CRS ni bbox. El cursor incluye catálogos provincial/de partidos y versión de relaciones."
+            "description": "Código INDEC provincial repetible del catálogo GET /api/v1/territorios/provincias con las 24 jurisdicciones. Admite un valor o parámetros repetidos, máximo 24 valores brutos; deduplica y ordena. Sin este filtro conserva el alcance global, incluidas obras con territorio vacío. OR entre provincias y AND con los demás filtros. Nación actual registra la provincia resuelta como indec.provincia REPORTED; PBA conserva además nacion.provincia=BUENOS_AIRES, partido canónico o par legacy exacto REPORTED del padrón, o asociación espacial VERIFIED publicada. CABA admite la provincia INDEC resuelta y el namespace histórico nacion.provincia=CABA; no existe caba.comuna soportado. El nombre nacional debe ser compatible con la jurisdicción seleccionada y no puede tener códigos provinciales contradictorios. CABA también veta partido PBA REPORTED reconocido o asociación VERIFIED PBA. Texto provincial desconocido, vacío, múltiple o contradictorio veta. El filtro no infiere ubicación por fuente, editor, institución, candidata, coordenadas, corroboración CRS ni bbox. El cursor incluye catálogo provincial, padrón PBA y versión de relaciones."
+          },
+          {
+            "name": "localidadCodigo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 100,
+              "items": {
+                "type": "string",
+                "pattern": "^\\d{8,10}$"
+              }
+            },
+            "style": "form",
+            "explode": true,
+            "description": "Código exacto de una localidad GeoRef; admite hasta 100 valores repetidos del catálogo GET /api/v1/territorios/localidades. OR entre localidades y AND con los demás filtros. Sólo devuelve obras cuya revisión pública contiene indec.localidad REPORTED; no infiere localidad desde departamento, nombre, fuente o geometría. El cursor incorpora códigos y versión del catálogo de localidades."
           },
           {
             "name": "partidos",
@@ -860,7 +896,7 @@
             }
           },
           "422": {
-            "description": "Filtros, códigos provinciales o UUID fuera de catálogos, listas vacías o excesivas, combinación territorial, límite o cursor no válidos.",
+            "description": "Filtros, códigos provinciales o de localidad, UUID fuera de catálogos, listas vacías o excesivas, combinación territorial, límite o cursor no válidos.",
             "content": {
               "application/json": {
                 "schema": {
@@ -953,7 +989,24 @@
             },
             "style": "form",
             "explode": true,
-            "description": "Código INDEC provincial repetible del catálogo GET /api/v1/territorios/provincias: 02 (CABA) y 06 (Buenos Aires). Admite un valor o parámetros repetidos, máximo 24 valores brutos; deduplica y ordena. Sin este filtro conserva el alcance global, incluidas obras con territorio vacío. OR entre provincias y AND con los demás filtros. PBA exige nacion.provincia=BUENOS_AIRES REPORTED, partido canónico o par legacy exacto REPORTED del padrón, o asociación espacial VERIFIED publicada. CABA exige nacion.provincia=CABA REPORTED; no existe caba.comuna soportado. Para cada provincia veta cualquier código provincial REPORTED distinto o texto nacional crudo no compatible tras NFD, acentos, espacios y caso. Los únicos aliases crudos CABA son CABA, CIUDAD AUTONOMA DE BUENOS AIRES y CAPITAL FEDERAL; PBA admite BUENOS AIRES. Para CABA también veta partido PBA REPORTED reconocido o asociación VERIFIED PBA. Texto provincial desconocido, vacío, múltiple o contradictorio veta. No atribuye por fuente, editor, institución, candidata, coordenadas, corroboración CRS ni bbox. El cursor incluye catálogos provincial/de partidos y versión de relaciones."
+            "description": "Código INDEC provincial repetible del catálogo GET /api/v1/territorios/provincias con las 24 jurisdicciones. Admite un valor o parámetros repetidos, máximo 24 valores brutos; deduplica y ordena. Sin este filtro conserva el alcance global, incluidas obras con territorio vacío. OR entre provincias y AND con los demás filtros. Nación actual registra la provincia resuelta como indec.provincia REPORTED; PBA conserva además nacion.provincia=BUENOS_AIRES, partido canónico o par legacy exacto REPORTED del padrón, o asociación espacial VERIFIED publicada. CABA admite la provincia INDEC resuelta y el namespace histórico nacion.provincia=CABA; no existe caba.comuna soportado. El nombre nacional debe ser compatible con la jurisdicción seleccionada y no puede tener códigos provinciales contradictorios. CABA también veta partido PBA REPORTED reconocido o asociación VERIFIED PBA. Texto provincial desconocido, vacío, múltiple o contradictorio veta. El filtro no infiere ubicación por fuente, editor, institución, candidata, coordenadas, corroboración CRS ni bbox. El cursor incluye catálogo provincial, padrón PBA y versión de relaciones."
+          },
+          {
+            "name": "localidadCodigo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 100,
+              "items": {
+                "type": "string",
+                "pattern": "^\\d{8,10}$"
+              }
+            },
+            "style": "form",
+            "explode": true,
+            "description": "Código exacto de una localidad GeoRef; admite hasta 100 valores repetidos del catálogo GET /api/v1/territorios/localidades. OR entre localidades y AND con los demás filtros. Sólo devuelve obras cuya revisión pública contiene indec.localidad REPORTED; no infiere localidad desde departamento, nombre, fuente o geometría. El cursor incorpora códigos y versión del catálogo de localidades."
           },
           {
             "name": "partidos",
@@ -1335,7 +1388,7 @@
             }
           },
           "422": {
-            "description": "bbox inválido o BBOX_TOO_BROAD al exceder 10 MiB: reducir bbox/limit.\n\nFiltros, códigos provinciales o UUID fuera de catálogos, listas vacías o excesivas, combinación territorial, límite o cursor no válidos.",
+            "description": "bbox inválido o BBOX_TOO_BROAD al exceder 10 MiB: reducir bbox/limit.\n\nFiltros, códigos provinciales o de localidad, UUID fuera de catálogos, listas vacías o excesivas, combinación territorial, límite o cursor no válidos.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1714,7 +1767,7 @@
     },
     "/api/v1/territorios/provincias": {
       "get": {
-        "description": "Lectura anónima e independiente de obras, base de datos, cola y storage. provincias@2 registra Ciudad Autónoma de Buenos Aires (02, CIUDAD_AUTONOMA) y Buenos Aires (06, PROVINCIA). Conserva consultadoEn y las fuentes del padrón PBA ya instalado; la fuente adicional identifica el código CABA corroborado en la revisión GeoRef del 2026-10-05 y su API v2.0, sin acreditar una nueva consulta remota. Registrar una jurisdicción no atribuye obras por su fuente: el filtro requiere evidencia territorial publicada. El contrato admite futuras jurisdicciones con códigos INDEC textuales de dos dígitos. No devuelve geometrías, conteos ni frescura de las fuentes de obras. No admite parámetros de consulta ni requiere sesión, permisos administrativos, Origin o CSRF.",
+        "description": "Lectura anónima e independiente de obras, base de datos, cola y storage. provincias@3 registra las 24 jurisdicciones de primer orden devueltas por el Servicio Georef API v2.0 el 2026-10-08, con códigos INDEC textuales de dos dígitos y licencia CC BY 4.0. La atribución y fecha describen la consulta; no acreditan vigencia de obras. Registrar una jurisdicción no atribuye obras por su fuente: el filtro exige territorio publicado con código INDEC provincial compatible. No devuelve geometrías, conteos ni frescura de las fuentes de obras. No admite parámetros de consulta ni requiere sesión, permisos administrativos, Origin o CSRF.",
         "operationId": "TerritoriesController_provinces",
         "parameters": [],
         "responses": {
@@ -1785,6 +1838,102 @@
           }
         },
         "summary": "Consultar las provincias disponibles para filtros públicos",
+        "tags": [
+          "Territorios"
+        ]
+      }
+    },
+    "/api/v1/territorios/localidades": {
+      "get": {
+        "description": "Lectura anónima e independiente de obras, base de datos, cola y storage. Publica las 4.028 localidades del CSV GeoRef API v2.0 consultado el 2026-10-08, con IDs textuales y jerarquía provincia/departamento, licencia CC BY 4.0 y versión propia. provinciaCodigo acepta uno o varios códigos INDEC del catálogo provincial para reducir la respuesta. La lista describe unidades oficiales disponibles; no cuenta obras ni afirma cobertura editorial. No devuelve geometrías y no requiere sesión, permisos administrativos, Origin o CSRF.",
+        "operationId": "TerritoriesController_localities",
+        "parameters": [
+          {
+            "name": "provinciaCodigo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 24,
+              "items": {
+                "type": "string",
+                "pattern": "^[0-9]{2}$"
+              }
+            },
+            "style": "form",
+            "explode": true,
+            "description": "Código INDEC provincial del catálogo GET /api/v1/territorios/provincias; admite hasta 24 valores repetidos y conserva el orden canónico."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Catálogo nominal completo o filtrado por provincia, con versión, atribución y licencia.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLocalityCatalog"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Código provincial fuera del catálogo o parámetros no admitidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable.",
+            "headers": {
+              "Retry-After": {
+                "description": "Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "Cache-Control": {
+                "description": "El rechazo por cuota no se almacena en cachés compartidas.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                    "requestId": "10000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno sin detalles privados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar localidades del catálogo oficial GeoRef",
         "tags": [
           "Territorios"
         ]
@@ -2195,6 +2344,113 @@
                 "codigo",
                 "nombre",
                 "tipo"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "version",
+          "consultadoEn",
+          "fuentes",
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "PublicLocalityCatalog": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "enum": [
+              "georef-localidades@2.0-20261008"
+            ]
+          },
+          "consultadoEn": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "fuentes": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "nombre": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "licencia": {
+                  "type": "object",
+                  "properties": {
+                    "nombre": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "nombre",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "nombre",
+                "url",
+                "licencia"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "items": {
+            "minItems": 1,
+            "maxItems": 4028,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "codigo": {
+                  "type": "string",
+                  "pattern": "^\\d{8,10}$"
+                },
+                "nombre": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "provinciaCodigo": {
+                  "type": "string",
+                  "pattern": "^\\d{2}$"
+                },
+                "provinciaNombre": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "departamentoCodigo": {
+                  "type": "string",
+                  "pattern": "^\\d{5}$"
+                },
+                "departamentoNombre": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "codigo",
+                "nombre",
+                "provinciaCodigo",
+                "provinciaNombre",
+                "departamentoCodigo",
+                "departamentoNombre"
               ],
               "additionalProperties": false
             }
@@ -2972,10 +3228,13 @@
                   "type": "string",
                   "enum": [
                     "pba.municipio",
+                    "indec.provincia",
                     "indec.departamento",
+                    "indec.localidad",
                     "nacion.provincia",
                     "nacion.departamento"
-                  ]
+                  ],
+                  "description": "indec.localidad identifica una unidad nominal GeoRef informada por código y jerarquía compatible; no representa una coordenada ni una geometría."
                 },
                 "codigo": {
                   "type": "string",
@@ -3853,6 +4112,11 @@
                   "minimum": 0,
                   "maximum": 9007199254740991
                 },
+                "localidadesConObrasPublicadas": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
                 "obrasConUbicacionAprobada": {
                   "type": "integer",
                   "minimum": 0,
@@ -3886,6 +4150,7 @@
                 "urlCatalogo",
                 "recursos",
                 "obrasPublicadas",
+                "localidadesConObrasPublicadas",
                 "obrasConUbicacionAprobada",
                 "obrasSinUbicacionAprobada",
                 "ubicacionesAprobadas",
@@ -4752,10 +5017,13 @@
                   "type": "string",
                   "enum": [
                     "pba.municipio",
+                    "indec.provincia",
                     "indec.departamento",
+                    "indec.localidad",
                     "nacion.provincia",
                     "nacion.departamento"
-                  ]
+                  ],
+                  "description": "indec.localidad identifica una unidad nominal GeoRef informada por código y jerarquía compatible; no representa una coordenada ni una geometría."
                 },
                 "codigo": {
                   "type": "string",

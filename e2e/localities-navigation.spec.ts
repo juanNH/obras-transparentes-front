@@ -99,7 +99,7 @@ test("un cambio durante paginación retira lista, conteos y cifras de fuentes de
   await page.goto("/mapa?vista=lista");
   const counts = page.getByRole("region", { name: "Cuántas obras podés consultar", exact: true });
   const coverage = page.getByRole("region", { name: "Publicaciones por fuente y disponibilidad en el mapa", exact: true });
-  await expect(counts.locator("dd")).toHaveCount(3); await expect(coverage.locator("dd")).toHaveCount(21);
+  await expect(counts.locator("dd")).toHaveCount(3); await expect(coverage.locator("dd")).toHaveCount(23);
   await page.route("**/api/public/obras?*", async route => {
     const response = await route.fetch();
     const body = await response.json();

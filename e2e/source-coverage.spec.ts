@@ -20,7 +20,7 @@ test("Provincia y Nación comparten inventario sin sumar localizaciones como obr
   expect(countReads.filter((entry: { query: { fuente?: string } }) => entry.query.fuente === "nacion-obras")).toHaveLength(1);
   const inventory = await (await request.get("/api/public/obras/cobertura-fuentes")).json();
   const nationCounts = inventory.fuentes.find((source: { codigo: string }) => source.codigo === "nacion-obras");
-  await expect(nation.locator("dd")).toHaveText([String(nationCounts.obrasPublicadas), String(nationCounts.obrasConUbicacionAprobada), String(nationCounts.obrasSinUbicacionAprobada)]);
+  await expect(nation.locator("dd")).toHaveText([String(nationCounts.obrasPublicadas), String(nationCounts.obrasConUbicacionAprobada), String(nationCounts.obrasSinUbicacionAprobada), String(nationCounts.localidadesConObrasPublicadas)]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await panel.screenshot({ path: info.outputPath("panel-inventario-provincia-nacion.png"), scale: "css", style: ".skip-link:not(:focus) { visibility: hidden; }" });
   await page.screenshot({ path: info.outputPath("inventario-provincia-nacion.png"), fullPage: true, style: ".skip-link:not(:focus) { visibility: hidden; }" });
