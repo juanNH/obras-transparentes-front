@@ -98,8 +98,8 @@ test("fallas o cambio de catálogo ocultan cifras sin perder navegación y publi
 test("un cambio durante paginación retira lista, conteos y cifras de fuentes del corte anterior", async ({ page }) => {
   await page.goto("/mapa?vista=lista");
   const counts = page.getByRole("region", { name: "Cuántas obras podés consultar", exact: true });
-  const coverage = page.getByRole("region", { name: "Publicaciones por fuente y disponibilidad en el mapa", exact: true });
-  await expect(counts.locator("dd")).toHaveCount(3); await expect(coverage.locator("dd")).toHaveCount(23);
+  const coverage = page.getByRole("region", { name: "Publicaciones por provincia y fuente", exact: true });
+  await expect(counts.locator("dd")).toHaveCount(3); await expect(coverage.locator("dd")).toHaveCount(28);
   await page.route("**/api/public/obras?*", async route => {
     const response = await route.fetch();
     const body = await response.json();

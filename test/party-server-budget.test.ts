@@ -8,7 +8,7 @@ import { MAX_INSTITUTIONAL_CATALOG_BYTES } from "../src/lib/institutional-organi
 
 afterEach(() => vi.unstubAllGlobals());
 describe("presupuesto independiente de nómina", () => {
-  it("cancela el inventario provincial/nacional de más de 32 KiB con fuentes filtradas", async () => {
+  it("cancela el inventario público de más de 32 KiB con fuentes filtradas", async () => {
     const cancelled = vi.fn();
     const body = new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new Uint8Array(32 * 1024 + 1)); }, cancel: cancelled });
     const request = vi.fn<typeof fetch>().mockResolvedValue(new Response(body));

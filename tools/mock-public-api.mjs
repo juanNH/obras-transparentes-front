@@ -266,15 +266,17 @@ const server = createServer((request, response) => {
     return send(200, validate("PublicWorkCounts", { catalogoVersion: municipalFixtureState.changed ? "8" : catalogoVersion, totalPublicadas: population.length, totalConGeometria, totalSinGeometria: population.length - totalConGeometria, area: bbox ? { bbox, obrasEnMapa, obrasFueraDelArea: totalConGeometria - obrasEnMapa } : null }));
   }
   if (url.pathname === "/api/v1/obras/cobertura-fuentes") {
-    const selected = url.searchParams.has("fuente") ? [...new Set(url.searchParams.getAll("fuente"))] : ["pba-edificios", "nacion-obras"];
-    if ([...url.searchParams.keys()].some(key => key !== "fuente") || url.searchParams.getAll("fuente").length > 2 || selected.some(code => code !== "pba-edificios" && code !== "nacion-obras"))
-      return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic source coverage requires up to two source codes", requestId: null } });
+    const available = examples.sourceCoverage.fuentes.map(source => source.codigo);
+    const selected = url.searchParams.has("fuente") ? [...new Set(url.searchParams.getAll("fuente"))] : available;
+    if ([...url.searchParams.keys()].some(key => key !== "fuente") || url.searchParams.getAll("fuente").length > available.length || selected.some(code => !available.includes(code)))
+      return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic source coverage requires declared source codes", requestId: null } });
     if (municipalFixtureState.failed) return send(503, { error: { code: "UNAVAILABLE", message: "Synthetic independent source coverage unavailable", requestId: null } });
     const sources = selected.map(codigo => {
       const source = examples.sourceCoverage.fuentes.find(source => source.codigo === codigo);
       const population = filtered(new URLSearchParams({ fuente: codigo }));
       const located = population.filter(item => item.tieneGeometria).length;
       return { ...source, obrasPublicadas: population.length, obrasConUbicacionAprobada: located, obrasSinUbicacionAprobada: population.length - located,
+        localidadesConObrasPublicadas: 0,
         ubicacionesAprobadas: features.filter(feature => population.some(item => item.obraId === feature.properties.obraId)).length,
         obrasConEvidenciaLicenciaPublicada: 0, obrasSinEvidenciaLicenciaPublicada: population.length };
     });
@@ -282,7 +284,8 @@ const server = createServer((request, response) => {
     const uniqueWorks = new Set(sourceWorks.flatMap(source => [...source]));
     const shared = [...uniqueWorks].filter(id => sourceWorks.filter(source => source.has(id)).length > 1).length;
     return send(200, validate("PublicSourceCoverage", { catalogoVersion: municipalFixtureState.changed ? "8" : catalogoVersion,
-      obrasPublicadasUnicas: uniqueWorks.size, obrasCompartidasEntreFuentes: shared, fuentes: sources }));
+      obrasPublicadasUnicas: uniqueWorks.size, obrasCompartidasEntreFuentes: shared,
+      totalVinculosAdicionales: sourceWorks.reduce((sum, source) => sum + source.size, 0) - uniqueWorks.size, fuentes: sources }));
   }
   if (url.pathname === "/api/v1/obras/cobertura-municipal") {
     if (url.searchParams.size) return send(422, { error: { code: "VALIDATION_FAILED", message: "Synthetic municipal coverage has no filters", requestId: null } });

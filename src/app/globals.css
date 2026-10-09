@@ -370,15 +370,30 @@ input[type="checkbox"], input[type="radio"] { min-width: 22px; min-height: 22px;
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
-.source-coverage { margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--color-border); border-radius: 1rem; background: var(--color-surface); }
-.source-coverage h2 { margin: 0 0 0.5rem; font-size: 1.125rem; }
-.source-coverage-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1rem; margin: 1rem 0 0; padding: 0; list-style: none; }
-.source-coverage-list li { min-width: 0; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: 0.75rem; background: var(--color-bg); }
-.source-coverage-list h3 { margin: 0 0 0.5rem; font-size: 1rem; overflow-wrap: anywhere; }
+.source-coverage { margin-top: 1.5rem; padding: 0.75rem 1rem; border: 1px solid var(--color-border); border-radius: 0.75rem; background: var(--color-surface); }
+.source-coverage h2 { display: inline; margin: 0; font-size: 1.125rem; }
+.source-coverage summary { min-height: 44px; cursor: pointer; overflow-wrap: anywhere; }
+.source-coverage-overview > summary { padding: 0.25rem 0; }
+.source-coverage-overview > summary > span { display: block; margin-left: 1.25rem; color: var(--color-text-muted); font-size: 0.875rem; }
+.source-coverage-search { display: grid; gap: 0.5rem; max-width: 36rem; margin: 1rem 0; }
+.source-coverage-search label { font-weight: 700; }
+.source-coverage-search input { width: 100%; min-height: 44px; }
+.source-coverage-search p { margin: 0; }
+.source-coverage-groups { display: grid; gap: 0.5rem; }
+.source-coverage-group { border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-bg); }
+.source-coverage-group > summary { padding: 0.75rem; font-weight: 700; }
+.source-coverage-group-count { display: inline-block; margin-left: 0.75rem; font-size: 0.875rem; font-weight: 400; color: var(--color-text-muted); }
+.source-coverage-group > .results-footnote { margin: 0.25rem 0.75rem; }
+.source-coverage-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.source-coverage-list li { min-width: 0; padding: 0.75rem; border-top: 1px solid var(--color-border); background: var(--color-surface); }
+.source-coverage-list li:last-child { border-radius: 0 0 0.5rem 0.5rem; }
+.source-coverage-list h3 { display: inline; margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
+.source-coverage-published { display: block; margin-left: 1.25rem; font-size: 0.875rem; color: var(--color-text-muted); }
+.source-coverage-scope { color: var(--color-text-muted); }
 .source-coverage-list dl { margin: 0; font-size: 0.875rem; }
 .source-coverage-list dl div { display: flex; justify-content: space-between; gap: 1rem; }
 .source-coverage-list dd { margin: 0; font-weight: 700; }
-.source-coverage-list li > p:not(.source-coverage-status) { margin: 0.75rem 0; font-size: 0.875rem; }
+.source-coverage-source > p:not(.source-coverage-status) { margin: 0.75rem 0; font-size: 0.875rem; }
 .source-coverage-list a { display: inline-flex; align-items: center; min-height: 44px; }
 .source-coverage-status { width: fit-content; margin: 0 0 0.75rem; padding: 0.25rem 0.5rem; border: 1px solid var(--color-border-control); border-radius: var(--radius-pill); background: var(--color-primary-soft); color: var(--color-text); font-size: 0.8125rem; font-weight: 700; }
 .source-coverage-status[data-status="UNKNOWN"] { background: var(--color-warning-bg); color: var(--color-warning); border-color: var(--color-warning); }
@@ -388,7 +403,7 @@ input[type="checkbox"], input[type="radio"] { min-width: 22px; min-height: 22px;
 @media (forced-colors: active) {
   :focus-visible { outline-color: Highlight; box-shadow: none; }
   .button, .status-badge, .notice, .work-card, .detail-panel, .view-switch, .map-canvas, input, select, textarea { border-color: CanvasText; }
-  .source-coverage-list li, .source-coverage-status, .source-coverage-notice { border-color: CanvasText; background: Canvas; color: CanvasText; }
+  .source-coverage, .source-coverage-group, .source-coverage-list li, .source-coverage-status, .source-coverage-notice { border-color: CanvasText; background: Canvas; color: CanvasText; }
   .view-switch button[aria-pressed="true"] { color: HighlightText; background: Highlight; border-color: Highlight; }
   .button:disabled { color: GrayText; border-color: GrayText; }
   .pilot-dot, .illustration-dot { background: CanvasText; }

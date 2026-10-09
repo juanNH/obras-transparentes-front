@@ -344,12 +344,21 @@
     "catalogoVersion": "9",
     "obrasPublicadasUnicas": 2,
     "obrasCompartidasEntreFuentes": 1,
+    "totalVinculosAdicionales": 1,
     "fuentes": [
       {
         "fuenteId": "50000000-0000-4000-8000-000000000001",
         "codigo": "pba-edificios",
         "nombre": "PBA · Nuevos edificios escolares",
         "urlCatalogo": "https://example.test/catalogo/pba-edificios-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "PROVINCIAL",
+          "provincia": {
+            "codigo": "06",
+            "nombre": "Buenos Aires"
+          },
+          "municipio": null
+        },
         "recursos": [
           {
             "rol": "principal",
@@ -369,6 +378,11 @@
         "codigo": "nacion-obras",
         "nombre": "Nación · MapaInversiones",
         "urlCatalogo": "https://example.test/catalogo/nacion-obras-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "NACIONAL",
+          "provincia": null,
+          "municipio": null
+        },
         "recursos": [
           {
             "rol": "principal",
@@ -386,6 +400,157 @@
         "ubicacionesAprobadas": 2,
         "obrasConEvidenciaLicenciaPublicada": 1,
         "obrasSinEvidenciaLicenciaPublicada": 1
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000003",
+        "codigo": "caba-actualizado",
+        "nombre": "CABA · BA Obras actualizado",
+        "urlCatalogo": "https://example.test/catalogo/caba-actualizado-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "PROVINCIAL",
+          "provincia": {
+            "codigo": "02",
+            "nombre": "Ciudad Autónoma de Buenos Aires"
+          },
+          "municipio": null
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "WORK_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000004",
+        "codigo": "vl-obras",
+        "nombre": "Vicente López · Obras 2025–2026",
+        "urlCatalogo": "https://example.test/catalogo/vl-obras-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MUNICIPAL",
+          "provincia": {
+            "codigo": "06",
+            "nombre": "Buenos Aires"
+          },
+          "municipio": {
+            "esquema": "indec.departamento",
+            "codigo": "06861",
+            "nombre": "Vicente López"
+          }
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "WORK_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000005",
+        "codigo": "bahia-obras",
+        "nombre": "Bahía Blanca · Obras públicas WS",
+        "urlCatalogo": "https://example.test/catalogo/bahia-obras-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MUNICIPAL",
+          "provincia": {
+            "codigo": "06",
+            "nombre": "Buenos Aires"
+          },
+          "municipio": {
+            "esquema": "indec.departamento",
+            "codigo": "06056",
+            "nombre": "Bahía Blanca"
+          }
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "WORK_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000006",
+        "codigo": "olavarria-obras",
+        "nombre": "Olavarría · Obras Públicas",
+        "urlCatalogo": "https://example.test/catalogo/olavarria-obras-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MUNICIPAL",
+          "provincia": {
+            "codigo": "06",
+            "nombre": "Buenos Aires"
+          },
+          "municipio": {
+            "esquema": "indec.departamento",
+            "codigo": "06595",
+            "nombre": "Olavarría"
+          }
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "WORK_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000007",
+        "codigo": "pergamino-obras",
+        "nombre": "Pergamino · Obras Públicas",
+        "urlCatalogo": "https://example.test/catalogo/pergamino-obras-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MUNICIPAL",
+          "provincia": {
+            "codigo": "06",
+            "nombre": "Buenos Aires"
+          },
+          "municipio": {
+            "esquema": "indec.departamento",
+            "codigo": "06623",
+            "nombre": "Pergamino"
+          }
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "WORK_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
       }
     ]
   },

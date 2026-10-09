@@ -503,7 +503,7 @@
     },
     "/api/v1/obras/cobertura-fuentes": {
       "get": {
-        "description": "Lee un único snapshot REPEATABLE READ de revisiones actualmente publicadas y devuelve catalogoVersion. Admite fuente repetida para PBA (pba-edificios) y Nación (nacion-obras); sin filtro incluye ambas. Es un inventario agregado completo, no se pagina ni acepta filtros territoriales o temporales; GET /api/v1/obras conserva filtros, cursor y paginación ligados a catalogoVersion. Por fuente, obrasPublicadas se cuenta una vez por obraId aunque se repita su procedencia; localidadesConObrasPublicadas cuenta códigos distintos indec.localidad REPORTED y ubicaciones aprobadas se cuentan aparte, particionando las obras con/sin ubicación. Las obrasCompartidasEntreFuentes identifican solapamiento y los totales por fuente no deben sumarse para obtener obras únicas. Las unidades documentales describen los recursos originales: los edificios escolares PBA no equivalen automáticamente a intervenciones y las geometrías de Nación son localizaciones vinculadas, no obras. Las métricas de licencia usan sólo la evidencia congelada en la primera publicación de la revisión vigente; no revelan propuestas, filas de origen, IDs ni rutas de originales. La ficha pública conserva procedencia, licencia y ubicación aprobada de cada publicación.",
+        "description": "Lectura anónima sin sesión, permisos, Origin ni CSRF. Lee un único snapshot REPEATABLE READ de revisiones actualmente publicadas y devuelve catalogoVersion. Admite fuente repetida para las siete fuentes de obras instaladas; sin filtro incluye todas, también las que tienen cero publicaciones. alcanceTerritorial declara el alcance de la fuente: Nación es nacional; fuentes provinciales y municipales se agrupan bajo su provincia oficial, incluida CABA como jurisdicción provincial de navegación. No acredita ubicación, gestión ni cobertura exhaustiva de las obras. Es un inventario completo, no se pagina ni acepta filtros territoriales o temporales; GET /api/v1/obras conserva filtros, cursor y paginación ligados a catalogoVersion. Cada obraId se cuenta una vez por fuente; localidadesConObrasPublicadas cuenta códigos distintos indec.localidad REPORTED y ubicaciones aprobadas se cuentan aparte. obrasCompartidasEntreFuentes cuenta obras con varias fuentes y totalVinculosAdicionales cuenta sus vínculos después del primero: la suma por fuente equivale a obrasPublicadasUnicas más totalVinculosAdicionales, incluso con tres o más fuentes. Los edificios escolares PBA no equivalen automáticamente a intervenciones, las geometrías de Nación son localizaciones vinculadas y el padrón de establecimientos se mantiene fuera del catálogo de obras. Las métricas de licencia usan sólo evidencia congelada en la primera publicación de la revisión vigente; no revelan propuestas, filas de origen, IDs ni rutas de originales. La ficha pública conserva procedencia, licencia y ubicación aprobada. Parámetros desconocidos o fuentes no admitidas devuelven 422; 429 incluye Retry-After.",
         "operationId": "WorksController_sourceCoverage",
         "parameters": [
           {
@@ -516,13 +516,18 @@
                 "type": "string",
                 "enum": [
                   "pba-edificios",
-                  "nacion-obras"
+                  "caba-actualizado",
+                  "nacion-obras",
+                  "vl-obras",
+                  "bahia-obras",
+                  "olavarria-obras",
+                  "pergamino-obras"
                 ]
               }
             },
             "style": "form",
             "explode": true,
-            "description": "Repetible; acepta pba-edificios o nacion-obras. Sin valores devuelve ambas fuentes."
+            "description": "Repetible; selecciona códigos de procedencia instalados. Sin valores devuelve las siete fuentes de obras; no admite el padrón pba-establecimientos."
           }
         ],
         "responses": {
@@ -540,12 +545,21 @@
                       "catalogoVersion": "9",
                       "obrasPublicadasUnicas": 2,
                       "obrasCompartidasEntreFuentes": 1,
+                      "totalVinculosAdicionales": 1,
                       "fuentes": [
                         {
                           "fuenteId": "50000000-0000-4000-8000-000000000001",
                           "codigo": "pba-edificios",
                           "nombre": "PBA · Nuevos edificios escolares",
                           "urlCatalogo": "https://example.test/catalogo/pba-edificios-sintetico",
+                          "alcanceTerritorial": {
+                            "nivel": "PROVINCIAL",
+                            "provincia": {
+                              "codigo": "06",
+                              "nombre": "Buenos Aires"
+                            },
+                            "municipio": null
+                          },
                           "recursos": [
                             {
                               "rol": "principal",
@@ -565,6 +579,11 @@
                           "codigo": "nacion-obras",
                           "nombre": "Nación · MapaInversiones",
                           "urlCatalogo": "https://example.test/catalogo/nacion-obras-sintetico",
+                          "alcanceTerritorial": {
+                            "nivel": "NACIONAL",
+                            "provincia": null,
+                            "municipio": null
+                          },
                           "recursos": [
                             {
                               "rol": "principal",
@@ -582,6 +601,157 @@
                           "ubicacionesAprobadas": 2,
                           "obrasConEvidenciaLicenciaPublicada": 1,
                           "obrasSinEvidenciaLicenciaPublicada": 1
+                        },
+                        {
+                          "fuenteId": "50000000-0000-4000-8000-000000000003",
+                          "codigo": "caba-actualizado",
+                          "nombre": "CABA · BA Obras actualizado",
+                          "urlCatalogo": "https://example.test/catalogo/caba-actualizado-sintetico",
+                          "alcanceTerritorial": {
+                            "nivel": "PROVINCIAL",
+                            "provincia": {
+                              "codigo": "02",
+                              "nombre": "Ciudad Autónoma de Buenos Aires"
+                            },
+                            "municipio": null
+                          },
+                          "recursos": [
+                            {
+                              "rol": "principal",
+                              "unidadDocumental": "WORK_RECORD"
+                            }
+                          ],
+                          "obrasPublicadas": 0,
+                          "localidadesConObrasPublicadas": 0,
+                          "obrasConUbicacionAprobada": 0,
+                          "obrasSinUbicacionAprobada": 0,
+                          "ubicacionesAprobadas": 0,
+                          "obrasConEvidenciaLicenciaPublicada": 0,
+                          "obrasSinEvidenciaLicenciaPublicada": 0
+                        },
+                        {
+                          "fuenteId": "50000000-0000-4000-8000-000000000004",
+                          "codigo": "vl-obras",
+                          "nombre": "Vicente López · Obras 2025–2026",
+                          "urlCatalogo": "https://example.test/catalogo/vl-obras-sintetico",
+                          "alcanceTerritorial": {
+                            "nivel": "MUNICIPAL",
+                            "provincia": {
+                              "codigo": "06",
+                              "nombre": "Buenos Aires"
+                            },
+                            "municipio": {
+                              "esquema": "indec.departamento",
+                              "codigo": "06861",
+                              "nombre": "Vicente López"
+                            }
+                          },
+                          "recursos": [
+                            {
+                              "rol": "principal",
+                              "unidadDocumental": "WORK_RECORD"
+                            }
+                          ],
+                          "obrasPublicadas": 0,
+                          "localidadesConObrasPublicadas": 0,
+                          "obrasConUbicacionAprobada": 0,
+                          "obrasSinUbicacionAprobada": 0,
+                          "ubicacionesAprobadas": 0,
+                          "obrasConEvidenciaLicenciaPublicada": 0,
+                          "obrasSinEvidenciaLicenciaPublicada": 0
+                        },
+                        {
+                          "fuenteId": "50000000-0000-4000-8000-000000000005",
+                          "codigo": "bahia-obras",
+                          "nombre": "Bahía Blanca · Obras públicas WS",
+                          "urlCatalogo": "https://example.test/catalogo/bahia-obras-sintetico",
+                          "alcanceTerritorial": {
+                            "nivel": "MUNICIPAL",
+                            "provincia": {
+                              "codigo": "06",
+                              "nombre": "Buenos Aires"
+                            },
+                            "municipio": {
+                              "esquema": "indec.departamento",
+                              "codigo": "06056",
+                              "nombre": "Bahía Blanca"
+                            }
+                          },
+                          "recursos": [
+                            {
+                              "rol": "principal",
+                              "unidadDocumental": "WORK_RECORD"
+                            }
+                          ],
+                          "obrasPublicadas": 0,
+                          "localidadesConObrasPublicadas": 0,
+                          "obrasConUbicacionAprobada": 0,
+                          "obrasSinUbicacionAprobada": 0,
+                          "ubicacionesAprobadas": 0,
+                          "obrasConEvidenciaLicenciaPublicada": 0,
+                          "obrasSinEvidenciaLicenciaPublicada": 0
+                        },
+                        {
+                          "fuenteId": "50000000-0000-4000-8000-000000000006",
+                          "codigo": "olavarria-obras",
+                          "nombre": "Olavarría · Obras Públicas",
+                          "urlCatalogo": "https://example.test/catalogo/olavarria-obras-sintetico",
+                          "alcanceTerritorial": {
+                            "nivel": "MUNICIPAL",
+                            "provincia": {
+                              "codigo": "06",
+                              "nombre": "Buenos Aires"
+                            },
+                            "municipio": {
+                              "esquema": "indec.departamento",
+                              "codigo": "06595",
+                              "nombre": "Olavarría"
+                            }
+                          },
+                          "recursos": [
+                            {
+                              "rol": "principal",
+                              "unidadDocumental": "WORK_RECORD"
+                            }
+                          ],
+                          "obrasPublicadas": 0,
+                          "localidadesConObrasPublicadas": 0,
+                          "obrasConUbicacionAprobada": 0,
+                          "obrasSinUbicacionAprobada": 0,
+                          "ubicacionesAprobadas": 0,
+                          "obrasConEvidenciaLicenciaPublicada": 0,
+                          "obrasSinEvidenciaLicenciaPublicada": 0
+                        },
+                        {
+                          "fuenteId": "50000000-0000-4000-8000-000000000007",
+                          "codigo": "pergamino-obras",
+                          "nombre": "Pergamino · Obras Públicas",
+                          "urlCatalogo": "https://example.test/catalogo/pergamino-obras-sintetico",
+                          "alcanceTerritorial": {
+                            "nivel": "MUNICIPAL",
+                            "provincia": {
+                              "codigo": "06",
+                              "nombre": "Buenos Aires"
+                            },
+                            "municipio": {
+                              "esquema": "indec.departamento",
+                              "codigo": "06623",
+                              "nombre": "Pergamino"
+                            }
+                          },
+                          "recursos": [
+                            {
+                              "rol": "principal",
+                              "unidadDocumental": "WORK_RECORD"
+                            }
+                          ],
+                          "obrasPublicadas": 0,
+                          "localidadesConObrasPublicadas": 0,
+                          "obrasConUbicacionAprobada": 0,
+                          "obrasSinUbicacionAprobada": 0,
+                          "ubicacionesAprobadas": 0,
+                          "obrasConEvidenciaLicenciaPublicada": 0,
+                          "obrasSinEvidenciaLicenciaPublicada": 0
                         }
                       ]
                     }
@@ -636,7 +806,7 @@
             }
           }
         },
-        "summary": "Consultar cobertura pública de Provincia y Nación",
+        "summary": "Consultar cobertura pública de todas las fuentes y su alcance territorial",
         "tags": [
           "Obras publicadas"
         ]
@@ -3815,6 +3985,81 @@
                           "tipo": {
                             "type": "string",
                             "enum": [
+                              "GEOREF_LOCALITY"
+                            ]
+                          },
+                          "codigo": {
+                            "type": "string",
+                            "pattern": "^\\d{8,10}$"
+                          },
+                          "nombre": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "provinciaCodigo": {
+                            "type": "string",
+                            "pattern": "^\\d{2}$"
+                          },
+                          "provinciaNombre": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "departamentoCodigo": {
+                            "type": "string",
+                            "pattern": "^\\d{5}$"
+                          },
+                          "departamentoNombre": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "referencia": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": "string",
+                                "format": "uri"
+                              },
+                              "consultadoEn": {
+                                "type": "string",
+                                "format": "date",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                              },
+                              "version": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "sha256": {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{64}$"
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "consultadoEn",
+                              "version",
+                              "sha256"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "tipo",
+                          "codigo",
+                          "nombre",
+                          "provinciaCodigo",
+                          "provinciaNombre",
+                          "departamentoCodigo",
+                          "departamentoNombre",
+                          "referencia"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
                               "BASE_REVISION"
                             ]
                           },
@@ -4049,9 +4294,15 @@
             "minimum": 0,
             "maximum": 9007199254740991
           },
+          "totalVinculosAdicionales": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Vínculos de procedencia que exceden el primer vínculo de cada obra entre las fuentes seleccionadas. Permite conciliar la suma por fuente con obrasPublicadasUnicas cuando una obra tiene tres o más fuentes; no es un conteo de obras."
+          },
           "fuentes": {
             "minItems": 1,
-            "maxItems": 2,
+            "maxItems": 7,
             "type": "array",
             "items": {
               "type": "object",
@@ -4065,7 +4316,12 @@
                   "type": "string",
                   "enum": [
                     "pba-edificios",
-                    "nacion-obras"
+                    "caba-actualizado",
+                    "nacion-obras",
+                    "vl-obras",
+                    "bahia-obras",
+                    "olavarria-obras",
+                    "pergamino-obras"
                   ]
                 },
                 "nombre": {
@@ -4075,6 +4331,144 @@
                 "urlCatalogo": {
                   "type": "string",
                   "format": "uri"
+                },
+                "alcanceTerritorial": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "nivel": {
+                          "type": "string",
+                          "enum": [
+                            "NACIONAL"
+                          ]
+                        },
+                        "provincia": {
+                          "type": "string",
+                          "nullable": true,
+                          "enum": [
+                            null
+                          ]
+                        },
+                        "municipio": {
+                          "type": "string",
+                          "nullable": true,
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "nivel",
+                        "provincia",
+                        "municipio"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "nivel": {
+                          "type": "string",
+                          "enum": [
+                            "PROVINCIAL"
+                          ]
+                        },
+                        "provincia": {
+                          "type": "object",
+                          "properties": {
+                            "codigo": {
+                              "type": "string",
+                              "pattern": "^[0-9]{2}$"
+                            },
+                            "nombre": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "codigo",
+                            "nombre"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "municipio": {
+                          "type": "string",
+                          "nullable": true,
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "nivel",
+                        "provincia",
+                        "municipio"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "nivel": {
+                          "type": "string",
+                          "enum": [
+                            "MUNICIPAL"
+                          ]
+                        },
+                        "provincia": {
+                          "type": "object",
+                          "properties": {
+                            "codigo": {
+                              "type": "string",
+                              "pattern": "^[0-9]{2}$"
+                            },
+                            "nombre": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "codigo",
+                            "nombre"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "municipio": {
+                          "type": "object",
+                          "properties": {
+                            "esquema": {
+                              "type": "string",
+                              "enum": [
+                                "indec.departamento"
+                              ]
+                            },
+                            "codigo": {
+                              "type": "string",
+                              "pattern": "^[0-9]{5}$"
+                            },
+                            "nombre": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "esquema",
+                            "codigo",
+                            "nombre"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "nivel",
+                        "provincia",
+                        "municipio"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ],
+                  "description": "Alcance declarado de la fuente para agrupar su procedencia. Provincia usa código INDEC de dos dígitos; municipio identifica el departamento/partido INDEC de cinco dígitos. CABA ocupa el nivel provincial de navegación. No acredita territorio publicado, ubicación, gestión ni cobertura exhaustiva de las obras."
                 },
                 "recursos": {
                   "minItems": 1,
@@ -4097,7 +4491,7 @@
                           "COMPLETED_SCHOOL_BUILDING_RECORD",
                           "SPATIAL_LOCATION_RECORD"
                         ],
-                        "description": "WORK_RECORD describe registros de obra de MapaInversiones; COMPLETED_SCHOOL_BUILDING_RECORD describe registros de edificios escolares finalizados; SPATIAL_LOCATION_RECORD describe localizaciones vinculadas, nunca obras adicionales."
+                        "description": "WORK_RECORD describe registros de obra; COMPLETED_SCHOOL_BUILDING_RECORD describe registros de edificios escolares finalizados; SPATIAL_LOCATION_RECORD describe localizaciones vinculadas, nunca obras adicionales."
                       }
                     },
                     "required": [
@@ -4148,6 +4542,7 @@
                 "codigo",
                 "nombre",
                 "urlCatalogo",
+                "alcanceTerritorial",
                 "recursos",
                 "obrasPublicadas",
                 "localidadesConObrasPublicadas",
@@ -4165,6 +4560,7 @@
           "catalogoVersion",
           "obrasPublicadasUnicas",
           "obrasCompartidasEntreFuentes",
+          "totalVinculosAdicionales",
           "fuentes"
         ],
         "additionalProperties": false
@@ -4879,6 +5275,81 @@
                           "recursoId",
                           "clave",
                           "valor",
+                          "referencia"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "GEOREF_LOCALITY"
+                            ]
+                          },
+                          "codigo": {
+                            "type": "string",
+                            "pattern": "^\\d{8,10}$"
+                          },
+                          "nombre": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "provinciaCodigo": {
+                            "type": "string",
+                            "pattern": "^\\d{2}$"
+                          },
+                          "provinciaNombre": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "departamentoCodigo": {
+                            "type": "string",
+                            "pattern": "^\\d{5}$"
+                          },
+                          "departamentoNombre": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "referencia": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": "string",
+                                "format": "uri"
+                              },
+                              "consultadoEn": {
+                                "type": "string",
+                                "format": "date",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                              },
+                              "version": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "sha256": {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{64}$"
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "consultadoEn",
+                              "version",
+                              "sha256"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "tipo",
+                          "codigo",
+                          "nombre",
+                          "provinciaCodigo",
+                          "provinciaNombre",
+                          "departamentoCodigo",
+                          "departamentoNombre",
                           "referencia"
                         ],
                         "additionalProperties": false
@@ -6561,6 +7032,81 @@
                           "tipo": {
                             "type": "string",
                             "enum": [
+                              "GEOREF_LOCALITY"
+                            ]
+                          },
+                          "codigo": {
+                            "type": "string",
+                            "pattern": "^\\d{8,10}$"
+                          },
+                          "nombre": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "provinciaCodigo": {
+                            "type": "string",
+                            "pattern": "^\\d{2}$"
+                          },
+                          "provinciaNombre": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "departamentoCodigo": {
+                            "type": "string",
+                            "pattern": "^\\d{5}$"
+                          },
+                          "departamentoNombre": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "referencia": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": "string",
+                                "format": "uri"
+                              },
+                              "consultadoEn": {
+                                "type": "string",
+                                "format": "date",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                              },
+                              "version": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "sha256": {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{64}$"
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "consultadoEn",
+                              "version",
+                              "sha256"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "tipo",
+                          "codigo",
+                          "nombre",
+                          "provinciaCodigo",
+                          "provinciaNombre",
+                          "departamentoCodigo",
+                          "departamentoNombre",
+                          "referencia"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
                               "BASE_REVISION"
                             ]
                           },
@@ -7627,6 +8173,81 @@
                                     "recursoId",
                                     "clave",
                                     "valor",
+                                    "referencia"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "tipo": {
+                                      "type": "string",
+                                      "enum": [
+                                        "GEOREF_LOCALITY"
+                                      ]
+                                    },
+                                    "codigo": {
+                                      "type": "string",
+                                      "pattern": "^\\d{8,10}$"
+                                    },
+                                    "nombre": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "provinciaCodigo": {
+                                      "type": "string",
+                                      "pattern": "^\\d{2}$"
+                                    },
+                                    "provinciaNombre": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "departamentoCodigo": {
+                                      "type": "string",
+                                      "pattern": "^\\d{5}$"
+                                    },
+                                    "departamentoNombre": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "referencia": {
+                                      "type": "object",
+                                      "properties": {
+                                        "url": {
+                                          "type": "string",
+                                          "format": "uri"
+                                        },
+                                        "consultadoEn": {
+                                          "type": "string",
+                                          "format": "date",
+                                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                                        },
+                                        "version": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "sha256": {
+                                          "type": "string",
+                                          "pattern": "^[a-f0-9]{64}$"
+                                        }
+                                      },
+                                      "required": [
+                                        "url",
+                                        "consultadoEn",
+                                        "version",
+                                        "sha256"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "tipo",
+                                    "codigo",
+                                    "nombre",
+                                    "provinciaCodigo",
+                                    "provinciaNombre",
+                                    "departamentoCodigo",
+                                    "departamentoNombre",
                                     "referencia"
                                   ],
                                   "additionalProperties": false

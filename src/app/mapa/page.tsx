@@ -9,10 +9,7 @@ import {
   parseExplorerQuery,
   searchParamsOf,
 } from "../../lib/explorer-query";
-import {
-  buildSourceCoverage,
-  SOURCE_COUNT_CODES,
-} from "../../lib/source-coverage";
+import { buildSourceCoverage } from "../../lib/source-coverage";
 import { PublicApiError } from "../../api/client";
 import type {
   InstitutionalOrganizationCatalog,
@@ -70,22 +67,18 @@ export default async function MapPage({
     state.query.provinciaCodigo?.length === 1
       ? api.localities(state.query.provinciaCodigo)
       : Promise.resolve(null);
-  const [primaryReads, sourceCountReads, localityReads] = await Promise.all([
+  const [primaryReads, localityReads] = await Promise.all([
     Promise.allSettled([
       api.list(state.query),
       api.parties(),
       api.provinces(),
       api.organizations(),
-      api.municipalCoverage(),
       api.counts(countsQuery(state.query)),
       api.sourceCoverage(),
     ]),
-    Promise.allSettled(
-      SOURCE_COUNT_CODES.map((fuente) => api.counts({ fuente })),
-    ),
     Promise.allSettled([localityRead]),
   ]);
-  const [works, parties, provinces, organizations, coverage, counts, sources] =
+  const [works, parties, provinces, organizations, counts, sources] =
     primaryReads;
   if (works.status === "fulfilled") initial = works.value;
   else {
@@ -114,9 +107,7 @@ export default async function MapPage({
         : "UNAVAILABLE";
   sourceCoverage = buildSourceCoverage(
     initial?.catalogoVersion ?? null,
-    coverage,
     sources,
-    sourceCountReads,
   );
   return (
     <section className="container explorer-page">

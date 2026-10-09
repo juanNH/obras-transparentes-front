@@ -26,7 +26,7 @@ export type InstitutionalOrganizationCatalog =
 /** Totales globales de las tres fuentes piloto en una versión del catálogo público; no son conteos de filtros ni gestión municipal. */
 export type MunicipalCoverage =
   components["schemas"]["PublicMunicipalCoverage"];
-/** Inventario público de Provincia/Nación con unidad documental, ubicaciones y evidencia de licencia del corte publicado. */
+/** Inventario público de todas las fuentes con alcance declarado, unidades documentales y evidencia del corte publicado. */
 export type SourceCoverage = components["schemas"]["PublicSourceCoverage"];
 /** Fuentes habilitadas para el agregado de cobertura, conservadas desde el contrato generado. */
 export type SourceCoverageCode = SourceCoverage["fuentes"][number]["codigo"];
@@ -39,10 +39,34 @@ const sourceDocumentResources = {
     { rol: "principal", unidadDocumental: "WORK_RECORD" },
     { rol: "geometrias", unidadDocumental: "SPATIAL_LOCATION_RECORD" },
   ],
+  "caba-actualizado": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }],
+  "vl-obras": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }],
+  "bahia-obras": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }],
+  "olavarria-obras": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }],
+  "pergamino-obras": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }],
 } as const satisfies Record<
   SourceCoverageCode,
   readonly SourceCoverage["fuentes"][number]["recursos"][number][]
 >;
+/** Fuentes del inventario público; la consulta omitida pide el conjunto completo del contrato. */
+export const SOURCE_COVERAGE_CODES = Object.keys(
+  sourceDocumentResources,
+) as readonly SourceCoverageCode[];
+
+/** Comprueba las relaciones del alcance declarado sin inferir territorio a partir de nombres o publicaciones. */
+function validSourceScope(
+  scope: SourceCoverage["fuentes"][number]["alcanceTerritorial"],
+): boolean {
+  if (scope.nivel === "NACIONAL")
+    return scope.provincia === null && scope.municipio === null;
+  if (!scope.provincia || !isKnownProvinceCode(scope.provincia.codigo))
+    return false;
+  return scope.nivel === "PROVINCIAL"
+    ? scope.municipio === null
+    : scope.municipio !== null &&
+        scope.municipio.esquema === "indec.departamento" &&
+        scope.municipio.codigo.startsWith(scope.provincia.codigo);
+}
 /** Totales de obras por filtros sin paginación; el área particiona sólo publicaciones con geometría aprobada. */
 export type WorkCounts = components["schemas"]["PublicWorkCounts"];
 /** Sobre público de error que permite conservar código e identificador de solicitud. */
@@ -328,8 +352,8 @@ export function createPublicApi(
   }
   return {
     /**
-     * Lee cobertura provincial/nacional sin filtros de obras y comprueba las particiones que JSON Schema no expresa.
-     * @param fuentes - Hasta dos códigos del contrato; omitidos solicita ambas fuentes, sin sumar registros espaciales como obras.
+     * Lee cobertura de todas las fuentes sin filtros de obras y comprueba las particiones que JSON Schema no expresa.
+     * @param fuentes - Hasta siete códigos del contrato; omitidos solicita todas las fuentes, sin sumar registros espaciales como obras.
      * @param requestOptions - Señal de cancelación, sin credenciales de administración.
      * @returns Inventario del mismo corte, con obras únicas separadas de los totales por fuente que pueden solaparse.
      * @throws ApiContractError Si falta una fuente solicitada o los conteos de ubicaciones, licencias o solapamiento son inconsistentes.
@@ -338,17 +362,15 @@ export function createPublicApi(
       fuentes?: readonly SourceCoverageCode[],
       requestOptions: RequestOptions = {},
     ): Promise<SourceCoverage> {
-      const codes = fuentes ?? ["pba-edificios", "nacion-obras"];
+      const codes = fuentes ?? SOURCE_COVERAGE_CODES;
       if (
         !Array.isArray(codes) ||
         codes.length < 1 ||
-        codes.length > 2 ||
-        codes.some(
-          (code) => code !== "pba-edificios" && code !== "nacion-obras",
-        )
+        codes.length > SOURCE_COVERAGE_CODES.length ||
+        codes.some((code) => !SOURCE_COVERAGE_CODES.includes(code))
       )
         throw new TypeError(
-          "La cobertura admite hasta dos fuentes de Provincia o Nación.",
+          "La cobertura admite hasta siete fuentes públicas declaradas.",
         );
       const expected = [...new Set(codes)].sort();
       const params = new URLSearchParams();
@@ -367,15 +389,21 @@ export function createPublicApi(
         received.join(",") !== expected.join(",") ||
         coverage.obrasCompartidasEntreFuentes >
           coverage.obrasPublicadasUnicas ||
+        coverage.totalVinculosAdicionales <
+          coverage.obrasCompartidasEntreFuentes ||
+        coverage.totalVinculosAdicionales >
+          coverage.obrasCompartidasEntreFuentes * (received.length - 1) ||
         (received.length === 1 &&
-          coverage.obrasCompartidasEntreFuentes !== 0) ||
+          (coverage.obrasCompartidasEntreFuentes !== 0 ||
+            coverage.totalVinculosAdicionales !== 0)) ||
         totalBySource !==
-          coverage.obrasPublicadasUnicas +
-            coverage.obrasCompartidasEntreFuentes ||
+          coverage.obrasPublicadasUnicas + coverage.totalVinculosAdicionales ||
         coverage.fuentes.some(
           (source) =>
             source.obrasPublicadas > coverage.obrasPublicadasUnicas ||
-            coverage.obrasCompartidasEntreFuentes > source.obrasPublicadas ||
+            (received.length === 2 &&
+              coverage.obrasCompartidasEntreFuentes > source.obrasPublicadas) ||
+            !validSourceScope(source.alcanceTerritorial) ||
             source.obrasPublicadas !==
               source.obrasConUbicacionAprobada +
                 source.obrasSinUbicacionAprobada ||

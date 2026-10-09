@@ -44,9 +44,8 @@ describe("conteos y navegación por fuente públicos", () => {
   it("SSR consulta los demás filtros y oculta cifras si su catálogo difiere de la lista", async () => {
     const input = { fuente: "pergamino-obras", tieneGeometria: "true", bbox: "-59,-35,-58,-34", cursor: "synthetic-page" };
     const page = await MapPage({ searchParams: Promise.resolve(input) });
-    expect(api.counts).toHaveBeenCalledTimes(3);
+    expect(api.counts).toHaveBeenCalledTimes(1);
     expect(api.counts).toHaveBeenCalledWith({ fuente: "pergamino-obras", bbox: [-59, -35, -58, -34] });
-    for (const fuente of ["caba-actualizado", "vl-obras"]) expect(api.counts).toHaveBeenCalledWith({ fuente });
     expect(explorer(page).props.counts).toEqual(counts);
     api.counts.mockResolvedValue({ ...counts, catalogoVersion: "9876" });
     expect(explorer(await MapPage({ searchParams: Promise.resolve(input) })).props).toMatchObject({ counts: null, countsError: "CATALOG_CHANGED" });
