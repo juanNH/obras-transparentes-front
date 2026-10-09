@@ -48,8 +48,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Consultar cobertura pública de Provincia y Nación
-         * @description Lee un único snapshot REPEATABLE READ de revisiones actualmente publicadas y devuelve catalogoVersion. Admite fuente repetida para PBA (pba-edificios) y Nación (nacion-obras); sin filtro incluye ambas. Es un inventario agregado completo, no se pagina ni acepta filtros territoriales o temporales; GET /api/v1/obras conserva filtros, cursor y paginación ligados a catalogoVersion. Por fuente, obrasPublicadas se cuenta una vez por obraId aunque se repita su procedencia; localidadesConObrasPublicadas cuenta códigos distintos indec.localidad REPORTED y ubicaciones aprobadas se cuentan aparte, particionando las obras con/sin ubicación. Las obrasCompartidasEntreFuentes identifican solapamiento y los totales por fuente no deben sumarse para obtener obras únicas. Las unidades documentales describen los recursos originales: los edificios escolares PBA no equivalen automáticamente a intervenciones y las geometrías de Nación son localizaciones vinculadas, no obras. Las métricas de licencia usan sólo la evidencia congelada en la primera publicación de la revisión vigente; no revelan propuestas, filas de origen, IDs ni rutas de originales. La ficha pública conserva procedencia, licencia y ubicación aprobada de cada publicación.
+         * Consultar cobertura pública de todas las fuentes y su alcance territorial
+         * @description Lectura anónima sin sesión, permisos, Origin ni CSRF. Lee un único snapshot REPEATABLE READ de revisiones actualmente publicadas y devuelve catalogoVersion. Admite fuente repetida para las siete fuentes de obras instaladas; sin filtro incluye todas, también las que tienen cero publicaciones. alcanceTerritorial declara el alcance de la fuente: Nación es nacional; fuentes provinciales y municipales se agrupan bajo su provincia oficial, incluida CABA como jurisdicción provincial de navegación. No acredita ubicación, gestión ni cobertura exhaustiva de las obras. Es un inventario completo, no se pagina ni acepta filtros territoriales o temporales; GET /api/v1/obras conserva filtros, cursor y paginación ligados a catalogoVersion. Cada obraId se cuenta una vez por fuente; localidadesConObrasPublicadas cuenta códigos distintos indec.localidad REPORTED y ubicaciones aprobadas se cuentan aparte. obrasCompartidasEntreFuentes cuenta obras con varias fuentes y totalVinculosAdicionales cuenta sus vínculos después del primero: la suma por fuente equivale a obrasPublicadasUnicas más totalVinculosAdicionales, incluso con tres o más fuentes. Los edificios escolares PBA no equivalen automáticamente a intervenciones, las geometrías de Nación son localizaciones vinculadas y el padrón de establecimientos se mantiene fuera del catálogo de obras. Las métricas de licencia usan sólo evidencia congelada en la primera publicación de la revisión vigente; no revelan propuestas, filas de origen, IDs ni rutas de originales. La ficha pública conserva procedencia, licencia y ubicación aprobada. Parámetros desconocidos o fuentes no admitidas devuelven 422; 429 incluye Retry-After.
          */
         get: operations["WorksController_sourceCoverage"];
         put?: never;
@@ -397,6 +397,23 @@ export interface components {
                             tipo: "CATALOG_METADATA";
                             valor: string;
                         } | {
+                            codigo: string;
+                            departamentoCodigo: string;
+                            departamentoNombre: string;
+                            nombre: string;
+                            provinciaCodigo: string;
+                            provinciaNombre: string;
+                            referencia: {
+                                /** Format: date */
+                                consultadoEn: string;
+                                sha256: string;
+                                /** Format: uri */
+                                url: string;
+                                version: string;
+                            };
+                            /** @enum {string} */
+                            tipo: "GEOREF_LOCALITY";
+                        } | {
                             campo: string;
                             /** Format: uuid */
                             obraId: string;
@@ -665,8 +682,39 @@ export interface components {
             /** @description Versión decimal exacta del catálogo; conservar como string, nunca convertir a Number. */
             catalogoVersion: string;
             fuentes: {
+                /** @description Alcance declarado de la fuente para agrupar su procedencia. Provincia usa código INDEC de dos dígitos; municipio identifica el departamento/partido INDEC de cinco dígitos. CABA ocupa el nivel provincial de navegación. No acredita territorio publicado, ubicación, gestión ni cobertura exhaustiva de las obras. */
+                alcanceTerritorial: {
+                    /** @enum {string|null} */
+                    municipio: null;
+                    /** @enum {string} */
+                    nivel: "NACIONAL";
+                    /** @enum {string|null} */
+                    provincia: null;
+                } | {
+                    /** @enum {string|null} */
+                    municipio: null;
+                    /** @enum {string} */
+                    nivel: "PROVINCIAL";
+                    provincia: {
+                        codigo: string;
+                        nombre: string;
+                    };
+                } | {
+                    municipio: {
+                        codigo: string;
+                        /** @enum {string} */
+                        esquema: "indec.departamento";
+                        nombre: string;
+                    };
+                    /** @enum {string} */
+                    nivel: "MUNICIPAL";
+                    provincia: {
+                        codigo: string;
+                        nombre: string;
+                    };
+                };
                 /** @enum {string} */
-                codigo: "pba-edificios" | "nacion-obras";
+                codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
                 /** Format: uuid */
                 fuenteId: string;
                 localidadesConObrasPublicadas: number;
@@ -680,7 +728,7 @@ export interface components {
                     /** @enum {string} */
                     rol: "principal" | "geometrias";
                     /**
-                     * @description WORK_RECORD describe registros de obra de MapaInversiones; COMPLETED_SCHOOL_BUILDING_RECORD describe registros de edificios escolares finalizados; SPATIAL_LOCATION_RECORD describe localizaciones vinculadas, nunca obras adicionales.
+                     * @description WORK_RECORD describe registros de obra; COMPLETED_SCHOOL_BUILDING_RECORD describe registros de edificios escolares finalizados; SPATIAL_LOCATION_RECORD describe localizaciones vinculadas, nunca obras adicionales.
                      * @enum {string}
                      */
                     unidadDocumental: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD" | "SPATIAL_LOCATION_RECORD";
@@ -691,6 +739,8 @@ export interface components {
             }[];
             obrasCompartidasEntreFuentes: number;
             obrasPublicadasUnicas: number;
+            /** @description Vínculos de procedencia que exceden el primer vínculo de cada obra entre las fuentes seleccionadas. Permite conciliar la suma por fuente con obrasPublicadasUnicas cuando una obra tiene tres o más fuentes; no es un conteo de obras. */
+            totalVinculosAdicionales: number;
         };
         PublicWorkCounts: {
             area: {
@@ -983,6 +1033,23 @@ export interface components {
                         tipo: "CATALOG_METADATA";
                         valor: string;
                     } | {
+                        codigo: string;
+                        departamentoCodigo: string;
+                        departamentoNombre: string;
+                        nombre: string;
+                        provinciaCodigo: string;
+                        provinciaNombre: string;
+                        referencia: {
+                            /** Format: date */
+                            consultadoEn: string;
+                            sha256: string;
+                            /** Format: uri */
+                            url: string;
+                            version: string;
+                        };
+                        /** @enum {string} */
+                        tipo: "GEOREF_LOCALITY";
+                    } | {
                         campo: string;
                         /** Format: uuid */
                         obraId: string;
@@ -1061,6 +1128,23 @@ export interface components {
                     /** @enum {string} */
                     tipo: "CATALOG_METADATA";
                     valor: string;
+                } | {
+                    codigo: string;
+                    departamentoCodigo: string;
+                    departamentoNombre: string;
+                    nombre: string;
+                    provinciaCodigo: string;
+                    provinciaNombre: string;
+                    referencia: {
+                        /** Format: date */
+                        consultadoEn: string;
+                        sha256: string;
+                        /** Format: uri */
+                        url: string;
+                        version: string;
+                    };
+                    /** @enum {string} */
+                    tipo: "GEOREF_LOCALITY";
                 } | {
                     campo: string;
                     /** Format: uuid */
@@ -1343,6 +1427,23 @@ export interface components {
                     tipo: "CATALOG_METADATA";
                     valor: string;
                 } | {
+                    codigo: string;
+                    departamentoCodigo: string;
+                    departamentoNombre: string;
+                    nombre: string;
+                    provinciaCodigo: string;
+                    provinciaNombre: string;
+                    referencia: {
+                        /** Format: date */
+                        consultadoEn: string;
+                        sha256: string;
+                        /** Format: uri */
+                        url: string;
+                        version: string;
+                    };
+                    /** @enum {string} */
+                    tipo: "GEOREF_LOCALITY";
+                } | {
                     campo: string;
                     /** Format: uuid */
                     obraId: string;
@@ -1600,8 +1701,8 @@ export interface operations {
     WorksController_sourceCoverage: {
         parameters: {
             query?: {
-                /** @description Repetible; acepta pba-edificios o nacion-obras. Sin valores devuelve ambas fuentes. */
-                fuente?: ("pba-edificios" | "nacion-obras")[];
+                /** @description Repetible; selecciona códigos de procedencia instalados. Sin valores devuelve las siete fuentes de obras; no admite el padrón pba-establecimientos. */
+                fuente?: ("pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras")[];
             };
             header?: never;
             path?: never;

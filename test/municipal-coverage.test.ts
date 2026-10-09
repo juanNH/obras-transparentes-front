@@ -95,14 +95,33 @@ const perSource: Record<string, WorkCounts> = {
     totalConGeometria: 0,
     totalSinGeometria: 2,
   },
+  "bahia-obras": {
+    ...workCounts,
+    totalPublicadas: 1,
+    totalConGeometria: 1,
+    totalSinGeometria: 0,
+  },
+  "olavarria-obras": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "pergamino-obras": {
+    ...workCounts,
+    totalPublicadas: 2,
+    totalConGeometria: 0,
+    totalSinGeometria: 2,
+  },
 };
 const sourceInventory = parsePublicResponse<SourceCoverage>(
   "PublicSourceCoverage",
   {
     ...examples.sourceCoverage,
     catalogoVersion: version,
-    obrasPublicadasUnicas: 9,
+    obrasPublicadasUnicas: 14,
     obrasCompartidasEntreFuentes: 0,
+    totalVinculosAdicionales: 0,
     fuentes: examples.sourceCoverage.fuentes.map((source) => ({
       ...source,
       obrasPublicadas: perSource[source.codigo]!.totalPublicadas,
@@ -180,7 +199,7 @@ describe("cobertura pública por fuente", () => {
     }
   });
 
-  it("presenta las siete fuentes en el mismo corte y consulta conteos globales por fuente", async () => {
+  it("presenta las siete fuentes en el mismo corte con una lectura agregada independiente de filtros", async () => {
     const page = await MapPage({
       searchParams: Promise.resolve({
         fuente: "pergamino-obras",
@@ -197,11 +216,9 @@ describe("cobertura pública por fuente", () => {
     expect(
       props.sourceCoverage.map((source) => source.codigo).slice(0, 2),
     ).toEqual(["pba-edificios", "nacion-obras"]);
-    expect(api.municipalCoverage).toHaveBeenCalledExactlyOnceWith();
+    expect(api.municipalCoverage).not.toHaveBeenCalled();
     expect(api.sourceCoverage).toHaveBeenCalledExactlyOnceWith();
-    for (const fuente of ["caba-actualizado", "vl-obras"])
-      expect(api.counts).toHaveBeenCalledWith({ fuente });
-    expect(api.counts).toHaveBeenCalledTimes(3);
+    expect(api.counts).toHaveBeenCalledTimes(1);
     const html = renderToStaticMarkup(
       SourceCoveragePanel({
         coverage: props.sourceCoverage,
@@ -229,7 +246,7 @@ describe("cobertura pública por fuente", () => {
     expect(html).not.toContain("bbox=");
   });
 
-  it("oculta Provincia y Nación cuando su corte agregado no coincide con el listado", async () => {
+  it("oculta todas las cantidades cuando el corte agregado no coincide con el listado", async () => {
     api.sourceCoverage.mockResolvedValue({
       ...sourceInventory,
       catalogoVersion: "987654321",
@@ -245,21 +262,18 @@ describe("cobertura pública por fuente", () => {
       items.find((source) => source.codigo === "pba-edificios"),
     ).toMatchObject({ estado: "UNKNOWN", obrasPublicadas: null });
     expect(items.find((source) => source.codigo === "vl-obras")).toMatchObject({
-      estado: "AVAILABLE",
-      obrasPublicadas: 2,
+      estado: "UNKNOWN",
+      obrasPublicadas: null,
     });
     const html = renderToStaticMarkup(
       SourceCoveragePanel({ coverage: items, catalogoVersion: version }),
     );
     expect(html).toContain("No hay un conteo verificable para el mismo corte");
-    const nationCard = html
-      .split("<li>")
-      .find((card) => card.includes("Nación · obras"))!;
-    expect(nationCard).not.toContain("<dd>");
-    expect(nationCard).not.toContain("localizaciones vinculadas");
+    expect(html).not.toContain("<dd>");
+    expect(html).not.toContain("localizaciones vinculadas");
   });
 
-  it("distingue una diferencia de versión del error de lectura y conserva la lista", async () => {
+  it("conserva la lista cuando falla la cobertura unificada y oculta los diagnósticos privados", async () => {
     api.municipalCoverage.mockResolvedValue({
       ...coverage,
       catalogoVersion: "987654321",
@@ -274,25 +288,7 @@ describe("cobertura pública por fuente", () => {
     const props = explorer(page).props;
     expect(props.initial).toEqual(examples.listPopulated);
     expect(
-      props.sourceCoverage
-        .filter((source) =>
-          ["bahia-obras", "olavarria-obras", "pergamino-obras"].includes(
-            source.codigo,
-          ),
-        )
-        .every((source) => source.estado === "UNKNOWN"),
-    ).toBe(true);
-    expect(
-      props.sourceCoverage
-        .filter((source) =>
-          [
-            "pba-edificios",
-            "nacion-obras",
-            "caba-actualizado",
-            "vl-obras",
-          ].includes(source.codigo),
-        )
-        .every((source) => source.estado === "ERROR"),
+      props.sourceCoverage.every((source) => source.estado === "ERROR"),
     ).toBe(true);
     const html = renderToStaticMarkup(
       SourceCoveragePanel({
@@ -300,7 +296,6 @@ describe("cobertura pública por fuente", () => {
         catalogoVersion: version,
       }),
     );
-    expect(html).toContain("Desconocido");
     expect(html).toContain("Error de lectura");
     expect(html).not.toContain("private-internal-diagnostic");
   });
@@ -325,7 +320,7 @@ describe("cobertura pública por fuente", () => {
     ).not.toContain("<dd>");
   });
 
-  it("el BFF admite hasta dos fuentes y rechaza filtros de obras, paginación y códigos ajenos", async () => {
+  it("el BFF admite hasta siete fuentes y rechaza filtros de obras, paginación y códigos ajenos", async () => {
     const input = new Request(
       "https://example.test/api/public/obras/cobertura-fuentes?fuente=nacion-obras&fuente=pba-edificios",
       {
@@ -348,12 +343,14 @@ describe("cobertura pública por fuente", () => {
       { signal: input.signal },
     );
     for (const query of [
-      "fuente=bahia-obras",
+      "fuente=unknown-obras",
       "fuente=",
       "limit=20",
       "bbox=-60,-35,-59,-34",
       "cursor=synthetic-page",
-      "fuente=nacion-obras&fuente=nacion-obras&fuente=pba-edificios",
+      new URLSearchParams(
+        Array.from({ length: 8 }, () => ["fuente", "nacion-obras"]),
+      ).toString(),
     ]) {
       expect(
         (

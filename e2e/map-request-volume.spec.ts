@@ -105,8 +105,8 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   expect(counts((await fixtureRequests(request)).slice(baseline)).parties).toBe(1);
   expect(counts((await fixtureRequests(request)).slice(baseline)).provinces).toBe(1);
   expect(counts((await fixtureRequests(request)).slice(baseline)).organizations).toBe(1);
-  expect(counts((await fixtureRequests(request)).slice(baseline)).municipalCoverage).toBe(1);
-  expect(counts((await fixtureRequests(request)).slice(baseline)).workCounts).toBe(3);
+  expect(counts((await fixtureRequests(request)).slice(baseline)).municipalCoverage).toBe(0);
+  expect(counts((await fixtureRequests(request)).slice(baseline)).workCounts).toBe(1);
   expect(counts((await fixtureRequests(request)).slice(baseline)).sourceCoverage).toBe(1);
   expect(browser).toHaveLength(0);
 
@@ -159,10 +159,10 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   expect(counts(filtered).parties).toBe(3);
   expect(counts(filtered).provinces).toBe(3);
   expect(counts(filtered).organizations).toBe(3);
-  expect(counts(filtered).municipalCoverage).toBe(3);
-  expect(counts(filtered).workCounts).toBe(9);
+  expect(counts(filtered).municipalCoverage).toBe(0);
+  expect(counts(filtered).workCounts).toBe(3);
   expect(counts(filtered).sourceCoverage).toBe(3);
-  expect(filtered).toHaveLength(31);
+  expect(filtered).toHaveLength(22);
   expect(filtered.filter(record => record.path === "/api/v1/obras").at(-1)!.query).toMatchObject({ fuente: "nacion-obras" });
   expect(filtered.filter(record => record.path === "/api/v1/obras").at(-1)!.query).not.toHaveProperty("bbox");
   expect(browser.filter(record => record.path === "/api/public/geojson")).toHaveLength(2);

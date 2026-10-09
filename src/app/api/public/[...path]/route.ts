@@ -1,6 +1,7 @@
 /** @file Pasarela GET de mismo origen para rutas públicas admitidas; valida consultas y oculta detalles internos. */
 import {
   PublicApiError,
+  SOURCE_COVERAGE_CODES,
   type SourceCoverageCode,
 } from "../../../../api/client";
 import { parseExplorerQuery, isUUID } from "../../../../lib/explorer-query";
@@ -30,7 +31,7 @@ const allowed = new Set([
   "cursor",
 ]);
 /**
- * Acepta lista, GeoJSON, ficha, conteos, coberturas y catálogos públicos; el inventario provincial/nacional recibe sólo hasta dos fuentes y usa presupuesto independiente.
+ * Acepta lista, GeoJSON, ficha, conteos, coberturas y catálogos públicos; el inventario admite hasta siete fuentes declaradas y usa presupuesto independiente.
  * @param request - GET de mismo origen; su señal cancela la lectura upstream.
  * @param params - Segmentos de la ruta pública resueltos por App Router.
  * @returns JSON validado sin caché o un error público que no revela URLs internas.
@@ -73,13 +74,13 @@ export async function GET(
       const codes = url.searchParams.getAll("fuente");
       if (
         [...url.searchParams.keys()].some((key) => key !== "fuente") ||
-        codes.length > 2 ||
+        codes.length > SOURCE_COVERAGE_CODES.length ||
         codes.some(
-          (code) => code !== "pba-edificios" && code !== "nacion-obras",
+          (code) => !SOURCE_COVERAGE_CODES.includes(code as SourceCoverageCode),
         )
       )
         throw new TypeError(
-          "La cobertura recibe sólo fuentes de Provincia o Nación.",
+          "La cobertura recibe sólo fuentes públicas declaradas.",
         );
       validated = true;
       result = await api.sourceCoverage(

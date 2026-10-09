@@ -38,6 +38,7 @@ import {
 } from "../lib/explorer-query";
 import type { ExplorerQuery } from "../lib/explorer-query";
 import type { PublicSourceCoverage } from "../lib/source-coverage";
+import { groupSourceCoverage } from "../lib/source-coverage";
 import {
   limitMapFeatures,
   limitMapLayers,
@@ -708,6 +709,7 @@ export function Explorer({
     <div className="explorer">
       <SourceCoveragePanel
         coverage={sourceCoverage}
+        activeSource={state.query.fuente}
         catalogoVersion={mismatch ? null : (version ?? null)}
         stale={mismatch}
       />
@@ -725,10 +727,14 @@ export function Explorer({
             defaultValue={query.fuente ?? ""}
           >
             <option value="">Todas las fuentes</option>
-            {Object.entries(SOURCES).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
+            {groupSourceCoverage(sourceCoverage).map((group) => (
+              <optgroup key={group.id} label={group.nombre}>
+                {group.fuentes.map((source) => (
+                  <option key={source.codigo} value={source.codigo}>
+                    {source.nombre}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>
