@@ -154,6 +154,30 @@ const perSource: Record<string, WorkCounts> = {
     totalConGeometria: 0,
     totalSinGeometria: 0,
   },
+  "general-pueyrredon-registros": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "tandil-documentos": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "general-rodriguez-documentos": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "coronel-suarez-documentos": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
 };
 const sourceInventory = parsePublicResponse<SourceCoverage>(
   "PublicSourceCoverage",
@@ -169,10 +193,15 @@ const sourceInventory = parsePublicResponse<SourceCoverage>(
       obrasConUbicacionAprobada: perSource[source.codigo]!.totalConGeometria,
       obrasSinUbicacionAprobada: perSource[source.codigo]!.totalSinGeometria,
       localidadesConObrasPublicadas: source.codigo === "nacion-obras" ? 18 : 0,
-      ubicacionesAprobadas:
-        source.codigo === "lujan-documentos"
-          ? 0
-          : perSource[source.codigo]!.totalConGeometria + 1,
+      ubicacionesAprobadas: [
+        "lujan-documentos",
+        "general-pueyrredon-registros",
+        "tandil-documentos",
+        "general-rodriguez-documentos",
+        "coronel-suarez-documentos",
+      ].includes(source.codigo)
+        ? 0
+        : perSource[source.codigo]!.totalConGeometria + 1,
       obrasConEvidenciaLicenciaPublicada:
         perSource[source.codigo]!.totalPublicadas,
       obrasSinEvidenciaLicenciaPublicada: 0,
