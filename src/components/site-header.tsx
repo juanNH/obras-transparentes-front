@@ -18,6 +18,7 @@ export function SiteHeader() {
         </Link>
         <nav aria-label="Navegación principal" className="main-nav">
           <Link href="/proyecto" className="nav-project">El proyecto</Link>
+          <Link href="/registros" prefetch={false}>Registros informados</Link>
           <Link href={sourceListHref("pba-edificios")} prefetch={false}>Provincia</Link>
           <Link href={sourceListHref("nacion-obras")} prefetch={false}>Nación</Link>
           <Link href="/mapa" prefetch={false} className="nav-explore">Explorar obras <span aria-hidden="true">↗</span></Link>

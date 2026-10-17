@@ -1,4 +1,4 @@
-/** @file Comprueba conteos de las siete fuentes, versiones compartidas y lecturas municipales sintéticas sin consultar el catálogo activo. */
+/** @file Comprueba conteos de fuentes, versiones compartidas y lecturas municipales sintéticas sin consultar el catálogo activo. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -6,12 +6,14 @@ import examples from "../contracts/examples.json" with { type: "json" };
 import {
   createPublicApi,
   PublicApiError,
+  SOURCE_COVERAGE_CODES,
   type MunicipalCoverage,
   type SourceCoverage,
   type WorkCounts,
 } from "../src/api/client";
 import { SourceCoveragePanel } from "../src/components/source-coverage";
 import { parsePublicResponse } from "../src/api/contract";
+import { reportedRecordsHref } from "../src/api/reported-records";
 import type { PublicSourceCoverage } from "../src/lib/source-coverage";
 
 const api = vi.hoisted(() => ({
@@ -23,6 +25,7 @@ const api = vi.hoisted(() => ({
   municipalCoverage: vi.fn(),
   sourceCoverage: vi.fn(),
   counts: vi.fn(),
+  reportedRecordCounts: vi.fn(),
 }));
 vi.mock("../src/lib/public-api", () => ({ publicApi: () => api }));
 vi.mock("../src/lib/config", () => ({
@@ -60,6 +63,14 @@ const coverage: MunicipalCoverage = {
       obrasPublicadas: 2,
       obrasConGeometria: 0,
       obrasSinGeometria: 2,
+    },
+    {
+      fuenteId: "70000000-0000-4000-8000-000000000004",
+      codigo: "mercedes-obras",
+      nombre: "EJEMPLO SINTÉTICO — Mercedes",
+      obrasPublicadas: 0,
+      obrasConGeometria: 0,
+      obrasSinGeometria: 0,
     },
   ],
 };
@@ -113,6 +124,60 @@ const perSource: Record<string, WorkCounts> = {
     totalConGeometria: 0,
     totalSinGeometria: 2,
   },
+  "acumar-obras": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "neuquen-obras": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "mendoza-obras": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "mercedes-obras": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "lujan-documentos": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "general-pueyrredon-registros": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "tandil-documentos": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "general-rodriguez-documentos": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "coronel-suarez-documentos": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
 };
 const sourceInventory = parsePublicResponse<SourceCoverage>(
   "PublicSourceCoverage",
@@ -128,7 +193,15 @@ const sourceInventory = parsePublicResponse<SourceCoverage>(
       obrasConUbicacionAprobada: perSource[source.codigo]!.totalConGeometria,
       obrasSinUbicacionAprobada: perSource[source.codigo]!.totalSinGeometria,
       localidadesConObrasPublicadas: source.codigo === "nacion-obras" ? 18 : 0,
-      ubicacionesAprobadas: perSource[source.codigo]!.totalConGeometria + 1,
+      ubicacionesAprobadas: [
+        "lujan-documentos",
+        "general-pueyrredon-registros",
+        "tandil-documentos",
+        "general-rodriguez-documentos",
+        "coronel-suarez-documentos",
+      ].includes(source.codigo)
+        ? 0
+        : perSource[source.codigo]!.totalConGeometria + 1,
       obrasConEvidenciaLicenciaPublicada:
         perSource[source.codigo]!.totalPublicadas,
       obrasSinEvidenciaLicenciaPublicada: 0,
@@ -144,6 +217,9 @@ beforeEach(() => {
     Object.keys(query).length === 1 && query.fuente
       ? perSource[query.fuente]
       : workCounts,
+  );
+  api.reportedRecordCounts.mockRejectedValue(
+    new Error("Synthetic reported-record counts unavailable"),
   );
 });
 
@@ -199,7 +275,7 @@ describe("cobertura pública por fuente", () => {
     }
   });
 
-  it("presenta las siete fuentes en el mismo corte con una lectura agregada independiente de filtros", async () => {
+  it("presenta todas las fuentes en el mismo corte con una lectura agregada independiente de filtros", async () => {
     const page = await MapPage({
       searchParams: Promise.resolve({
         fuente: "pergamino-obras",
@@ -209,7 +285,9 @@ describe("cobertura pública por fuente", () => {
       }),
     });
     const props = explorer(page).props;
-    expect(props.sourceCoverage).toHaveLength(7);
+    expect(props.sourceCoverage).toHaveLength(
+      examples.sourceCoverage.fuentes.length,
+    );
     expect(
       props.sourceCoverage.every((source) => source.estado === "AVAILABLE"),
     ).toBe(true);
@@ -225,7 +303,7 @@ describe("cobertura pública por fuente", () => {
         catalogoVersion: props.initial!.catalogoVersion,
       }),
     );
-    expect(html).toContain("globales del catálogo público");
+    expect(html).toContain("Conteos globales de obras");
     expect(html).toContain("comparten corte con el listado y las fichas");
     expect(html).toContain("Provincia de Buenos Aires · edificios escolares");
     expect(html).toContain("Nación · obras");
@@ -239,10 +317,26 @@ describe("cobertura pública por fuente", () => {
       "localizaciones vinculadas; no agrega obras al conteo",
     );
     expect(html).toContain("no se suman para obtener obras únicas");
-    for (const source of props.sourceCoverage)
-      expect(html).toContain(
-        `href="/mapa?fuente=${source.codigo}&amp;vista=lista"`,
-      );
+    for (const source of props.sourceCoverage) {
+      const href =
+        source.codigo === "lujan-documentos" ||
+        source.codigo === "coronel-suarez-documentos"
+          ? reportedRecordsHref({
+              fuente: source.codigo,
+              tipo: "DOCUMENT_REPORT_SECTION",
+            })
+          : source.codigo === "mendoza-obras" ||
+              source.codigo === "general-rodriguez-documentos" ||
+              source.codigo === "tandil-documentos"
+            ? reportedRecordsHref({
+                fuente: source.codigo,
+                tipo: "PROCUREMENT_ACT_RECORD",
+              })
+            : source.codigo === "general-pueyrredon-registros"
+              ? reportedRecordsHref({ fuente: source.codigo })
+              : `/mapa?fuente=${source.codigo}&vista=lista`;
+      expect(html).toContain(`href="${href.replaceAll("&", "&amp;")}"`);
+    }
     expect(html).not.toContain("bbox=");
   });
 
@@ -320,7 +414,7 @@ describe("cobertura pública por fuente", () => {
     ).not.toContain("<dd>");
   });
 
-  it("el BFF admite hasta siete fuentes y rechaza filtros de obras, paginación y códigos ajenos", async () => {
+  it("el BFF admite las fuentes del contrato y rechaza filtros de obras, paginación y códigos ajenos", async () => {
     const input = new Request(
       "https://example.test/api/public/obras/cobertura-fuentes?fuente=nacion-obras&fuente=pba-edificios",
       {
@@ -349,7 +443,10 @@ describe("cobertura pública por fuente", () => {
       "bbox=-60,-35,-59,-34",
       "cursor=synthetic-page",
       new URLSearchParams(
-        Array.from({ length: 8 }, () => ["fuente", "nacion-obras"]),
+        Array.from({ length: SOURCE_COVERAGE_CODES.length + 1 }, () => [
+          "fuente",
+          "nacion-obras",
+        ]),
       ).toString(),
     ]) {
       expect(

@@ -1,5 +1,6 @@
 /** @file Presenta una cobertura compacta por provincia y procedencia, con estados explícitos y enlaces públicos sin área. */
 import { SourceCoverageBrowser } from "./source-coverage-browser";
+import { REPORTED_RECORD_TYPES, type ReportedRecordCounts } from "../api/reported-records";
 import type {
   PublicSourceCode,
   PublicSourceCoverage,
@@ -11,11 +12,13 @@ export function SourceCoveragePanel({
   catalogoVersion,
   stale = false,
   activeSource,
+  reportedRecordCounts = null,
 }: {
   coverage: readonly PublicSourceCoverage[];
   catalogoVersion: string | null;
   stale?: boolean;
   activeSource?: PublicSourceCode | undefined;
+  reportedRecordCounts?: ReportedRecordCounts | null;
 }) {
   return (
     <section
@@ -39,12 +42,12 @@ export function SourceCoveragePanel({
           <span>{coverage.length} fuentes · Consultar cobertura</span>
         </summary>
         <p className="results-footnote">
-          Fuentes nacionales y fuentes de cada provincia, incluidos sus
+          Fuentes nacionales, de varias provincias y de cada provincia, incluidos sus
           municipios. Esta agrupación indica el alcance de la fuente; no
           acredita dónde están sus obras ni quién las ejecuta o financia.
         </p>
         <p className="results-footnote">
-          Conteos globales del catálogo público; no cambian con filtros, área o
+          Conteos globales de obras; no cambian con filtros, área o
           paginación.{" "}
           {catalogoVersion && !stale ? (
             <>
@@ -59,10 +62,23 @@ export function SourceCoveragePanel({
           Una obra puede estar vinculada a varias fuentes: sus cantidades no se
           suman para obtener obras únicas.
         </p>
+        <aside className="notice" aria-label="Catálogo separado de registros">
+          {reportedRecordCounts ? (
+            <>
+              <p><strong>{reportedRecordCounts.totalRegistros} registros informados publicados</strong> · catálogo de registros {reportedRecordCounts.catalogoVersion}.</p>
+              <p>Estas unidades se cuentan por separado de las obras. Cada catálogo tiene su propia versión.</p>
+              <ul>{reportedRecordCounts.porTipo.map((item) => (
+                <li key={item.tipo}>{REPORTED_RECORD_TYPES[item.tipo]}: {item.cantidad}</li>
+              ))}</ul>
+            </>
+          ) : <p>No se pudo consultar el conteo de registros informados.</p>}
+          <a href="/registros">Consultar el catálogo de registros</a>
+        </aside>
         <SourceCoverageBrowser
           coverage={coverage}
           stale={stale}
           activeSource={activeSource}
+          reportedRecordCounts={reportedRecordCounts}
         />
         {(stale ||
           coverage.some((source) => source.estado !== "AVAILABLE")) && (

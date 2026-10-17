@@ -11,6 +11,9 @@ describe("procedencia institucional para el mapa", () => {
     ["bahia-obras", "municipality"],
     ["olavarria-obras", "municipality"],
     ["pergamino-obras", "municipality"],
+    ["acumar-obras", "multiprovincial"],
+    ["neuquen-obras", "province"],
+    ["mendoza-obras", "municipality"],
   ] as const)("clasifica %s por el catálogo de origen", (codigo, expected) => {
     expect(mapOriginCategory([{ codigo }])).toBe(expected);
   });

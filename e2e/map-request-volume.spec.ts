@@ -60,6 +60,7 @@ function counts(records: readonly FixtureRequest[]) {
     municipalCoverage: records.filter(record => record.path === "/api/v1/obras/cobertura-municipal").length,
     sourceCoverage: records.filter(record => record.path === "/api/v1/obras/cobertura-fuentes").length,
     workCounts: records.filter(record => record.path === "/api/v1/obras/conteos").length,
+    reportedRecordCounts: records.filter(record => record.path === "/api/v1/registros-informados/conteos").length,
     organizationJSONBytes: records.filter(record => record.path === "/api/v1/organizaciones-institucionales").reduce((sum, record) => sum + record.responseBytes, 0),
     decodedJSONBytes: records.reduce((sum, record) => sum + record.responseBytes, 0),
   };
@@ -162,7 +163,8 @@ test("cada acción distingue nueva consulta de reutilización del catálogo", as
   expect(counts(filtered).municipalCoverage).toBe(0);
   expect(counts(filtered).workCounts).toBe(3);
   expect(counts(filtered).sourceCoverage).toBe(3);
-  expect(filtered).toHaveLength(22);
+  expect(counts(filtered).reportedRecordCounts).toBe(3);
+  expect(filtered).toHaveLength(25);
   expect(filtered.filter(record => record.path === "/api/v1/obras").at(-1)!.query).toMatchObject({ fuente: "nacion-obras" });
   expect(filtered.filter(record => record.path === "/api/v1/obras").at(-1)!.query).not.toHaveProperty("bbox");
   expect(browser.filter(record => record.path === "/api/public/geojson")).toHaveLength(2);

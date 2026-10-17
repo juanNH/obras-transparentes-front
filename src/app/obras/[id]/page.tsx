@@ -48,7 +48,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   return {
     ...pageMetadata(`/obras/${id}`, {
       title: `${work.nombre}${territory ? ` · ${territory}` : ""}`,
-      description: `${work.nombre}. ${stateLabel(work.estado)}. Consultá la información disponible, sus fechas y fuentes en Obras Transparentes.`,
+      description: `${work.nombre}. ${stateLabel(work.estado, work.estadoInformado)}. Consultá la información disponible, sus fechas y fuentes en Obras Transparentes.`,
       index: revisionId === undefined && work.publicadaActualmente,
     }),
     ...(canonical ? { openGraph: { title: work.nombre, description: "Información pública sobre esta obra, sus fechas y sus fuentes.", url: canonical, type: "article" as const, locale: "es_AR", siteName: "Obras Transparentes" } } : {}),

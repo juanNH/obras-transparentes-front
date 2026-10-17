@@ -1,5 +1,45 @@
 // Generado desde contracts/openapi.json. Ejecutar npm run contract:sync.
 export interface paths {
+    "/api/v1/bases-derivadas/general-pueyrredon-registros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Descargar la base derivada actual del corte 2025 de General Pueyrredón
+         * @description Lectura anónima sin sesión, permiso, Origin ni CSRF, en REPEATABLE READ READ ONLY. No admite filtros, aceptación contractual ni consulta histórica. Antes de recibir el original exacto, recursoId y capturadaEn son null; la fecha tampoco se completa desde una licencia o el reloj. Sin decisión ODbL registrada propia devuelve PENDING_POLICY y colección pública vacía. ACTIVE puede estar vacío antes de publicar; los retiros y sustituciones se reflejan sin distribuir versiones anteriores, conservando licencias públicas congeladas. Ofrece sólo registros públicos del original por fuente, SHA-256 y tamaño, con cero obras consolidadas; cuatro WORK_RECORD informados y 214 SOURCE_CAPTURE_UNIT no equivalen a 218 obras. Hasta 218 registros, 16 MiB de entrada y 10 MiB de respuesta, completos o conflicto explícito. Excluye originales, proveedor, contactos, imágenes, anexos, actores y motivos privados. Guardia precommit propia serializa nuevas publicaciones y valida origen, licencia y presupuesto sin ampliar la oferta de Olavarría. La consulta o descarga no acepta ODbL ni registra política de distribución. Cache-Control no-store; ETag identifica estos bytes, sin habilitar revisiones históricas.
+         */
+        get: operations["GeneralPueyrredonDerivedDatabaseController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bases-derivadas/olavarria-obras": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Descargar la base derivada actual de Olavarría
+         * @description Lectura anónima sin sesión, permiso, Origin ni CSRF. Un único snapshot REPEATABLE READ READ ONLY separa registros informados vigentes y revisiones de obras actualmente publicadas derivadas del original exacto autorizado. No se suman sus cantidades. Antes de una decisión ALLOWED devuelve PENDING_POLICY con dos colecciones vacías; consultar o descargar no acepta ODbL ni registra la política. Una decisión ALLOWED válida puede habilitar una oferta ACTIVE todavía vacía, sin anticipar publicaciones. Conserva avisos y atribuciones públicos congelados. Las decisiones posteriores pendientes no eliminan la oferta de contenido que sigue públicamente vigente con licencia congelada. Sólo el original exacto y fuentes compatibles con su contrato; guardia nativa precommit evita mezclas y exceso antes de publicar. Máximo 200 elementos por unidad, 16 MiB de JSON de entrada, 10000 identidades de ubicación y 10 MiB de respuesta. Un exceso o estado no representable falla explícitamente sin truncar. Reutiliza DTO públicos, sin originales privados, actores, motivos, candidatos geométricos ni versiones retiradas. No admite filtros, revisiones históricas ni aceptación. Cache-Control no-store; ETag describe los bytes actuales y no habilita consulta histórica. La política final de distribución requiere confirmación explícita en el flujo administrativo autorizado.
+         */
+        get: operations["OlavarriaDerivedDatabaseController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/obras": {
         parameters: {
             query?: never;
@@ -29,7 +69,7 @@ export interface paths {
         };
         /**
          * Consultar una obra y su procedencia publicada
-         * @description Sin revisionId devuelve la revisión actual; con revisionId permite consultar una revisión de esa obra que haya sido publicada. Omite geometrías candidatas y archivos originales privados. metadata.publicadoEn corresponde a la primera publicación de la revisión consultada. Su contenido histórico es estable, pero publicadaActualmente y catalogoVersion reflejan el catálogo al consultar.
+         * @description Sin revisionId devuelve la revisión actual; con revisionId permite consultar una revisión de esa obra que haya sido publicada. Omite geometrías candidatas y archivos originales privados. Los campos privados INSPECTOR, FECHA DE INSPECCIÓN e INFORME de ACUMAR tampoco aparecen como claves de calidadCampos/procedencia ni como referencias a sus celdas de origen; esta proyección se aplica también a revisiones históricas sin modificar el snapshot privado. metadata.publicadoEn corresponde a la primera publicación de la revisión consultada. Su contenido histórico es estable, pero publicadaActualmente y catalogoVersion reflejan el catálogo al consultar.
          */
         get: operations["WorksController_detail"];
         put?: never;
@@ -49,7 +89,7 @@ export interface paths {
         };
         /**
          * Consultar cobertura pública de todas las fuentes y su alcance territorial
-         * @description Lectura anónima sin sesión, permisos, Origin ni CSRF. Lee un único snapshot REPEATABLE READ de revisiones actualmente publicadas y devuelve catalogoVersion. Admite fuente repetida para las siete fuentes de obras instaladas; sin filtro incluye todas, también las que tienen cero publicaciones. alcanceTerritorial declara el alcance de la fuente: Nación es nacional; fuentes provinciales y municipales se agrupan bajo su provincia oficial, incluida CABA como jurisdicción provincial de navegación. No acredita ubicación, gestión ni cobertura exhaustiva de las obras. Es un inventario completo, no se pagina ni acepta filtros territoriales o temporales; GET /api/v1/obras conserva filtros, cursor y paginación ligados a catalogoVersion. Cada obraId se cuenta una vez por fuente; localidadesConObrasPublicadas cuenta códigos distintos indec.localidad REPORTED y ubicaciones aprobadas se cuentan aparte. obrasCompartidasEntreFuentes cuenta obras con varias fuentes y totalVinculosAdicionales cuenta sus vínculos después del primero: la suma por fuente equivale a obrasPublicadasUnicas más totalVinculosAdicionales, incluso con tres o más fuentes. Los edificios escolares PBA no equivalen automáticamente a intervenciones, las geometrías de Nación son localizaciones vinculadas y el padrón de establecimientos se mantiene fuera del catálogo de obras. Las métricas de licencia usan sólo evidencia congelada en la primera publicación de la revisión vigente; no revelan propuestas, filas de origen, IDs ni rutas de originales. La ficha pública conserva procedencia, licencia y ubicación aprobada. Parámetros desconocidos o fuentes no admitidas devuelven 422; 429 incluye Retry-After.
+         * @description Lectura anónima sin sesión, permisos, Origin ni CSRF. Lee un único snapshot REPEATABLE READ de revisiones actualmente publicadas y devuelve catalogoVersion. Admite fuente repetida para las diez fuentes de obras instaladas; sin filtro incluye todas, también las que tienen cero publicaciones. alcanceTerritorial declara el alcance de la fuente: Nación es nacional; fuentes provinciales y municipales se agrupan bajo su provincia oficial, incluida CABA. ACUMAR declara alcance MULTIPROVINCIAL con CABA y Buenos Aires: ese grupo aparece una sola vez y sus publicaciones no se suman nuevamente en cada provincia. Neuquén usa el código provincial oficial 58. Ciudad de Mendoza declara alcance municipal bajo provincia 50; sus actos de contratación no generan obras publicadas. No acredita ubicación, gestión ni cobertura exhaustiva de las obras. Es un inventario completo, no se pagina ni acepta filtros territoriales o temporales; GET /api/v1/obras conserva filtros, cursor y paginación ligados a catalogoVersion. Cada obraId se cuenta una vez por fuente; localidadesConObrasPublicadas cuenta códigos distintos indec.localidad REPORTED y ubicaciones aprobadas se cuentan aparte. obrasCompartidasEntreFuentes cuenta obras con varias fuentes y totalVinculosAdicionales cuenta sus vínculos después del primero: la suma por fuente equivale a obrasPublicadasUnicas más totalVinculosAdicionales, incluso con tres o más fuentes. Los edificios escolares PBA no equivalen automáticamente a intervenciones, las geometrías de Nación son localizaciones vinculadas y el padrón de establecimientos se mantiene fuera del catálogo de obras. Las métricas de licencia usan sólo evidencia congelada en la primera publicación de la revisión vigente; no revelan propuestas, filas de origen, IDs ni rutas de originales. La ficha pública conserva procedencia, licencia y ubicación aprobada. Parámetros desconocidos o fuentes no admitidas devuelven 422; 429 incluye Retry-After.
          */
         get: operations["WorksController_sourceCoverage"];
         put?: never;
@@ -132,6 +172,66 @@ export interface paths {
          * @description Lectura anónima sin parámetros. Catálogo completo de identidades referidas por roles VERIFIED en revisiones actualmente publicadas; máximo 1000 identidades y 512 KiB. Si excede el presupuesto responde 503, sin truncar. La ausencia de una institución no demuestra ausencia de actividad. No requiere sesión, permisos, Origin o CSRF.
          */
         get: operations["PublicInstitutionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/registros-informados": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar registros informados por sus fuentes
+         * @description Lectura anónima. Cuenta registros, no obras; no acredita ejecución, identidad consolidada, moneda ni ubicación. Sólo proyecciones publicadas y vigentes. El límite es máximo: una página puede contener menos registros para mantener aproximadamente 7 MiB de JSON UTF-8; nunca corta un texto ni salta registros, y un registro individual grande conserva su contenido íntegro. nextCursor continúa después del último registro incluido. Cursor opaco ligado a filtros y versión propia; CATALOG_CHANGED obliga a reiniciar. No admite geometrías ni contenido privado. Sin caché para respetar retiros. DOCUMENT_REPORT_SECTION identifica una sección documental: documento conserva URL/SHA del original y página/sección para PDF, o formato HTML y el intervalo de bytes [byteStart,byteEnd) para HTML. El recurso y SHA de fuente identifican por separado el JSON derivado; originalBase64 y rawCells no se publican. PROCUREMENT_ACT_RECORD identifica un acto de contratación de un perfil instalado; mantiene literales sus campos, puede conservar procedencia HTML o PDF tipada y se cuenta por tipo, sin crear una obra ni deducir estado físico, fecha de ejecución o geometría. SOURCE_CAPTURE_UNIT identifica unidades tabulares de la clasificación municipal instalada; no acredita una obra ni habilita capturas privadas sin adaptación. Los avisos CATALOG_* tienen alcance del catálogo y no atribuyen una contradicción a cada sección.
+         */
+        get: operations["ReportedRecordsPublicController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/registros-informados/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar un registro informado o su retiro
+         * @description Lectura anónima por identidad estable del origen físico, independiente del lote de reproceso. Un retiro devuelve HTTP200, estado RETIRED, registro:null y motivo público seguro. No hay parámetro de revisión histórica ni enlaces a originales privados. Las advertencias públicas explican la incertidumbre y la licencia queda congelada por versión.
+         */
+        get: operations["ReportedRecordsPublicController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/registros-informados/conteos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Contar registros informados publicados
+         * @description Lectura anónima y coherente de la versión propia del catálogo de registros. Excluye retirados. No sumar totalRegistros a las obras consolidadas: las unidades y posibles repeticiones tienen una semántica distinta. EDUCATIONAL_ESTABLISHMENT_RECORD cuenta filas de oferta institucional, separado de edificios escolares e intervenciones. Cuando el resultado contiene ese tipo, instituciones conserva filasOfertaPublicadas y establecimientosDistintosInformados (códigos de fuente distintos bajo los mismos filtros y catalogoVersion); no acredita identidad jurídica ni nuevas instituciones. Domicilios, contactos, coordenadas y matrícula permanecen privados.
+         */
+        get: operations["ReportedRecordsPublicController_counts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -224,6 +324,734 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        GeneralPueyrredonDerivedDatabase: {
+            aviso: string;
+            catalogos: {
+                obras: string;
+                registros: string;
+            };
+            contenidoSha256: string;
+            /** @enum {string} */
+            estado: "PENDING_POLICY" | "ACTIVE";
+            licenciaDistribucion: {
+                /** @enum {string} */
+                codigo: "ODbL-1.0";
+                decisionesPublicas: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                /** @enum {string} */
+                estado: "PENDING" | "REGISTERED";
+                /** Format: uri */
+                url: string;
+            };
+            limites: {
+                /** @enum {number} */
+                bytesRespuesta: 10485760;
+                /** @enum {number} */
+                filasPorUnidad: 218;
+            };
+            obras: {
+                /** @enum {number} */
+                cantidad: 0;
+                items: {
+                    asociacionesEspaciales: {
+                        /** @enum {string} */
+                        condicion: "VERIFIED";
+                        evidencia: {
+                            /** Format: uuid */
+                            decisionId: string;
+                            geometriaSha256: string;
+                            limitesSha256: string;
+                            limitesVersion: string;
+                            /** @enum {string} */
+                            metodo: "POSTGIS_INTERSECTION";
+                            /** @enum {string} */
+                            metodoVersion: "pba-spatial@1";
+                        };
+                        /** Format: uuid */
+                        partidoId: string;
+                        /** @enum {string} */
+                        relacion: "INTERIOR" | "CROSSING";
+                        ubicacionClave: string;
+                    }[];
+                    atributosFuente?: {
+                        gestion: string | null;
+                        subfuente: string | null;
+                    };
+                    avanceFinanciero?: string | null;
+                    avanceFisico: string | null;
+                    calidadCampos: {
+                        [key: string]: {
+                            /** @enum {string} */
+                            estado: "KNOWN" | "NOT_REPORTED" | "NOT_APPLICABLE" | "INVALID" | "PENDING_REVIEW";
+                            motivo?: string;
+                        };
+                    };
+                    /** @description Versión decimal exacta del catálogo; conservar como string, nunca convertir a Number. */
+                    catalogoVersion: string;
+                    clasificaciones: {
+                        codigo: string;
+                        esquema: string;
+                        etiqueta: string;
+                    }[];
+                    contratacion?: {
+                        ejercicio: string | null;
+                        expediente: string | null;
+                        numero: string | null;
+                        procedimiento: string | null;
+                    };
+                    educacion: {
+                        establecimientos: {
+                            clave: string | null;
+                            cui: string | null;
+                            idFuente: string | null;
+                            matricula: number | null;
+                            nombre: string;
+                            periodo: string | null;
+                            regionEducativa: string | null;
+                            /** @enum {string|null} */
+                            tipoIntervencion: "CREACION" | "SUSTITUCION" | null;
+                        }[];
+                    };
+                    /** @enum {string|null} */
+                    estado: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED" | null;
+                    /** @description Clasificación de la revisión pública, sin inferir desde avance, contratación o revisión editorial. NOT_AVAILABLE indica que esta revisión no conserva un estado utilizable; no afirma que el original carezca de él. */
+                    estadoInformado?: {
+                        /** @enum {string} */
+                        codigo: "COMPLETED" | "IN_PROGRESS" | "PLANNED" | "PROCUREMENT" | "PAUSED" | "SUSPENDED" | "CANCELLED" | "OTHER_REPORTED" | "NOT_REPORTED";
+                        /** @enum {string} */
+                        criterio: "SOURCE_LITERAL" | "LEGACY_STATE" | "NOT_AVAILABLE";
+                        literal: string | null;
+                    };
+                    fechasInformadas: ({
+                        /** @enum {string} */
+                        campo: "inicio" | "fin";
+                        /** Format: date */
+                        diaCivil: string;
+                        /** @enum {string} */
+                        epoch: "1900" | "1904";
+                        estilo: string;
+                        /** @enum {string|null} */
+                        naturaleza: null;
+                        serial: string;
+                    } | {
+                        anio: string;
+                        /** @enum {string} */
+                        campo: "inicio" | "fin";
+                        /** @enum {string|null} */
+                        naturaleza: null;
+                        /** @enum {string} */
+                        precision: "YEAR";
+                    } | {
+                        /** @enum {string} */
+                        campo: "inicio" | "fin";
+                        /** Format: date */
+                        diaCivil: string;
+                        /** @enum {string|null} */
+                        naturaleza: null;
+                        /** @enum {string} */
+                        origen: "REVIEW_DECISION";
+                        /** @enum {string} */
+                        precision: "DAY";
+                    })[];
+                    fuentes: {
+                        /** @enum {string} */
+                        codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras" | "acumar-obras" | "neuquen-obras" | "mendoza-obras" | "mercedes-obras";
+                        /** Format: uuid */
+                        recursoId: string;
+                        sha256: string;
+                        /** Format: uri */
+                        urlCatalogo: string;
+                    }[];
+                    importes: ({
+                        /** @enum {string|null} */
+                        alcance: null;
+                        /** @enum {string|null} */
+                        base: null;
+                        /** @enum {string} */
+                        concepto: "MONTO_DEFINITIVO_REPORTADO";
+                        /** @enum {string|null} */
+                        moneda: null;
+                        valor: string;
+                    } | {
+                        /** @enum {string|null} */
+                        alcance: null;
+                        /** @enum {string|null} */
+                        base: null;
+                        /** @enum {string} */
+                        concepto: "MONTO_REPORTADO";
+                        /** @enum {string|null} */
+                        moneda: null;
+                        valor: string;
+                    } | {
+                        /** @enum {string|null} */
+                        alcance: null;
+                        /** @enum {string|null} */
+                        base: null;
+                        /** @enum {string} */
+                        concepto: "TOTAL_OBRA_REPORTADO";
+                        /** @enum {string|null} */
+                        moneda: "ARS" | "USD" | null;
+                        valor: string;
+                    })[];
+                    /** @description Evidencia de licencia y atribución congelada al publicar esta revisión; ausencia no declara una licencia nueva para publicaciones históricas. */
+                    licenciasFuentes?: {
+                        /** @enum {string} */
+                        alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                        atribucion: string;
+                        /** Format: date-time */
+                        capturadaEn: string;
+                        codigo: string;
+                        codigoLicencia: string;
+                        /** @enum {string} */
+                        contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                        distribucionBase: {
+                            aviso: string;
+                            licencia: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        /** Format: uri */
+                        evidenciaUrl: string;
+                        /** Format: uuid */
+                        fuenteId: string;
+                        licenciaContenidos: {
+                            codigo: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        recursoVersionIds: string[];
+                        /** Format: uri */
+                        urlLicencia: string;
+                        version: number;
+                    }[];
+                    metadata: {
+                        /**
+                         * Format: date-time
+                         * @description Fecha de actualización de la fuente respaldada por evidencia. Actualmente null: los contratos vigentes no aportan una fecha unívoca; no se infiere de publicación, captura ni fechas de obra.
+                         */
+                        fechaActualizacionFuente: string | null;
+                        /**
+                         * Format: date-time
+                         * @description Primera publicación de esta revisión en Obras Transparentes, en UTC. No es la aprobación, la captura ni la actualización de la fuente.
+                         */
+                        publicadoEn: string;
+                    };
+                    municipal?: {
+                        areaResponsableReportada: string | null;
+                        estadoFuente: string | null;
+                        jurisdiccionReportada: string | null;
+                        lugarReportado: string | null;
+                        tipoFuente: string | null;
+                    };
+                    nacional?: {
+                        atributosFuente: {
+                            accionClimatica: string | null;
+                            contraparteCuit: string | null;
+                            contraparteModalidad: string | null;
+                            contraparteNombre: string | null;
+                            contraparteRol: string | null;
+                            odsIncidencia: string | null;
+                        };
+                        descripcion: string | null;
+                        duracionDias: number | null;
+                        estadoFuente: string | null;
+                        monedaFuente: string | null;
+                        objetivo: string | null;
+                        participantes: {
+                            ejecutor: string | null;
+                            financiadores: string[];
+                        };
+                        programaFuente: string | null;
+                        referencias: {
+                            bapin: string | null;
+                            idproyecto: string;
+                            numeroObra: string | null;
+                            operacionFinanciera: string | null;
+                            perfilObra: string | null;
+                        };
+                        sectorFuente: string | null;
+                        territorio: {
+                            codigoBahra: string | null;
+                            departamento: string | null;
+                            provincia: string | null;
+                        };
+                        tipoProyectoFuente: string | null;
+                    };
+                    nombre: string;
+                    numeroRevision: number;
+                    /** Format: uuid */
+                    obraId: string;
+                    participantes?: {
+                        cuit: string | null;
+                        jurisdiccionReportada: string | null;
+                        razonSocial: string | null;
+                    };
+                    procedencia: {
+                        [key: string]: {
+                            evidencias: ({
+                                columna: string;
+                                localizador: {
+                                    byteEndExclusive: number;
+                                    byteStart: number;
+                                    dataOrdinal: number;
+                                    /** @enum {string} */
+                                    format: "JSON";
+                                    pointer: string;
+                                } | {
+                                    byteEndExclusive: number;
+                                    byteStart: number;
+                                    dataOrdinal: number;
+                                    /** @enum {string} */
+                                    format: "CSV";
+                                    lineEnd: number;
+                                    lineStart: number;
+                                } | {
+                                    cells: string[];
+                                    date1904: boolean;
+                                    /** @enum {string} */
+                                    format: "XLSX";
+                                    part: string;
+                                    row: number;
+                                    worksheet: string;
+                                };
+                                posicion: number;
+                                /** Format: uuid */
+                                recursoId: string;
+                                /** Format: uuid */
+                                registroOrigenId: string;
+                                /** Format: uuid */
+                                resultadoRegistroId: string;
+                                /** @enum {string} */
+                                tipo: "SOURCE_CELL";
+                            } | {
+                                clave: string;
+                                /** Format: uuid */
+                                recursoId: string;
+                                referencia: {
+                                    /** Format: date-time */
+                                    consultadoEn: string;
+                                    sha256: string;
+                                    /** Format: uri */
+                                    url: string;
+                                    version: string;
+                                };
+                                /** @enum {string} */
+                                tipo: "CATALOG_METADATA";
+                                valor: string;
+                            } | {
+                                codigo: string;
+                                departamentoCodigo: string;
+                                departamentoNombre: string;
+                                nombre: string;
+                                provinciaCodigo: string;
+                                provinciaNombre: string;
+                                referencia: {
+                                    /** Format: date */
+                                    consultadoEn: string;
+                                    sha256: string;
+                                    /** Format: uri */
+                                    url: string;
+                                    version: string;
+                                };
+                                /** @enum {string} */
+                                tipo: "GEOREF_LOCALITY";
+                            } | {
+                                campo: string;
+                                /** Format: uuid */
+                                obraId: string;
+                                /** Format: uuid */
+                                revisionId: string;
+                                /** @enum {string} */
+                                tipo: "BASE_REVISION";
+                            } | {
+                                campo: string;
+                                /** Format: uuid */
+                                decisionId: string;
+                                /** @enum {string} */
+                                tipo: "REVIEW_DECISION";
+                            })[];
+                            regla: string;
+                            version: string;
+                        };
+                    };
+                    programas: string[];
+                    /** @description Vigencia al consultar. Aunque revisionId fije el contenido, este campo y catalogoVersion pueden cambiar. */
+                    publicadaActualmente: boolean;
+                    /** Format: uuid */
+                    revisionId: string;
+                    rolesInstitucionales: {
+                        /** @enum {string} */
+                        condicion: "VERIFIED";
+                        /** Format: uuid */
+                        decisionId: string;
+                        evidencias: ({
+                            columna: string;
+                            localizador: {
+                                byteEndExclusive: number;
+                                byteStart: number;
+                                dataOrdinal: number;
+                                /** @enum {string} */
+                                format: "JSON";
+                                pointer: string;
+                            } | {
+                                byteEndExclusive: number;
+                                byteStart: number;
+                                dataOrdinal: number;
+                                /** @enum {string} */
+                                format: "CSV";
+                                lineEnd: number;
+                                lineStart: number;
+                            } | {
+                                cells: string[];
+                                date1904: boolean;
+                                /** @enum {string} */
+                                format: "XLSX";
+                                part: string;
+                                row: number;
+                                worksheet: string;
+                            };
+                            posicion: number;
+                            /** Format: uuid */
+                            recursoId: string;
+                            /** Format: uuid */
+                            registroOrigenId: string;
+                            /** Format: uuid */
+                            resultadoRegistroId: string;
+                            /** @enum {string} */
+                            tipo: "SOURCE_CELL";
+                        } | {
+                            clave: string;
+                            /** Format: uuid */
+                            recursoId: string;
+                            referencia: {
+                                /** Format: date-time */
+                                consultadoEn: string;
+                                sha256: string;
+                                /** Format: uri */
+                                url: string;
+                                version: string;
+                            };
+                            /** @enum {string} */
+                            tipo: "CATALOG_METADATA";
+                            valor: string;
+                        } | {
+                            codigo: string;
+                            departamentoCodigo: string;
+                            departamentoNombre: string;
+                            nombre: string;
+                            provinciaCodigo: string;
+                            provinciaNombre: string;
+                            referencia: {
+                                /** Format: date */
+                                consultadoEn: string;
+                                sha256: string;
+                                /** Format: uri */
+                                url: string;
+                                version: string;
+                            };
+                            /** @enum {string} */
+                            tipo: "GEOREF_LOCALITY";
+                        } | {
+                            campo: string;
+                            /** Format: uuid */
+                            obraId: string;
+                            /** Format: uuid */
+                            revisionId: string;
+                            /** @enum {string} */
+                            tipo: "BASE_REVISION";
+                        } | {
+                            campo: string;
+                            /** Format: uuid */
+                            decisionId: string;
+                            /** @enum {string} */
+                            tipo: "REVIEW_DECISION";
+                        })[];
+                        organizacion: {
+                            /** Format: uuid */
+                            id: string;
+                            /** @enum {string} */
+                            nivel: "MUNICIPAL" | "PROVINCIAL" | "NACIONAL" | "OTRO";
+                            nombre: string;
+                            /** Format: uuid */
+                            partidoId: string | null;
+                        };
+                        /** @enum {string} */
+                        rol: "PROMOTOR" | "CONTRATANTE" | "EJECUTOR" | "FINANCIADOR" | "CONTRATISTA";
+                        vigencia: {
+                            fin: ({
+                                /** @enum {string} */
+                                precision: "DAY";
+                                valor: string & (string);
+                            } | {
+                                /** @enum {string} */
+                                precision: "YEAR";
+                                valor: string;
+                            }) | null;
+                            inicio: ({
+                                /** @enum {string} */
+                                precision: "DAY";
+                                valor: string & (string);
+                            } | {
+                                /** @enum {string} */
+                                precision: "YEAR";
+                                valor: string;
+                            }) | null;
+                        };
+                    }[];
+                    /** @enum {string} */
+                    schemaVersion: "obra@1" | "obra@2" | "obra@3";
+                    territorios: {
+                        codigo: string;
+                        /** @enum {string} */
+                        condicion: "REPORTED";
+                        /**
+                         * @description indec.localidad identifica una unidad nominal GeoRef informada por código y jerarquía compatible; no representa una coordenada ni una geometría.
+                         * @enum {string}
+                         */
+                        esquema: "pba.municipio" | "indec.provincia" | "indec.departamento" | "indec.localidad" | "nacion.provincia" | "nacion.departamento";
+                        nombre: string;
+                    }[];
+                    ubicaciones: ({
+                        clave: string;
+                        /** @enum {string} */
+                        condicion: "ACCEPTED";
+                        controles: string[];
+                        crs: {
+                            /** @enum {string} */
+                            codigo: "EPSG:4326";
+                            /** @enum {string} */
+                            condicion: "REPORTED_REFERENCE";
+                            /** @enum {string} */
+                            fundamento: "CATALOG_METADATA";
+                        } | {
+                            /** @enum {string} */
+                            codigo: "EPSG:4326";
+                            /** @enum {string} */
+                            condicion: "APPROVED_ASSUMPTION";
+                            /** @enum {string} */
+                            fundamento: "REVIEW_DECISION";
+                        } | {
+                            /** @enum {string} */
+                            codigo: "EPSG:4326";
+                            /** @enum {string} */
+                            condicion: "SERVICE_REFERENCE";
+                            /** @enum {string} */
+                            fundamento: "OFFICIAL_SERVICE";
+                        };
+                        direccionReportada?: {
+                            calle: string | null;
+                            numero: string | null;
+                        };
+                        geometria: {
+                            coordinates: (number)[];
+                            /** @enum {string} */
+                            type: "Point";
+                        } | {
+                            coordinates: (number)[][];
+                            /** @enum {string} */
+                            type: "MultiPoint";
+                        } | {
+                            coordinates: (number)[][];
+                            /** @enum {string} */
+                            type: "LineString";
+                        } | {
+                            coordinates: (number)[][][];
+                            /** @enum {string} */
+                            type: "MultiLineString";
+                        } | {
+                            coordinates: (number)[][][];
+                            /** @enum {string} */
+                            type: "Polygon";
+                        } | {
+                            coordinates: (number)[][][][];
+                            /** @enum {string} */
+                            type: "MultiPolygon";
+                        };
+                        /** @enum {string} */
+                        origenGeometria?: "ADDRESS_GEOCODE";
+                        /** @enum {string} */
+                        precision: "ubicacion_establecimiento_reportada" | "coordenada_reportada_sin_precision" | "geometria_reportada_sin_precision";
+                        /** Format: uuid */
+                        ubicacionId: string;
+                    } | {
+                        clave: string;
+                        /** @enum {string} */
+                        condicion: "PENDING_REVIEW" | "OMITTED" | "INVALID";
+                        controles: string[];
+                        crs: ({
+                            /** @enum {string} */
+                            codigo: "EPSG:4326";
+                            /** @enum {string} */
+                            condicion: "REPORTED_REFERENCE";
+                            /** @enum {string} */
+                            fundamento: "CATALOG_METADATA";
+                        } | {
+                            /** @enum {string} */
+                            codigo: "EPSG:4326";
+                            /** @enum {string} */
+                            condicion: "APPROVED_ASSUMPTION";
+                            /** @enum {string} */
+                            fundamento: "REVIEW_DECISION";
+                        } | {
+                            /** @enum {string} */
+                            codigo: "EPSG:4326";
+                            /** @enum {string} */
+                            condicion: "SERVICE_REFERENCE";
+                            /** @enum {string} */
+                            fundamento: "OFFICIAL_SERVICE";
+                        }) | null;
+                        direccionReportada?: {
+                            calle: string | null;
+                            numero: string | null;
+                        };
+                        /** @enum {string|null} */
+                        geometria: null;
+                        /** @enum {string} */
+                        origenGeometria?: "ADDRESS_GEOCODE";
+                        /** @enum {string} */
+                        precision: "ubicacion_establecimiento_reportada" | "coordenada_reportada_sin_precision" | "geometria_reportada_sin_precision";
+                        /** @enum {string|null} */
+                        ubicacionId: null;
+                    })[];
+                }[];
+                /** @enum {string} */
+                unidad: "CURRENT_PUBLIC_WORK_REVISION";
+            };
+            original: {
+                /** @enum {number} */
+                bytes: 43918;
+                /** Format: date-time */
+                capturadaEn: string | null;
+                /** @enum {string} */
+                codigo: "general-pueyrredon-registros";
+                /** Format: uuid */
+                recursoId: string | null;
+                /** @enum {string} */
+                sha256: "ad305e65fbdcbda372721595965332c10260bb6a9d02c4a2cb22f5be6e350fe8";
+                /** Format: uri */
+                url: string;
+                /** Format: uri */
+                urlCatalogo: string;
+            };
+            registros: {
+                cantidad: number;
+                items: components["schemas"]["ReportedRecordDetail"][];
+                /** @enum {string} */
+                unidad: "CURRENT_PUBLISHED_REPORTED_SOURCE_RECORD";
+            };
+            /** @enum {string} */
+            schema: "general-pueyrredon-derived-database@1";
+            transformaciones: string[];
+        };
+        OlavarriaDerivedDatabase: {
+            aviso: string;
+            catalogos: {
+                obras: string;
+                registros: string;
+            };
+            contenidoSha256: string;
+            /** @enum {string} */
+            estado: "PENDING_POLICY" | "ACTIVE";
+            licenciaDistribucion: {
+                /** @enum {string} */
+                codigo: "ODbL-1.0";
+                decisionesPublicas: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                /** @enum {string} */
+                estado: "PENDING" | "REGISTERED";
+                /** Format: uri */
+                url: string;
+            };
+            limites: {
+                /** @enum {number} */
+                bytesRespuesta: 10485760;
+                /** @enum {number} */
+                filasPorUnidad: 200;
+            };
+            obras: {
+                cantidad: number;
+                items: components["schemas"]["PublicWorkDetail"][];
+                /** @enum {string} */
+                unidad: "CURRENT_PUBLIC_WORK_REVISION";
+            };
+            original: {
+                bytes: number;
+                /** @enum {string} */
+                codigo: "olavarria-obras";
+                /** Format: uuid */
+                recursoId: string;
+                sha256: string;
+                /** Format: uri */
+                url: string;
+                /** Format: uri */
+                urlCatalogo: string;
+            };
+            registros: {
+                cantidad: number;
+                items: components["schemas"]["ReportedRecordDetail"][];
+                /** @enum {string} */
+                unidad: "CURRENT_PUBLISHED_REPORTED_SOURCE_RECORD";
+            };
+            /** @enum {string} */
+            schema: "olavarria-derived-database@1";
+            transformaciones: string[];
+        };
         PublicApiError: {
             error: {
                 code: string;
@@ -327,9 +1155,17 @@ export interface components {
                     }[];
                     /** @enum {string|null} */
                     estado: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED" | null;
+                    /** @description Clasificación de la revisión pública, sin inferir desde avance, contratación o revisión editorial. NOT_AVAILABLE indica que esta revisión no conserva un estado utilizable; no afirma que el original carezca de él. */
+                    estadoInformado?: {
+                        /** @enum {string} */
+                        codigo: "COMPLETED" | "IN_PROGRESS" | "PLANNED" | "PROCUREMENT" | "PAUSED" | "SUSPENDED" | "CANCELLED" | "OTHER_REPORTED" | "NOT_REPORTED";
+                        /** @enum {string} */
+                        criterio: "SOURCE_LITERAL" | "LEGACY_STATE" | "NOT_AVAILABLE";
+                        literal: string | null;
+                    };
                     fuentes: {
                         /** @enum {string} */
-                        codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
+                        codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras" | "acumar-obras" | "neuquen-obras" | "mendoza-obras" | "mercedes-obras";
                         /** Format: uuid */
                         recursoId: string;
                         sha256: string;
@@ -510,7 +1346,7 @@ export interface components {
             catalogoVersion: string;
             fuentes: {
                 /** @enum {string} */
-                codigo: "bahia-obras" | "olavarria-obras" | "pergamino-obras";
+                codigo: "bahia-obras" | "olavarria-obras" | "pergamino-obras" | "mercedes-obras";
                 /** Format: uuid */
                 fuenteId: string;
                 nombre: string;
@@ -700,6 +1536,17 @@ export interface components {
                         nombre: string;
                     };
                 } | {
+                    /** @enum {string|null} */
+                    municipio: null;
+                    /** @enum {string} */
+                    nivel: "MULTIPROVINCIAL";
+                    /** @enum {string|null} */
+                    provincia: null;
+                    provincias: {
+                        codigo: string;
+                        nombre: string;
+                    }[];
+                } | {
                     municipio: {
                         codigo: string;
                         /** @enum {string} */
@@ -714,7 +1561,7 @@ export interface components {
                     };
                 };
                 /** @enum {string} */
-                codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
+                codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras" | "acumar-obras" | "neuquen-obras" | "mendoza-obras" | "mercedes-obras" | "lujan-documentos" | "general-pueyrredon-registros" | "tandil-documentos" | "general-rodriguez-documentos" | "coronel-suarez-documentos";
                 /** Format: uuid */
                 fuenteId: string;
                 localidadesConObrasPublicadas: number;
@@ -728,10 +1575,10 @@ export interface components {
                     /** @enum {string} */
                     rol: "principal" | "geometrias";
                     /**
-                     * @description WORK_RECORD describe registros de obra; COMPLETED_SCHOOL_BUILDING_RECORD describe registros de edificios escolares finalizados; SPATIAL_LOCATION_RECORD describe localizaciones vinculadas, nunca obras adicionales.
+                     * @description WORK_RECORD describe registros de obra; COMPLETED_SCHOOL_BUILDING_RECORD describe registros de edificios escolares finalizados; SPATIAL_LOCATION_RECORD describe localizaciones vinculadas, nunca obras adicionales; PROCUREMENT_ACT_RECORD describe actos de contratación excluidos de propuestas de obra; DOCUMENT_REPORT_SECTION describe secciones de informe publicadas como registros documentales, sin crear obras.
                      * @enum {string}
                      */
-                    unidadDocumental: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD" | "SPATIAL_LOCATION_RECORD";
+                    unidadDocumental: "SOURCE_CAPTURE_UNIT" | "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD" | "SPATIAL_LOCATION_RECORD" | "PROCUREMENT_ACT_RECORD" | "DOCUMENT_REPORT_SECTION";
                 }[];
                 ubicacionesAprobadas: number;
                 /** Format: uri */
@@ -816,6 +1663,14 @@ export interface components {
             };
             /** @enum {string|null} */
             estado: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED" | null;
+            /** @description Clasificación de la revisión pública, sin inferir desde avance, contratación o revisión editorial. NOT_AVAILABLE indica que esta revisión no conserva un estado utilizable; no afirma que el original carezca de él. */
+            estadoInformado?: {
+                /** @enum {string} */
+                codigo: "COMPLETED" | "IN_PROGRESS" | "PLANNED" | "PROCUREMENT" | "PAUSED" | "SUSPENDED" | "CANCELLED" | "OTHER_REPORTED" | "NOT_REPORTED";
+                /** @enum {string} */
+                criterio: "SOURCE_LITERAL" | "LEGACY_STATE" | "NOT_AVAILABLE";
+                literal: string | null;
+            };
             fechasInformadas: ({
                 /** @enum {string} */
                 campo: "inicio" | "fin";
@@ -849,7 +1704,7 @@ export interface components {
             })[];
             fuentes: {
                 /** @enum {string} */
-                codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
+                codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras" | "acumar-obras" | "neuquen-obras" | "mendoza-obras" | "mercedes-obras";
                 /** Format: uuid */
                 recursoId: string;
                 sha256: string;
@@ -1343,9 +2198,17 @@ export interface components {
             }[];
             /** @enum {string|null} */
             estado: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED" | null;
+            /** @description Clasificación de la revisión pública, sin inferir desde avance, contratación o revisión editorial. NOT_AVAILABLE indica que esta revisión no conserva un estado utilizable; no afirma que el original carezca de él. */
+            estadoInformado?: {
+                /** @enum {string} */
+                codigo: "COMPLETED" | "IN_PROGRESS" | "PLANNED" | "PROCUREMENT" | "PAUSED" | "SUSPENDED" | "CANCELLED" | "OTHER_REPORTED" | "NOT_REPORTED";
+                /** @enum {string} */
+                criterio: "SOURCE_LITERAL" | "LEGACY_STATE" | "NOT_AVAILABLE";
+                literal: string | null;
+            };
             fuentes: {
                 /** @enum {string} */
-                codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
+                codigo: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras" | "acumar-obras" | "neuquen-obras" | "mendoza-obras" | "mercedes-obras";
                 /** Format: uuid */
                 recursoId: string;
                 sha256: string;
@@ -1512,6 +2375,3180 @@ export interface components {
                 requestId: string | null;
             };
         };
+        ReportedRecordCounts: {
+            catalogoVersion: string;
+            /** @description Sólo cuando el resultado contiene filas institucionales: filas de oferta y códigos de establecimiento distintos dentro del mismo filtro y catálogo. No son obras, edificios ni identidades jurídicas verificadas. */
+            instituciones?: {
+                establecimientosDistintosInformados: number;
+                filasOfertaPublicadas: number;
+            };
+            localidadesConRegistros: number;
+            partidosConRegistros: number;
+            porFuente: {
+                cantidad: number;
+                codigo: string;
+            }[];
+            porTipo: {
+                cantidad: number;
+                /** @enum {string} */
+                tipo: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD" | "DOCUMENT_REPORT_SECTION" | "PROCUREMENT_ACT_RECORD" | "SOURCE_CAPTURE_UNIT" | "DOCUMENT_FRAGMENT_RECORD" | "DOCUMENT_SUPPORT_RECORD" | "SPATIAL_SUPPORT_RECORD" | "EDUCATIONAL_ESTABLISHMENT_RECORD";
+            }[];
+            totalRegistros: number;
+        };
+        ReportedRecordDetail: {
+            /** @enum {string} */
+            estado: "PUBLISHED" | "RETIRED";
+            motivoRetiro: string | null;
+            /** Format: date-time */
+            publicadoEn: string;
+            registro: ({
+                advertencias: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                    motivo: string;
+                }[];
+                datos: {
+                    campo: string;
+                    columna: string;
+                    /** @enum {string} */
+                    estado: "REPORTED" | "NOT_REPORTED";
+                    etiqueta: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    valor: string | null;
+                }[];
+                fuente: {
+                    /** Format: date-time */
+                    capturadaEn: string | null;
+                    codigo: string;
+                    nombre: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    sha256: string;
+                    /** Format: uri */
+                    urlCatalogo: string;
+                };
+                licencias: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                nombre: string;
+                territorio: {
+                    columnas: string[];
+                    /** @enum {string} */
+                    condicion: "REPORTED";
+                    localidad: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    partido: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    provincia: {
+                        codigo: string;
+                        nombre: string;
+                    };
+                } | null;
+                /** @enum {string} */
+                tipo: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD";
+                /** @enum {string} */
+                version: "registro-informado@1";
+            } | ({
+                advertencias: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                    motivo: string;
+                }[];
+                /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                avisosGenerales: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                    motivo: string;
+                }[];
+                datos: {
+                    campo: string;
+                    columna: string;
+                    /** @enum {string} */
+                    estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                    etiqueta: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    valor: string | null;
+                }[];
+                fuente: {
+                    /** Format: date-time */
+                    capturadaEn: string | null;
+                    codigo: string;
+                    nombre: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    sha256: string;
+                    /** Format: uri */
+                    urlCatalogo: string;
+                };
+                hallazgos: {
+                    campo: string | null;
+                    codigo: string;
+                    columna: string | null;
+                    motivo: string;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    /** Format: uuid */
+                    recursoId: string;
+                    /** @enum {string} */
+                    tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                }[];
+                licencias: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                nombre: string;
+                nombreGenerado: boolean;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                territorio: {
+                    columnas: string[];
+                    /** @enum {string} */
+                    condicion: "REPORTED";
+                    localidad: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    partido: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    provincia: {
+                        codigo: string;
+                        nombre: string;
+                    };
+                } | null;
+                /** @enum {string} */
+                tipo: "SOURCE_CAPTURE_UNIT";
+                /** @enum {string} */
+                version: "registro-informado@2";
+            } | {
+                advertencias: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                    motivo: string;
+                }[];
+                /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                avisosGenerales: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                    motivo: string;
+                }[];
+                datos: {
+                    campo: string;
+                    columna: string;
+                    /** @enum {string} */
+                    estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                    etiqueta: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    valor: string | null;
+                }[];
+                /** @description PDF original, página inicial y final inclusivas y sección. paginaFin no puede preceder a pagina. El recurso y SHA de fuente identifican por separado el JSON derivado. */
+                documento: {
+                    pagina: number;
+                    paginaFin?: number;
+                    seccion: string;
+                    sha256Original: string;
+                    /** Format: uri */
+                    urlOriginal: string;
+                };
+                fuente: {
+                    /** Format: date-time */
+                    capturadaEn: string | null;
+                    codigo: string;
+                    nombre: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    sha256: string;
+                    /** Format: uri */
+                    urlCatalogo: string;
+                };
+                hallazgos: {
+                    campo: string | null;
+                    codigo: string;
+                    columna: string | null;
+                    motivo: string;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    /** Format: uuid */
+                    recursoId: string;
+                    /** @enum {string} */
+                    tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                }[];
+                licencias: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                nombre: string;
+                nombreGenerado: boolean;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                territorio: {
+                    columnas: string[];
+                    /** @enum {string} */
+                    condicion: "REPORTED";
+                    localidad: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    partido: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    provincia: {
+                        codigo: string;
+                        nombre: string;
+                    };
+                } | null;
+                /** @enum {string} */
+                tipo: "PROCUREMENT_ACT_RECORD";
+                /** @enum {string} */
+                version: "registro-informado@2";
+            } | {
+                advertencias: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                    motivo: string;
+                }[];
+                /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                avisosGenerales: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                    motivo: string;
+                }[];
+                datos: {
+                    campo: string;
+                    columna: string;
+                    /** @enum {string} */
+                    estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                    etiqueta: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    valor: string | null;
+                }[];
+                fuente: {
+                    /** Format: date-time */
+                    capturadaEn: string | null;
+                    codigo: string;
+                    nombre: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    sha256: string;
+                    /** Format: uri */
+                    urlCatalogo: string;
+                };
+                hallazgos: {
+                    campo: string | null;
+                    codigo: string;
+                    columna: string | null;
+                    motivo: string;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    /** Format: uuid */
+                    recursoId: string;
+                    /** @enum {string} */
+                    tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                }[];
+                licencias: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                nombre: string;
+                nombreGenerado: boolean;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                territorio: {
+                    columnas: string[];
+                    /** @enum {string} */
+                    condicion: "REPORTED";
+                    localidad: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    partido: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    provincia: {
+                        codigo: string;
+                        nombre: string;
+                    };
+                } | null;
+                /** @enum {string} */
+                tipo: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD";
+                /** @enum {string} */
+                version: "registro-informado@2";
+            } | {
+                advertencias: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                    motivo: string;
+                }[];
+                /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                avisosGenerales: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                    motivo: string;
+                }[];
+                datos: {
+                    campo: string;
+                    columna: string;
+                    /** @enum {string} */
+                    estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                    etiqueta: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    valor: string | null;
+                }[];
+                fuente: {
+                    /** Format: date-time */
+                    capturadaEn: string | null;
+                    codigo: string;
+                    nombre: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    sha256: string;
+                    /** Format: uri */
+                    urlCatalogo: string;
+                };
+                hallazgos: {
+                    campo: string | null;
+                    codigo: string;
+                    columna: string | null;
+                    motivo: string;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    /** Format: uuid */
+                    recursoId: string;
+                    /** @enum {string} */
+                    tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                }[];
+                licencias: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                nombre: string;
+                nombreGenerado: boolean;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                territorio: {
+                    columnas: string[];
+                    /** @enum {string} */
+                    condicion: "REPORTED";
+                    localidad: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    partido: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    provincia: {
+                        codigo: string;
+                        nombre: string;
+                    };
+                } | null;
+                /** @enum {string} */
+                tipo: "PROCUREMENT_ACT_RECORD";
+                /** @enum {string} */
+                version: "registro-informado@2";
+            } | {
+                advertencias: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                    motivo: string;
+                }[];
+                /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                avisosGenerales: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                    motivo: string;
+                }[];
+                datos: {
+                    campo: string;
+                    columna: string;
+                    /** @enum {string} */
+                    estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                    etiqueta: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    valor: string | null;
+                }[];
+                /** @description PDF original, página inicial y final inclusivas y sección. paginaFin no puede preceder a pagina. El recurso y SHA de fuente identifican por separado el JSON derivado. */
+                documento: {
+                    pagina: number;
+                    paginaFin?: number;
+                    seccion: string;
+                    sha256Original: string;
+                    /** Format: uri */
+                    urlOriginal: string;
+                };
+                fuente: {
+                    /** Format: date-time */
+                    capturadaEn: string | null;
+                    codigo: string;
+                    nombre: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    sha256: string;
+                    /** Format: uri */
+                    urlCatalogo: string;
+                };
+                hallazgos: {
+                    campo: string | null;
+                    codigo: string;
+                    columna: string | null;
+                    motivo: string;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    /** Format: uuid */
+                    recursoId: string;
+                    /** @enum {string} */
+                    tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                }[];
+                licencias: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                nombre: string;
+                nombreGenerado: boolean;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                territorio: {
+                    columnas: string[];
+                    /** @enum {string} */
+                    condicion: "REPORTED";
+                    localidad: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    partido: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    provincia: {
+                        codigo: string;
+                        nombre: string;
+                    };
+                } | null;
+                /** @enum {string} */
+                tipo: "DOCUMENT_REPORT_SECTION";
+                /** @enum {string} */
+                version: "registro-informado@2";
+            } | {
+                advertencias: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                    motivo: string;
+                }[];
+                /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                avisosGenerales: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                    motivo: string;
+                }[];
+                datos: {
+                    campo: string;
+                    columna: string;
+                    /** @enum {string} */
+                    estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                    etiqueta: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    valor: string | null;
+                }[];
+                /** @description HTML original completo, SHA y sección con intervalo [byteStart, byteEnd) de bytes. No es un número de página PDF; el recurso y SHA de fuente identifican el JSON derivado por separado. */
+                documento: {
+                    byteEnd: number;
+                    byteStart: number;
+                    /** @enum {string} */
+                    formato: "HTML";
+                    seccion: string;
+                    sha256Original: string;
+                    /** Format: uri */
+                    urlOriginal: string;
+                };
+                fuente: {
+                    /** Format: date-time */
+                    capturadaEn: string | null;
+                    codigo: string;
+                    nombre: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    sha256: string;
+                    /** Format: uri */
+                    urlCatalogo: string;
+                };
+                hallazgos: {
+                    campo: string | null;
+                    codigo: string;
+                    columna: string | null;
+                    motivo: string;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    /** Format: uuid */
+                    recursoId: string;
+                    /** @enum {string} */
+                    tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                }[];
+                licencias: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                nombre: string;
+                nombreGenerado: boolean;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                territorio: {
+                    columnas: string[];
+                    /** @enum {string} */
+                    condicion: "REPORTED";
+                    localidad: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    partido: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    provincia: {
+                        codigo: string;
+                        nombre: string;
+                    };
+                } | null;
+                /** @enum {string} */
+                tipo: "DOCUMENT_REPORT_SECTION";
+                /** @enum {string} */
+                version: "registro-informado@2";
+            } | {
+                advertencias: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                    motivo: string;
+                }[];
+                /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                avisosGenerales: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                    motivo: string;
+                }[];
+                datos: {
+                    campo: string;
+                    columna: string;
+                    /** @enum {string} */
+                    estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                    etiqueta: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    valor: string | null;
+                }[];
+                /** @description HTML original completo, SHA y sección con intervalo [byteStart, byteEnd) de bytes. No es un número de página PDF; el recurso y SHA de fuente identifican el JSON derivado por separado. */
+                documento: {
+                    byteEnd: number;
+                    byteStart: number;
+                    /** @enum {string} */
+                    formato: "HTML";
+                    seccion: string;
+                    sha256Original: string;
+                    /** Format: uri */
+                    urlOriginal: string;
+                };
+                fuente: {
+                    /** Format: date-time */
+                    capturadaEn: string | null;
+                    codigo: string;
+                    nombre: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    sha256: string;
+                    /** Format: uri */
+                    urlCatalogo: string;
+                };
+                hallazgos: {
+                    campo: string | null;
+                    codigo: string;
+                    columna: string | null;
+                    motivo: string;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    /** Format: uuid */
+                    recursoId: string;
+                    /** @enum {string} */
+                    tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                }[];
+                licencias: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                nombre: string;
+                nombreGenerado: boolean;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                territorio: {
+                    columnas: string[];
+                    /** @enum {string} */
+                    condicion: "REPORTED";
+                    localidad: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    partido: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    provincia: {
+                        codigo: string;
+                        nombre: string;
+                    };
+                } | null;
+                /** @enum {string} */
+                tipo: "PROCUREMENT_ACT_RECORD";
+                /** @enum {string} */
+                version: "registro-informado@2";
+            }) | {
+                advertencias: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED";
+                    motivo: string;
+                }[];
+                apoyo: {
+                    documento: {
+                        sha256Original: string;
+                        /** Format: uri */
+                        urlOriginal: string | null;
+                    } | null;
+                    extractos: {
+                        desde: number;
+                        hasta: number;
+                        padreSha256: string;
+                        /** @enum {string} */
+                        rol: "HEADING" | "FRAGMENT";
+                        sha256: string;
+                        texto: string;
+                    }[];
+                    /** @enum {boolean} */
+                    geometriaPublicada: false;
+                    localizador: {
+                        /** @enum {string} */
+                        formato: "PDF";
+                        pagina: number;
+                    } | {
+                        fila: number;
+                        /** @enum {string} */
+                        formato: "XLS" | "XLSX";
+                        hojaSha256: string;
+                    } | {
+                        /** @enum {string} */
+                        formato: "DOCX";
+                        parrafoFin: number;
+                        parrafoInicio: number;
+                        /** @enum {string} */
+                        parte: "word/document.xml";
+                    } | {
+                        /** @enum {string} */
+                        formato: "CSV";
+                        registro: number;
+                    };
+                    /** @enum {string} */
+                    unidadFuente: "DOCUMENT_FRAGMENT" | "PROCUREMENT_ACT" | "CERTIFICATE" | "AGGREGATE_BUDGET" | "ASSET_LOCATION" | "OPERATIONAL_ACTIVITY" | "SERVICE_REQUEST" | "VISUAL_ILLUSTRATION" | "DOCUMENT_CONTEXT" | "DOCUMENTARY_ROW" | "PROPERTY_ACQUISITION_REPORTED" | "FINANCIAL_SUMMARY_REFERENCE" | "OPERATING_EXPENSE_REPORTED" | "SPATIAL_WORK_COMPONENT_REPORTED" | "SPATIAL_LOCATION_RECORD";
+                    /** @enum {string} */
+                    vinculacion: "NOT_ASSERTED";
+                };
+                datos: {
+                    campo: string;
+                    columna: string;
+                    /** @enum {string} */
+                    estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                    etiqueta: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    valor: string | null;
+                }[];
+                fuente: {
+                    /** Format: date-time */
+                    capturadaEn: string | null;
+                    codigo: string;
+                    nombre: string;
+                    /** Format: uuid */
+                    recursoId: string;
+                    sha256: string;
+                    /** Format: uri */
+                    urlCatalogo: string;
+                };
+                licencias: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                nombre: string;
+                /**
+                 * @description Política aditiva de apoyos: snapshot v3, sin datos personales, notas, geometrías candidatas ni asociación inferida. Sólo tres fragmentos Mercedes auditados admiten dos citas por unidad; exigen licencia del recurso y contenidosIndividuales LICENSED con licenciaContenidos explícita. El resto publica únicamente clase y procedencia tipada. No modifica snapshots, cursores ni comandos v1/v2.
+                 * @enum {string}
+                 */
+                politicaVersion: "publicacion-apoyos@1";
+                /** @enum {string|null} */
+                territorio: null;
+                /** @enum {string} */
+                tipo: "DOCUMENT_FRAGMENT_RECORD" | "DOCUMENT_SUPPORT_RECORD" | "SPATIAL_SUPPORT_RECORD";
+                /** @enum {string} */
+                version: "registro-informado@3";
+            } | {
+                advertencias: {
+                    /** @enum {string} */
+                    codigo: "SOURCE_REPORTED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED";
+                    motivo: string;
+                }[];
+                datos: {
+                    /** @enum {string} */
+                    campo: "establecimiento_id" | "establecimiento_nombre" | "cueanexo" | "modalidad" | "nivel" | "sector" | "tipo_organizacion" | "periodo" | "municipio_id" | "municipio_nombre";
+                    /** @enum {string} */
+                    columna: "establecimiento_id" | "establecimiento_nombre" | "cueanexo" | "modalidad" | "nivel" | "sector" | "tipo_organizacion" | "periodo" | "municipio_id" | "municipio_nombre";
+                    /** @enum {string} */
+                    estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                    etiqueta: string;
+                    motivoLimitacion: string | null;
+                    /** Format: uuid */
+                    recursoId: string;
+                    valor: string | null;
+                }[];
+                fuente: {
+                    /** Format: date-time */
+                    capturadaEn: string | null;
+                    /** @enum {string} */
+                    codigo: "pba-establecimientos";
+                    /** @enum {string} */
+                    nombre: "PBA · Establecimientos educativos";
+                    /** Format: uuid */
+                    recursoId: string;
+                    sha256: string;
+                    /** @enum {string} */
+                    urlCatalogo: "https://catalogo.datos.gba.gob.ar/dataset/establecimientos-educativos";
+                };
+                institucion: {
+                    codigo: string;
+                    /** @enum {boolean} */
+                    geometriaPublicada: false;
+                    localizador: {
+                        /** @enum {string} */
+                        formato: "CSV";
+                        registro: number;
+                    };
+                    /** @enum {string} */
+                    namespace: "pba.dgcye.establecimientos";
+                    /** @enum {boolean} */
+                    nombreGenerado: true;
+                    oferta: {
+                        cueanexo: string | null;
+                        modalidad: string | null;
+                        nivel: string | null;
+                        periodo: string | null;
+                    };
+                    /** @enum {string} */
+                    vinculacionObra: "NOT_ASSERTED";
+                };
+                licencias: {
+                    /** @enum {string} */
+                    alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                    atribucion: string;
+                    /** Format: date-time */
+                    capturadaEn: string;
+                    codigo: string;
+                    codigoLicencia: string;
+                    /** @enum {string} */
+                    contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                    distribucionBase: {
+                        aviso: string;
+                        licencia: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    /** Format: uri */
+                    evidenciaUrl: string;
+                    /** Format: uuid */
+                    fuenteId: string;
+                    licenciaContenidos: {
+                        codigo: string;
+                        /** Format: uri */
+                        url: string;
+                    } | null;
+                    recursoVersionIds: string[];
+                    /** Format: uri */
+                    urlLicencia: string;
+                    version: number;
+                }[];
+                nombre: string;
+                /**
+                 * @description Política explícita para pba-establecimientos@1: sólo CATALOG_ONLY con lector CSV posicional, columnas/linaje verificados y recurso exacto ALLOWED. Snapshot v4 de fila de oferta institucional, sin contactos, domicilio, demografía, matrícula, geometría ni obra. Permisos, sesión/CSRF, alcance actor/organización/recurso, almacenamiento original, UUID, If-Match y retiro comunes. Preparación con cursor propio; no modifica v1/v2/v3.
+                 * @enum {string}
+                 */
+                politicaVersion: "publicacion-instituciones@1";
+                territorio: {
+                    columnas: string[];
+                    /** @enum {string} */
+                    condicion: "REPORTED";
+                    localidad: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    partido: {
+                        codigo: string;
+                        nombre: string;
+                    } | null;
+                    provincia: {
+                        codigo: string;
+                        nombre: string;
+                    };
+                } | null;
+                /** @enum {string} */
+                tipo: "EDUCATIONAL_ESTABLISHMENT_RECORD";
+                /** @enum {string} */
+                version: "registro-informado@4";
+            }) | null;
+            /** Format: uuid */
+            registroId: string;
+            version: number;
+        };
+        ReportedRecordList: {
+            catalogoVersion: string;
+            items: {
+                /** @enum {string} */
+                estado: "PUBLISHED" | "RETIRED";
+                motivoRetiro: string | null;
+                /** Format: date-time */
+                publicadoEn: string;
+                registro: ({
+                    advertencias: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                        motivo: string;
+                    }[];
+                    datos: {
+                        campo: string;
+                        columna: string;
+                        /** @enum {string} */
+                        estado: "REPORTED" | "NOT_REPORTED";
+                        etiqueta: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        valor: string | null;
+                    }[];
+                    fuente: {
+                        /** Format: date-time */
+                        capturadaEn: string | null;
+                        codigo: string;
+                        nombre: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        sha256: string;
+                        /** Format: uri */
+                        urlCatalogo: string;
+                    };
+                    licencias: {
+                        /** @enum {string} */
+                        alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                        atribucion: string;
+                        /** Format: date-time */
+                        capturadaEn: string;
+                        codigo: string;
+                        codigoLicencia: string;
+                        /** @enum {string} */
+                        contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                        distribucionBase: {
+                            aviso: string;
+                            licencia: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        /** Format: uri */
+                        evidenciaUrl: string;
+                        /** Format: uuid */
+                        fuenteId: string;
+                        licenciaContenidos: {
+                            codigo: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        recursoVersionIds: string[];
+                        /** Format: uri */
+                        urlLicencia: string;
+                        version: number;
+                    }[];
+                    nombre: string;
+                    territorio: {
+                        columnas: string[];
+                        /** @enum {string} */
+                        condicion: "REPORTED";
+                        localidad: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        partido: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        provincia: {
+                            codigo: string;
+                            nombre: string;
+                        };
+                    } | null;
+                    /** @enum {string} */
+                    tipo: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD";
+                    /** @enum {string} */
+                    version: "registro-informado@1";
+                } | ({
+                    advertencias: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                        motivo: string;
+                    }[];
+                    /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                    avisosGenerales: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                        motivo: string;
+                    }[];
+                    datos: {
+                        campo: string;
+                        columna: string;
+                        /** @enum {string} */
+                        estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                        etiqueta: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        valor: string | null;
+                    }[];
+                    fuente: {
+                        /** Format: date-time */
+                        capturadaEn: string | null;
+                        codigo: string;
+                        nombre: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        sha256: string;
+                        /** Format: uri */
+                        urlCatalogo: string;
+                    };
+                    hallazgos: {
+                        campo: string | null;
+                        codigo: string;
+                        columna: string | null;
+                        motivo: string;
+                        /** @enum {string} */
+                        politicaVersion: "publicacion-homogenea@2";
+                        /** Format: uuid */
+                        recursoId: string;
+                        /** @enum {string} */
+                        tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                    }[];
+                    licencias: {
+                        /** @enum {string} */
+                        alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                        atribucion: string;
+                        /** Format: date-time */
+                        capturadaEn: string;
+                        codigo: string;
+                        codigoLicencia: string;
+                        /** @enum {string} */
+                        contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                        distribucionBase: {
+                            aviso: string;
+                            licencia: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        /** Format: uri */
+                        evidenciaUrl: string;
+                        /** Format: uuid */
+                        fuenteId: string;
+                        licenciaContenidos: {
+                            codigo: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        recursoVersionIds: string[];
+                        /** Format: uri */
+                        urlLicencia: string;
+                        version: number;
+                    }[];
+                    nombre: string;
+                    nombreGenerado: boolean;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    territorio: {
+                        columnas: string[];
+                        /** @enum {string} */
+                        condicion: "REPORTED";
+                        localidad: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        partido: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        provincia: {
+                            codigo: string;
+                            nombre: string;
+                        };
+                    } | null;
+                    /** @enum {string} */
+                    tipo: "SOURCE_CAPTURE_UNIT";
+                    /** @enum {string} */
+                    version: "registro-informado@2";
+                } | {
+                    advertencias: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                        motivo: string;
+                    }[];
+                    /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                    avisosGenerales: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                        motivo: string;
+                    }[];
+                    datos: {
+                        campo: string;
+                        columna: string;
+                        /** @enum {string} */
+                        estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                        etiqueta: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        valor: string | null;
+                    }[];
+                    /** @description PDF original, página inicial y final inclusivas y sección. paginaFin no puede preceder a pagina. El recurso y SHA de fuente identifican por separado el JSON derivado. */
+                    documento: {
+                        pagina: number;
+                        paginaFin?: number;
+                        seccion: string;
+                        sha256Original: string;
+                        /** Format: uri */
+                        urlOriginal: string;
+                    };
+                    fuente: {
+                        /** Format: date-time */
+                        capturadaEn: string | null;
+                        codigo: string;
+                        nombre: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        sha256: string;
+                        /** Format: uri */
+                        urlCatalogo: string;
+                    };
+                    hallazgos: {
+                        campo: string | null;
+                        codigo: string;
+                        columna: string | null;
+                        motivo: string;
+                        /** @enum {string} */
+                        politicaVersion: "publicacion-homogenea@2";
+                        /** Format: uuid */
+                        recursoId: string;
+                        /** @enum {string} */
+                        tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                    }[];
+                    licencias: {
+                        /** @enum {string} */
+                        alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                        atribucion: string;
+                        /** Format: date-time */
+                        capturadaEn: string;
+                        codigo: string;
+                        codigoLicencia: string;
+                        /** @enum {string} */
+                        contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                        distribucionBase: {
+                            aviso: string;
+                            licencia: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        /** Format: uri */
+                        evidenciaUrl: string;
+                        /** Format: uuid */
+                        fuenteId: string;
+                        licenciaContenidos: {
+                            codigo: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        recursoVersionIds: string[];
+                        /** Format: uri */
+                        urlLicencia: string;
+                        version: number;
+                    }[];
+                    nombre: string;
+                    nombreGenerado: boolean;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    territorio: {
+                        columnas: string[];
+                        /** @enum {string} */
+                        condicion: "REPORTED";
+                        localidad: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        partido: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        provincia: {
+                            codigo: string;
+                            nombre: string;
+                        };
+                    } | null;
+                    /** @enum {string} */
+                    tipo: "PROCUREMENT_ACT_RECORD";
+                    /** @enum {string} */
+                    version: "registro-informado@2";
+                } | {
+                    advertencias: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                        motivo: string;
+                    }[];
+                    /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                    avisosGenerales: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                        motivo: string;
+                    }[];
+                    datos: {
+                        campo: string;
+                        columna: string;
+                        /** @enum {string} */
+                        estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                        etiqueta: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        valor: string | null;
+                    }[];
+                    fuente: {
+                        /** Format: date-time */
+                        capturadaEn: string | null;
+                        codigo: string;
+                        nombre: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        sha256: string;
+                        /** Format: uri */
+                        urlCatalogo: string;
+                    };
+                    hallazgos: {
+                        campo: string | null;
+                        codigo: string;
+                        columna: string | null;
+                        motivo: string;
+                        /** @enum {string} */
+                        politicaVersion: "publicacion-homogenea@2";
+                        /** Format: uuid */
+                        recursoId: string;
+                        /** @enum {string} */
+                        tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                    }[];
+                    licencias: {
+                        /** @enum {string} */
+                        alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                        atribucion: string;
+                        /** Format: date-time */
+                        capturadaEn: string;
+                        codigo: string;
+                        codigoLicencia: string;
+                        /** @enum {string} */
+                        contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                        distribucionBase: {
+                            aviso: string;
+                            licencia: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        /** Format: uri */
+                        evidenciaUrl: string;
+                        /** Format: uuid */
+                        fuenteId: string;
+                        licenciaContenidos: {
+                            codigo: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        recursoVersionIds: string[];
+                        /** Format: uri */
+                        urlLicencia: string;
+                        version: number;
+                    }[];
+                    nombre: string;
+                    nombreGenerado: boolean;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    territorio: {
+                        columnas: string[];
+                        /** @enum {string} */
+                        condicion: "REPORTED";
+                        localidad: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        partido: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        provincia: {
+                            codigo: string;
+                            nombre: string;
+                        };
+                    } | null;
+                    /** @enum {string} */
+                    tipo: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD";
+                    /** @enum {string} */
+                    version: "registro-informado@2";
+                } | {
+                    advertencias: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                        motivo: string;
+                    }[];
+                    /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                    avisosGenerales: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                        motivo: string;
+                    }[];
+                    datos: {
+                        campo: string;
+                        columna: string;
+                        /** @enum {string} */
+                        estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                        etiqueta: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        valor: string | null;
+                    }[];
+                    fuente: {
+                        /** Format: date-time */
+                        capturadaEn: string | null;
+                        codigo: string;
+                        nombre: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        sha256: string;
+                        /** Format: uri */
+                        urlCatalogo: string;
+                    };
+                    hallazgos: {
+                        campo: string | null;
+                        codigo: string;
+                        columna: string | null;
+                        motivo: string;
+                        /** @enum {string} */
+                        politicaVersion: "publicacion-homogenea@2";
+                        /** Format: uuid */
+                        recursoId: string;
+                        /** @enum {string} */
+                        tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                    }[];
+                    licencias: {
+                        /** @enum {string} */
+                        alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                        atribucion: string;
+                        /** Format: date-time */
+                        capturadaEn: string;
+                        codigo: string;
+                        codigoLicencia: string;
+                        /** @enum {string} */
+                        contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                        distribucionBase: {
+                            aviso: string;
+                            licencia: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        /** Format: uri */
+                        evidenciaUrl: string;
+                        /** Format: uuid */
+                        fuenteId: string;
+                        licenciaContenidos: {
+                            codigo: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        recursoVersionIds: string[];
+                        /** Format: uri */
+                        urlLicencia: string;
+                        version: number;
+                    }[];
+                    nombre: string;
+                    nombreGenerado: boolean;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    territorio: {
+                        columnas: string[];
+                        /** @enum {string} */
+                        condicion: "REPORTED";
+                        localidad: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        partido: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        provincia: {
+                            codigo: string;
+                            nombre: string;
+                        };
+                    } | null;
+                    /** @enum {string} */
+                    tipo: "PROCUREMENT_ACT_RECORD";
+                    /** @enum {string} */
+                    version: "registro-informado@2";
+                } | {
+                    advertencias: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                        motivo: string;
+                    }[];
+                    /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                    avisosGenerales: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                        motivo: string;
+                    }[];
+                    datos: {
+                        campo: string;
+                        columna: string;
+                        /** @enum {string} */
+                        estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                        etiqueta: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        valor: string | null;
+                    }[];
+                    /** @description PDF original, página inicial y final inclusivas y sección. paginaFin no puede preceder a pagina. El recurso y SHA de fuente identifican por separado el JSON derivado. */
+                    documento: {
+                        pagina: number;
+                        paginaFin?: number;
+                        seccion: string;
+                        sha256Original: string;
+                        /** Format: uri */
+                        urlOriginal: string;
+                    };
+                    fuente: {
+                        /** Format: date-time */
+                        capturadaEn: string | null;
+                        codigo: string;
+                        nombre: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        sha256: string;
+                        /** Format: uri */
+                        urlCatalogo: string;
+                    };
+                    hallazgos: {
+                        campo: string | null;
+                        codigo: string;
+                        columna: string | null;
+                        motivo: string;
+                        /** @enum {string} */
+                        politicaVersion: "publicacion-homogenea@2";
+                        /** Format: uuid */
+                        recursoId: string;
+                        /** @enum {string} */
+                        tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                    }[];
+                    licencias: {
+                        /** @enum {string} */
+                        alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                        atribucion: string;
+                        /** Format: date-time */
+                        capturadaEn: string;
+                        codigo: string;
+                        codigoLicencia: string;
+                        /** @enum {string} */
+                        contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                        distribucionBase: {
+                            aviso: string;
+                            licencia: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        /** Format: uri */
+                        evidenciaUrl: string;
+                        /** Format: uuid */
+                        fuenteId: string;
+                        licenciaContenidos: {
+                            codigo: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        recursoVersionIds: string[];
+                        /** Format: uri */
+                        urlLicencia: string;
+                        version: number;
+                    }[];
+                    nombre: string;
+                    nombreGenerado: boolean;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    territorio: {
+                        columnas: string[];
+                        /** @enum {string} */
+                        condicion: "REPORTED";
+                        localidad: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        partido: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        provincia: {
+                            codigo: string;
+                            nombre: string;
+                        };
+                    } | null;
+                    /** @enum {string} */
+                    tipo: "DOCUMENT_REPORT_SECTION";
+                    /** @enum {string} */
+                    version: "registro-informado@2";
+                } | {
+                    advertencias: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                        motivo: string;
+                    }[];
+                    /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                    avisosGenerales: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                        motivo: string;
+                    }[];
+                    datos: {
+                        campo: string;
+                        columna: string;
+                        /** @enum {string} */
+                        estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                        etiqueta: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        valor: string | null;
+                    }[];
+                    /** @description HTML original completo, SHA y sección con intervalo [byteStart, byteEnd) de bytes. No es un número de página PDF; el recurso y SHA de fuente identifican el JSON derivado por separado. */
+                    documento: {
+                        byteEnd: number;
+                        byteStart: number;
+                        /** @enum {string} */
+                        formato: "HTML";
+                        seccion: string;
+                        sha256Original: string;
+                        /** Format: uri */
+                        urlOriginal: string;
+                    };
+                    fuente: {
+                        /** Format: date-time */
+                        capturadaEn: string | null;
+                        codigo: string;
+                        nombre: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        sha256: string;
+                        /** Format: uri */
+                        urlCatalogo: string;
+                    };
+                    hallazgos: {
+                        campo: string | null;
+                        codigo: string;
+                        columna: string | null;
+                        motivo: string;
+                        /** @enum {string} */
+                        politicaVersion: "publicacion-homogenea@2";
+                        /** Format: uuid */
+                        recursoId: string;
+                        /** @enum {string} */
+                        tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                    }[];
+                    licencias: {
+                        /** @enum {string} */
+                        alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                        atribucion: string;
+                        /** Format: date-time */
+                        capturadaEn: string;
+                        codigo: string;
+                        codigoLicencia: string;
+                        /** @enum {string} */
+                        contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                        distribucionBase: {
+                            aviso: string;
+                            licencia: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        /** Format: uri */
+                        evidenciaUrl: string;
+                        /** Format: uuid */
+                        fuenteId: string;
+                        licenciaContenidos: {
+                            codigo: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        recursoVersionIds: string[];
+                        /** Format: uri */
+                        urlLicencia: string;
+                        version: number;
+                    }[];
+                    nombre: string;
+                    nombreGenerado: boolean;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    territorio: {
+                        columnas: string[];
+                        /** @enum {string} */
+                        condicion: "REPORTED";
+                        localidad: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        partido: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        provincia: {
+                            codigo: string;
+                            nombre: string;
+                        };
+                    } | null;
+                    /** @enum {string} */
+                    tipo: "DOCUMENT_REPORT_SECTION";
+                    /** @enum {string} */
+                    version: "registro-informado@2";
+                } | {
+                    advertencias: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                        motivo: string;
+                    }[];
+                    /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+                    avisosGenerales: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                        motivo: string;
+                    }[];
+                    datos: {
+                        campo: string;
+                        columna: string;
+                        /** @enum {string} */
+                        estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                        etiqueta: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        valor: string | null;
+                    }[];
+                    /** @description HTML original completo, SHA y sección con intervalo [byteStart, byteEnd) de bytes. No es un número de página PDF; el recurso y SHA de fuente identifican el JSON derivado por separado. */
+                    documento: {
+                        byteEnd: number;
+                        byteStart: number;
+                        /** @enum {string} */
+                        formato: "HTML";
+                        seccion: string;
+                        sha256Original: string;
+                        /** Format: uri */
+                        urlOriginal: string;
+                    };
+                    fuente: {
+                        /** Format: date-time */
+                        capturadaEn: string | null;
+                        codigo: string;
+                        nombre: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        sha256: string;
+                        /** Format: uri */
+                        urlCatalogo: string;
+                    };
+                    hallazgos: {
+                        campo: string | null;
+                        codigo: string;
+                        columna: string | null;
+                        motivo: string;
+                        /** @enum {string} */
+                        politicaVersion: "publicacion-homogenea@2";
+                        /** Format: uuid */
+                        recursoId: string;
+                        /** @enum {string} */
+                        tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+                    }[];
+                    licencias: {
+                        /** @enum {string} */
+                        alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                        atribucion: string;
+                        /** Format: date-time */
+                        capturadaEn: string;
+                        codigo: string;
+                        codigoLicencia: string;
+                        /** @enum {string} */
+                        contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                        distribucionBase: {
+                            aviso: string;
+                            licencia: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        /** Format: uri */
+                        evidenciaUrl: string;
+                        /** Format: uuid */
+                        fuenteId: string;
+                        licenciaContenidos: {
+                            codigo: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        recursoVersionIds: string[];
+                        /** Format: uri */
+                        urlLicencia: string;
+                        version: number;
+                    }[];
+                    nombre: string;
+                    nombreGenerado: boolean;
+                    /** @enum {string} */
+                    politicaVersion: "publicacion-homogenea@2";
+                    territorio: {
+                        columnas: string[];
+                        /** @enum {string} */
+                        condicion: "REPORTED";
+                        localidad: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        partido: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        provincia: {
+                            codigo: string;
+                            nombre: string;
+                        };
+                    } | null;
+                    /** @enum {string} */
+                    tipo: "PROCUREMENT_ACT_RECORD";
+                    /** @enum {string} */
+                    version: "registro-informado@2";
+                }) | {
+                    advertencias: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED";
+                        motivo: string;
+                    }[];
+                    apoyo: {
+                        documento: {
+                            sha256Original: string;
+                            /** Format: uri */
+                            urlOriginal: string | null;
+                        } | null;
+                        extractos: {
+                            desde: number;
+                            hasta: number;
+                            padreSha256: string;
+                            /** @enum {string} */
+                            rol: "HEADING" | "FRAGMENT";
+                            sha256: string;
+                            texto: string;
+                        }[];
+                        /** @enum {boolean} */
+                        geometriaPublicada: false;
+                        localizador: {
+                            /** @enum {string} */
+                            formato: "PDF";
+                            pagina: number;
+                        } | {
+                            fila: number;
+                            /** @enum {string} */
+                            formato: "XLS" | "XLSX";
+                            hojaSha256: string;
+                        } | {
+                            /** @enum {string} */
+                            formato: "DOCX";
+                            parrafoFin: number;
+                            parrafoInicio: number;
+                            /** @enum {string} */
+                            parte: "word/document.xml";
+                        } | {
+                            /** @enum {string} */
+                            formato: "CSV";
+                            registro: number;
+                        };
+                        /** @enum {string} */
+                        unidadFuente: "DOCUMENT_FRAGMENT" | "PROCUREMENT_ACT" | "CERTIFICATE" | "AGGREGATE_BUDGET" | "ASSET_LOCATION" | "OPERATIONAL_ACTIVITY" | "SERVICE_REQUEST" | "VISUAL_ILLUSTRATION" | "DOCUMENT_CONTEXT" | "DOCUMENTARY_ROW" | "PROPERTY_ACQUISITION_REPORTED" | "FINANCIAL_SUMMARY_REFERENCE" | "OPERATING_EXPENSE_REPORTED" | "SPATIAL_WORK_COMPONENT_REPORTED" | "SPATIAL_LOCATION_RECORD";
+                        /** @enum {string} */
+                        vinculacion: "NOT_ASSERTED";
+                    };
+                    datos: {
+                        campo: string;
+                        columna: string;
+                        /** @enum {string} */
+                        estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                        etiqueta: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        valor: string | null;
+                    }[];
+                    fuente: {
+                        /** Format: date-time */
+                        capturadaEn: string | null;
+                        codigo: string;
+                        nombre: string;
+                        /** Format: uuid */
+                        recursoId: string;
+                        sha256: string;
+                        /** Format: uri */
+                        urlCatalogo: string;
+                    };
+                    licencias: {
+                        /** @enum {string} */
+                        alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                        atribucion: string;
+                        /** Format: date-time */
+                        capturadaEn: string;
+                        codigo: string;
+                        codigoLicencia: string;
+                        /** @enum {string} */
+                        contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                        distribucionBase: {
+                            aviso: string;
+                            licencia: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        /** Format: uri */
+                        evidenciaUrl: string;
+                        /** Format: uuid */
+                        fuenteId: string;
+                        licenciaContenidos: {
+                            codigo: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        recursoVersionIds: string[];
+                        /** Format: uri */
+                        urlLicencia: string;
+                        version: number;
+                    }[];
+                    nombre: string;
+                    /**
+                     * @description Política aditiva de apoyos: snapshot v3, sin datos personales, notas, geometrías candidatas ni asociación inferida. Sólo tres fragmentos Mercedes auditados admiten dos citas por unidad; exigen licencia del recurso y contenidosIndividuales LICENSED con licenciaContenidos explícita. El resto publica únicamente clase y procedencia tipada. No modifica snapshots, cursores ni comandos v1/v2.
+                     * @enum {string}
+                     */
+                    politicaVersion: "publicacion-apoyos@1";
+                    /** @enum {string|null} */
+                    territorio: null;
+                    /** @enum {string} */
+                    tipo: "DOCUMENT_FRAGMENT_RECORD" | "DOCUMENT_SUPPORT_RECORD" | "SPATIAL_SUPPORT_RECORD";
+                    /** @enum {string} */
+                    version: "registro-informado@3";
+                } | {
+                    advertencias: {
+                        /** @enum {string} */
+                        codigo: "SOURCE_REPORTED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED";
+                        motivo: string;
+                    }[];
+                    datos: {
+                        /** @enum {string} */
+                        campo: "establecimiento_id" | "establecimiento_nombre" | "cueanexo" | "modalidad" | "nivel" | "sector" | "tipo_organizacion" | "periodo" | "municipio_id" | "municipio_nombre";
+                        /** @enum {string} */
+                        columna: "establecimiento_id" | "establecimiento_nombre" | "cueanexo" | "modalidad" | "nivel" | "sector" | "tipo_organizacion" | "periodo" | "municipio_id" | "municipio_nombre";
+                        /** @enum {string} */
+                        estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                        etiqueta: string;
+                        motivoLimitacion: string | null;
+                        /** Format: uuid */
+                        recursoId: string;
+                        valor: string | null;
+                    }[];
+                    fuente: {
+                        /** Format: date-time */
+                        capturadaEn: string | null;
+                        /** @enum {string} */
+                        codigo: "pba-establecimientos";
+                        /** @enum {string} */
+                        nombre: "PBA · Establecimientos educativos";
+                        /** Format: uuid */
+                        recursoId: string;
+                        sha256: string;
+                        /** @enum {string} */
+                        urlCatalogo: "https://catalogo.datos.gba.gob.ar/dataset/establecimientos-educativos";
+                    };
+                    institucion: {
+                        codigo: string;
+                        /** @enum {boolean} */
+                        geometriaPublicada: false;
+                        localizador: {
+                            /** @enum {string} */
+                            formato: "CSV";
+                            registro: number;
+                        };
+                        /** @enum {string} */
+                        namespace: "pba.dgcye.establecimientos";
+                        /** @enum {boolean} */
+                        nombreGenerado: true;
+                        oferta: {
+                            cueanexo: string | null;
+                            modalidad: string | null;
+                            nivel: string | null;
+                            periodo: string | null;
+                        };
+                        /** @enum {string} */
+                        vinculacionObra: "NOT_ASSERTED";
+                    };
+                    licencias: {
+                        /** @enum {string} */
+                        alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                        atribucion: string;
+                        /** Format: date-time */
+                        capturadaEn: string;
+                        codigo: string;
+                        codigoLicencia: string;
+                        /** @enum {string} */
+                        contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                        distribucionBase: {
+                            aviso: string;
+                            licencia: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        /** Format: uri */
+                        evidenciaUrl: string;
+                        /** Format: uuid */
+                        fuenteId: string;
+                        licenciaContenidos: {
+                            codigo: string;
+                            /** Format: uri */
+                            url: string;
+                        } | null;
+                        recursoVersionIds: string[];
+                        /** Format: uri */
+                        urlLicencia: string;
+                        version: number;
+                    }[];
+                    nombre: string;
+                    /**
+                     * @description Política explícita para pba-establecimientos@1: sólo CATALOG_ONLY con lector CSV posicional, columnas/linaje verificados y recurso exacto ALLOWED. Snapshot v4 de fila de oferta institucional, sin contactos, domicilio, demografía, matrícula, geometría ni obra. Permisos, sesión/CSRF, alcance actor/organización/recurso, almacenamiento original, UUID, If-Match y retiro comunes. Preparación con cursor propio; no modifica v1/v2/v3.
+                     * @enum {string}
+                     */
+                    politicaVersion: "publicacion-instituciones@1";
+                    territorio: {
+                        columnas: string[];
+                        /** @enum {string} */
+                        condicion: "REPORTED";
+                        localidad: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        partido: {
+                            codigo: string;
+                            nombre: string;
+                        } | null;
+                        provincia: {
+                            codigo: string;
+                            nombre: string;
+                        };
+                    } | null;
+                    /** @enum {string} */
+                    tipo: "EDUCATIONAL_ESTABLISHMENT_RECORD";
+                    /** @enum {string} */
+                    version: "registro-informado@4";
+                }) | null;
+                /** Format: uuid */
+                registroId: string;
+                version: number;
+            }[];
+            limit: number;
+            nextCursor: string | null;
+        };
+        ReportedRecordSnapshot: {
+            advertencias: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                motivo: string;
+            }[];
+            datos: {
+                campo: string;
+                columna: string;
+                /** @enum {string} */
+                estado: "REPORTED" | "NOT_REPORTED";
+                etiqueta: string;
+                /** Format: uuid */
+                recursoId: string;
+                valor: string | null;
+            }[];
+            fuente: {
+                /** Format: date-time */
+                capturadaEn: string | null;
+                codigo: string;
+                nombre: string;
+                /** Format: uuid */
+                recursoId: string;
+                sha256: string;
+                /** Format: uri */
+                urlCatalogo: string;
+            };
+            licencias: {
+                /** @enum {string} */
+                alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                atribucion: string;
+                /** Format: date-time */
+                capturadaEn: string;
+                codigo: string;
+                codigoLicencia: string;
+                /** @enum {string} */
+                contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                distribucionBase: {
+                    aviso: string;
+                    licencia: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                /** Format: uri */
+                evidenciaUrl: string;
+                /** Format: uuid */
+                fuenteId: string;
+                licenciaContenidos: {
+                    codigo: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                recursoVersionIds: string[];
+                /** Format: uri */
+                urlLicencia: string;
+                version: number;
+            }[];
+            nombre: string;
+            territorio: {
+                columnas: string[];
+                /** @enum {string} */
+                condicion: "REPORTED";
+                localidad: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                partido: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                provincia: {
+                    codigo: string;
+                    nombre: string;
+                };
+            } | null;
+            /** @enum {string} */
+            tipo: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD";
+            /** @enum {string} */
+            version: "registro-informado@1";
+        } | ({
+            advertencias: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                motivo: string;
+            }[];
+            /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+            avisosGenerales: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                motivo: string;
+            }[];
+            datos: {
+                campo: string;
+                columna: string;
+                /** @enum {string} */
+                estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                etiqueta: string;
+                /** Format: uuid */
+                recursoId: string;
+                valor: string | null;
+            }[];
+            fuente: {
+                /** Format: date-time */
+                capturadaEn: string | null;
+                codigo: string;
+                nombre: string;
+                /** Format: uuid */
+                recursoId: string;
+                sha256: string;
+                /** Format: uri */
+                urlCatalogo: string;
+            };
+            hallazgos: {
+                campo: string | null;
+                codigo: string;
+                columna: string | null;
+                motivo: string;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                /** Format: uuid */
+                recursoId: string;
+                /** @enum {string} */
+                tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+            }[];
+            licencias: {
+                /** @enum {string} */
+                alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                atribucion: string;
+                /** Format: date-time */
+                capturadaEn: string;
+                codigo: string;
+                codigoLicencia: string;
+                /** @enum {string} */
+                contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                distribucionBase: {
+                    aviso: string;
+                    licencia: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                /** Format: uri */
+                evidenciaUrl: string;
+                /** Format: uuid */
+                fuenteId: string;
+                licenciaContenidos: {
+                    codigo: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                recursoVersionIds: string[];
+                /** Format: uri */
+                urlLicencia: string;
+                version: number;
+            }[];
+            nombre: string;
+            nombreGenerado: boolean;
+            /** @enum {string} */
+            politicaVersion: "publicacion-homogenea@2";
+            territorio: {
+                columnas: string[];
+                /** @enum {string} */
+                condicion: "REPORTED";
+                localidad: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                partido: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                provincia: {
+                    codigo: string;
+                    nombre: string;
+                };
+            } | null;
+            /** @enum {string} */
+            tipo: "SOURCE_CAPTURE_UNIT";
+            /** @enum {string} */
+            version: "registro-informado@2";
+        } | {
+            advertencias: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                motivo: string;
+            }[];
+            /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+            avisosGenerales: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                motivo: string;
+            }[];
+            datos: {
+                campo: string;
+                columna: string;
+                /** @enum {string} */
+                estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                etiqueta: string;
+                /** Format: uuid */
+                recursoId: string;
+                valor: string | null;
+            }[];
+            /** @description PDF original, página inicial y final inclusivas y sección. paginaFin no puede preceder a pagina. El recurso y SHA de fuente identifican por separado el JSON derivado. */
+            documento: {
+                pagina: number;
+                paginaFin?: number;
+                seccion: string;
+                sha256Original: string;
+                /** Format: uri */
+                urlOriginal: string;
+            };
+            fuente: {
+                /** Format: date-time */
+                capturadaEn: string | null;
+                codigo: string;
+                nombre: string;
+                /** Format: uuid */
+                recursoId: string;
+                sha256: string;
+                /** Format: uri */
+                urlCatalogo: string;
+            };
+            hallazgos: {
+                campo: string | null;
+                codigo: string;
+                columna: string | null;
+                motivo: string;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                /** Format: uuid */
+                recursoId: string;
+                /** @enum {string} */
+                tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+            }[];
+            licencias: {
+                /** @enum {string} */
+                alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                atribucion: string;
+                /** Format: date-time */
+                capturadaEn: string;
+                codigo: string;
+                codigoLicencia: string;
+                /** @enum {string} */
+                contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                distribucionBase: {
+                    aviso: string;
+                    licencia: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                /** Format: uri */
+                evidenciaUrl: string;
+                /** Format: uuid */
+                fuenteId: string;
+                licenciaContenidos: {
+                    codigo: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                recursoVersionIds: string[];
+                /** Format: uri */
+                urlLicencia: string;
+                version: number;
+            }[];
+            nombre: string;
+            nombreGenerado: boolean;
+            /** @enum {string} */
+            politicaVersion: "publicacion-homogenea@2";
+            territorio: {
+                columnas: string[];
+                /** @enum {string} */
+                condicion: "REPORTED";
+                localidad: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                partido: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                provincia: {
+                    codigo: string;
+                    nombre: string;
+                };
+            } | null;
+            /** @enum {string} */
+            tipo: "PROCUREMENT_ACT_RECORD";
+            /** @enum {string} */
+            version: "registro-informado@2";
+        } | {
+            advertencias: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                motivo: string;
+            }[];
+            /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+            avisosGenerales: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                motivo: string;
+            }[];
+            datos: {
+                campo: string;
+                columna: string;
+                /** @enum {string} */
+                estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                etiqueta: string;
+                /** Format: uuid */
+                recursoId: string;
+                valor: string | null;
+            }[];
+            fuente: {
+                /** Format: date-time */
+                capturadaEn: string | null;
+                codigo: string;
+                nombre: string;
+                /** Format: uuid */
+                recursoId: string;
+                sha256: string;
+                /** Format: uri */
+                urlCatalogo: string;
+            };
+            hallazgos: {
+                campo: string | null;
+                codigo: string;
+                columna: string | null;
+                motivo: string;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                /** Format: uuid */
+                recursoId: string;
+                /** @enum {string} */
+                tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+            }[];
+            licencias: {
+                /** @enum {string} */
+                alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                atribucion: string;
+                /** Format: date-time */
+                capturadaEn: string;
+                codigo: string;
+                codigoLicencia: string;
+                /** @enum {string} */
+                contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                distribucionBase: {
+                    aviso: string;
+                    licencia: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                /** Format: uri */
+                evidenciaUrl: string;
+                /** Format: uuid */
+                fuenteId: string;
+                licenciaContenidos: {
+                    codigo: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                recursoVersionIds: string[];
+                /** Format: uri */
+                urlLicencia: string;
+                version: number;
+            }[];
+            nombre: string;
+            nombreGenerado: boolean;
+            /** @enum {string} */
+            politicaVersion: "publicacion-homogenea@2";
+            territorio: {
+                columnas: string[];
+                /** @enum {string} */
+                condicion: "REPORTED";
+                localidad: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                partido: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                provincia: {
+                    codigo: string;
+                    nombre: string;
+                };
+            } | null;
+            /** @enum {string} */
+            tipo: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD";
+            /** @enum {string} */
+            version: "registro-informado@2";
+        } | {
+            advertencias: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                motivo: string;
+            }[];
+            /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+            avisosGenerales: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                motivo: string;
+            }[];
+            datos: {
+                campo: string;
+                columna: string;
+                /** @enum {string} */
+                estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                etiqueta: string;
+                /** Format: uuid */
+                recursoId: string;
+                valor: string | null;
+            }[];
+            fuente: {
+                /** Format: date-time */
+                capturadaEn: string | null;
+                codigo: string;
+                nombre: string;
+                /** Format: uuid */
+                recursoId: string;
+                sha256: string;
+                /** Format: uri */
+                urlCatalogo: string;
+            };
+            hallazgos: {
+                campo: string | null;
+                codigo: string;
+                columna: string | null;
+                motivo: string;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                /** Format: uuid */
+                recursoId: string;
+                /** @enum {string} */
+                tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+            }[];
+            licencias: {
+                /** @enum {string} */
+                alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                atribucion: string;
+                /** Format: date-time */
+                capturadaEn: string;
+                codigo: string;
+                codigoLicencia: string;
+                /** @enum {string} */
+                contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                distribucionBase: {
+                    aviso: string;
+                    licencia: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                /** Format: uri */
+                evidenciaUrl: string;
+                /** Format: uuid */
+                fuenteId: string;
+                licenciaContenidos: {
+                    codigo: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                recursoVersionIds: string[];
+                /** Format: uri */
+                urlLicencia: string;
+                version: number;
+            }[];
+            nombre: string;
+            nombreGenerado: boolean;
+            /** @enum {string} */
+            politicaVersion: "publicacion-homogenea@2";
+            territorio: {
+                columnas: string[];
+                /** @enum {string} */
+                condicion: "REPORTED";
+                localidad: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                partido: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                provincia: {
+                    codigo: string;
+                    nombre: string;
+                };
+            } | null;
+            /** @enum {string} */
+            tipo: "PROCUREMENT_ACT_RECORD";
+            /** @enum {string} */
+            version: "registro-informado@2";
+        } | {
+            advertencias: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                motivo: string;
+            }[];
+            /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+            avisosGenerales: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                motivo: string;
+            }[];
+            datos: {
+                campo: string;
+                columna: string;
+                /** @enum {string} */
+                estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                etiqueta: string;
+                /** Format: uuid */
+                recursoId: string;
+                valor: string | null;
+            }[];
+            /** @description PDF original, página inicial y final inclusivas y sección. paginaFin no puede preceder a pagina. El recurso y SHA de fuente identifican por separado el JSON derivado. */
+            documento: {
+                pagina: number;
+                paginaFin?: number;
+                seccion: string;
+                sha256Original: string;
+                /** Format: uri */
+                urlOriginal: string;
+            };
+            fuente: {
+                /** Format: date-time */
+                capturadaEn: string | null;
+                codigo: string;
+                nombre: string;
+                /** Format: uuid */
+                recursoId: string;
+                sha256: string;
+                /** Format: uri */
+                urlCatalogo: string;
+            };
+            hallazgos: {
+                campo: string | null;
+                codigo: string;
+                columna: string | null;
+                motivo: string;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                /** Format: uuid */
+                recursoId: string;
+                /** @enum {string} */
+                tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+            }[];
+            licencias: {
+                /** @enum {string} */
+                alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                atribucion: string;
+                /** Format: date-time */
+                capturadaEn: string;
+                codigo: string;
+                codigoLicencia: string;
+                /** @enum {string} */
+                contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                distribucionBase: {
+                    aviso: string;
+                    licencia: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                /** Format: uri */
+                evidenciaUrl: string;
+                /** Format: uuid */
+                fuenteId: string;
+                licenciaContenidos: {
+                    codigo: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                recursoVersionIds: string[];
+                /** Format: uri */
+                urlLicencia: string;
+                version: number;
+            }[];
+            nombre: string;
+            nombreGenerado: boolean;
+            /** @enum {string} */
+            politicaVersion: "publicacion-homogenea@2";
+            territorio: {
+                columnas: string[];
+                /** @enum {string} */
+                condicion: "REPORTED";
+                localidad: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                partido: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                provincia: {
+                    codigo: string;
+                    nombre: string;
+                };
+            } | null;
+            /** @enum {string} */
+            tipo: "DOCUMENT_REPORT_SECTION";
+            /** @enum {string} */
+            version: "registro-informado@2";
+        } | {
+            advertencias: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                motivo: string;
+            }[];
+            /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+            avisosGenerales: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                motivo: string;
+            }[];
+            datos: {
+                campo: string;
+                columna: string;
+                /** @enum {string} */
+                estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                etiqueta: string;
+                /** Format: uuid */
+                recursoId: string;
+                valor: string | null;
+            }[];
+            /** @description HTML original completo, SHA y sección con intervalo [byteStart, byteEnd) de bytes. No es un número de página PDF; el recurso y SHA de fuente identifican el JSON derivado por separado. */
+            documento: {
+                byteEnd: number;
+                byteStart: number;
+                /** @enum {string} */
+                formato: "HTML";
+                seccion: string;
+                sha256Original: string;
+                /** Format: uri */
+                urlOriginal: string;
+            };
+            fuente: {
+                /** Format: date-time */
+                capturadaEn: string | null;
+                codigo: string;
+                nombre: string;
+                /** Format: uuid */
+                recursoId: string;
+                sha256: string;
+                /** Format: uri */
+                urlCatalogo: string;
+            };
+            hallazgos: {
+                campo: string | null;
+                codigo: string;
+                columna: string | null;
+                motivo: string;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                /** Format: uuid */
+                recursoId: string;
+                /** @enum {string} */
+                tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+            }[];
+            licencias: {
+                /** @enum {string} */
+                alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                atribucion: string;
+                /** Format: date-time */
+                capturadaEn: string;
+                codigo: string;
+                codigoLicencia: string;
+                /** @enum {string} */
+                contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                distribucionBase: {
+                    aviso: string;
+                    licencia: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                /** Format: uri */
+                evidenciaUrl: string;
+                /** Format: uuid */
+                fuenteId: string;
+                licenciaContenidos: {
+                    codigo: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                recursoVersionIds: string[];
+                /** Format: uri */
+                urlLicencia: string;
+                version: number;
+            }[];
+            nombre: string;
+            nombreGenerado: boolean;
+            /** @enum {string} */
+            politicaVersion: "publicacion-homogenea@2";
+            territorio: {
+                columnas: string[];
+                /** @enum {string} */
+                condicion: "REPORTED";
+                localidad: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                partido: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                provincia: {
+                    codigo: string;
+                    nombre: string;
+                };
+            } | null;
+            /** @enum {string} */
+            tipo: "DOCUMENT_REPORT_SECTION";
+            /** @enum {string} */
+            version: "registro-informado@2";
+        } | {
+            advertencias: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT";
+                motivo: string;
+            }[];
+            /** @description Avisos interpretativos; CATALOG_* describen metadatos del catálogo de origen y no una contradicción de cada sección. */
+            avisosGenerales: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED" | "POSSIBLE_DUPLICATE" | "FIELD_CONFLICT" | "CATALOG_TITLE_STATE_DISCREPANCY" | "CATALOG_AUTHOR_ORGANIZATION_DIFFER";
+                motivo: string;
+            }[];
+            datos: {
+                campo: string;
+                columna: string;
+                /** @enum {string} */
+                estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                etiqueta: string;
+                /** Format: uuid */
+                recursoId: string;
+                valor: string | null;
+            }[];
+            /** @description HTML original completo, SHA y sección con intervalo [byteStart, byteEnd) de bytes. No es un número de página PDF; el recurso y SHA de fuente identifican el JSON derivado por separado. */
+            documento: {
+                byteEnd: number;
+                byteStart: number;
+                /** @enum {string} */
+                formato: "HTML";
+                seccion: string;
+                sha256Original: string;
+                /** Format: uri */
+                urlOriginal: string;
+            };
+            fuente: {
+                /** Format: date-time */
+                capturadaEn: string | null;
+                codigo: string;
+                nombre: string;
+                /** Format: uuid */
+                recursoId: string;
+                sha256: string;
+                /** Format: uri */
+                urlCatalogo: string;
+            };
+            hallazgos: {
+                campo: string | null;
+                codigo: string;
+                columna: string | null;
+                motivo: string;
+                /** @enum {string} */
+                politicaVersion: "publicacion-homogenea@2";
+                /** Format: uuid */
+                recursoId: string;
+                /** @enum {string} */
+                tratamiento: "PUBLISHED_LITERAL" | "GENERATED_LABEL" | "FIELD_WITHHELD" | "CONTROL_REPLACED";
+            }[];
+            licencias: {
+                /** @enum {string} */
+                alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                atribucion: string;
+                /** Format: date-time */
+                capturadaEn: string;
+                codigo: string;
+                codigoLicencia: string;
+                /** @enum {string} */
+                contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                distribucionBase: {
+                    aviso: string;
+                    licencia: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                /** Format: uri */
+                evidenciaUrl: string;
+                /** Format: uuid */
+                fuenteId: string;
+                licenciaContenidos: {
+                    codigo: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                recursoVersionIds: string[];
+                /** Format: uri */
+                urlLicencia: string;
+                version: number;
+            }[];
+            nombre: string;
+            nombreGenerado: boolean;
+            /** @enum {string} */
+            politicaVersion: "publicacion-homogenea@2";
+            territorio: {
+                columnas: string[];
+                /** @enum {string} */
+                condicion: "REPORTED";
+                localidad: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                partido: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                provincia: {
+                    codigo: string;
+                    nombre: string;
+                };
+            } | null;
+            /** @enum {string} */
+            tipo: "PROCUREMENT_ACT_RECORD";
+            /** @enum {string} */
+            version: "registro-informado@2";
+        }) | {
+            advertencias: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "IDENTITY_UNRESOLVED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED";
+                motivo: string;
+            }[];
+            apoyo: {
+                documento: {
+                    sha256Original: string;
+                    /** Format: uri */
+                    urlOriginal: string | null;
+                } | null;
+                extractos: {
+                    desde: number;
+                    hasta: number;
+                    padreSha256: string;
+                    /** @enum {string} */
+                    rol: "HEADING" | "FRAGMENT";
+                    sha256: string;
+                    texto: string;
+                }[];
+                /** @enum {boolean} */
+                geometriaPublicada: false;
+                localizador: {
+                    /** @enum {string} */
+                    formato: "PDF";
+                    pagina: number;
+                } | {
+                    fila: number;
+                    /** @enum {string} */
+                    formato: "XLS" | "XLSX";
+                    hojaSha256: string;
+                } | {
+                    /** @enum {string} */
+                    formato: "DOCX";
+                    parrafoFin: number;
+                    parrafoInicio: number;
+                    /** @enum {string} */
+                    parte: "word/document.xml";
+                } | {
+                    /** @enum {string} */
+                    formato: "CSV";
+                    registro: number;
+                };
+                /** @enum {string} */
+                unidadFuente: "DOCUMENT_FRAGMENT" | "PROCUREMENT_ACT" | "CERTIFICATE" | "AGGREGATE_BUDGET" | "ASSET_LOCATION" | "OPERATIONAL_ACTIVITY" | "SERVICE_REQUEST" | "VISUAL_ILLUSTRATION" | "DOCUMENT_CONTEXT" | "DOCUMENTARY_ROW" | "PROPERTY_ACQUISITION_REPORTED" | "FINANCIAL_SUMMARY_REFERENCE" | "OPERATING_EXPENSE_REPORTED" | "SPATIAL_WORK_COMPONENT_REPORTED" | "SPATIAL_LOCATION_RECORD";
+                /** @enum {string} */
+                vinculacion: "NOT_ASSERTED";
+            };
+            datos: {
+                campo: string;
+                columna: string;
+                /** @enum {string} */
+                estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                etiqueta: string;
+                /** Format: uuid */
+                recursoId: string;
+                valor: string | null;
+            }[];
+            fuente: {
+                /** Format: date-time */
+                capturadaEn: string | null;
+                codigo: string;
+                nombre: string;
+                /** Format: uuid */
+                recursoId: string;
+                sha256: string;
+                /** Format: uri */
+                urlCatalogo: string;
+            };
+            licencias: {
+                /** @enum {string} */
+                alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                atribucion: string;
+                /** Format: date-time */
+                capturadaEn: string;
+                codigo: string;
+                codigoLicencia: string;
+                /** @enum {string} */
+                contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                distribucionBase: {
+                    aviso: string;
+                    licencia: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                /** Format: uri */
+                evidenciaUrl: string;
+                /** Format: uuid */
+                fuenteId: string;
+                licenciaContenidos: {
+                    codigo: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                recursoVersionIds: string[];
+                /** Format: uri */
+                urlLicencia: string;
+                version: number;
+            }[];
+            nombre: string;
+            /**
+             * @description Política aditiva de apoyos: snapshot v3, sin datos personales, notas, geometrías candidatas ni asociación inferida. Sólo tres fragmentos Mercedes auditados admiten dos citas por unidad; exigen licencia del recurso y contenidosIndividuales LICENSED con licenciaContenidos explícita. El resto publica únicamente clase y procedencia tipada. No modifica snapshots, cursores ni comandos v1/v2.
+             * @enum {string}
+             */
+            politicaVersion: "publicacion-apoyos@1";
+            /** @enum {string|null} */
+            territorio: null;
+            /** @enum {string} */
+            tipo: "DOCUMENT_FRAGMENT_RECORD" | "DOCUMENT_SUPPORT_RECORD" | "SPATIAL_SUPPORT_RECORD";
+            /** @enum {string} */
+            version: "registro-informado@3";
+        } | {
+            advertencias: {
+                /** @enum {string} */
+                codigo: "SOURCE_REPORTED" | "SEMANTICS_UNREVIEWED" | "LOCATION_NOT_PUBLISHED";
+                motivo: string;
+            }[];
+            datos: {
+                /** @enum {string} */
+                campo: "establecimiento_id" | "establecimiento_nombre" | "cueanexo" | "modalidad" | "nivel" | "sector" | "tipo_organizacion" | "periodo" | "municipio_id" | "municipio_nombre";
+                /** @enum {string} */
+                columna: "establecimiento_id" | "establecimiento_nombre" | "cueanexo" | "modalidad" | "nivel" | "sector" | "tipo_organizacion" | "periodo" | "municipio_id" | "municipio_nombre";
+                /** @enum {string} */
+                estado: "REPORTED" | "NOT_REPORTED" | "WITHHELD";
+                etiqueta: string;
+                motivoLimitacion: string | null;
+                /** Format: uuid */
+                recursoId: string;
+                valor: string | null;
+            }[];
+            fuente: {
+                /** Format: date-time */
+                capturadaEn: string | null;
+                /** @enum {string} */
+                codigo: "pba-establecimientos";
+                /** @enum {string} */
+                nombre: "PBA · Establecimientos educativos";
+                /** Format: uuid */
+                recursoId: string;
+                sha256: string;
+                /** @enum {string} */
+                urlCatalogo: "https://catalogo.datos.gba.gob.ar/dataset/establecimientos-educativos";
+            };
+            institucion: {
+                codigo: string;
+                /** @enum {boolean} */
+                geometriaPublicada: false;
+                localizador: {
+                    /** @enum {string} */
+                    formato: "CSV";
+                    registro: number;
+                };
+                /** @enum {string} */
+                namespace: "pba.dgcye.establecimientos";
+                /** @enum {boolean} */
+                nombreGenerado: true;
+                oferta: {
+                    cueanexo: string | null;
+                    modalidad: string | null;
+                    nivel: string | null;
+                    periodo: string | null;
+                };
+                /** @enum {string} */
+                vinculacionObra: "NOT_ASSERTED";
+            };
+            licencias: {
+                /** @enum {string} */
+                alcance: "RESOURCE" | "DATABASE" | "CONTENTS";
+                atribucion: string;
+                /** Format: date-time */
+                capturadaEn: string;
+                codigo: string;
+                codigoLicencia: string;
+                /** @enum {string} */
+                contenidosIndividuales: "EXCLUDED" | "LICENSED";
+                distribucionBase: {
+                    aviso: string;
+                    licencia: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                /** Format: uri */
+                evidenciaUrl: string;
+                /** Format: uuid */
+                fuenteId: string;
+                licenciaContenidos: {
+                    codigo: string;
+                    /** Format: uri */
+                    url: string;
+                } | null;
+                recursoVersionIds: string[];
+                /** Format: uri */
+                urlLicencia: string;
+                version: number;
+            }[];
+            nombre: string;
+            /**
+             * @description Política explícita para pba-establecimientos@1: sólo CATALOG_ONLY con lector CSV posicional, columnas/linaje verificados y recurso exacto ALLOWED. Snapshot v4 de fila de oferta institucional, sin contactos, domicilio, demografía, matrícula, geometría ni obra. Permisos, sesión/CSRF, alcance actor/organización/recurso, almacenamiento original, UUID, If-Match y retiro comunes. Preparación con cursor propio; no modifica v1/v2/v3.
+             * @enum {string}
+             */
+            politicaVersion: "publicacion-instituciones@1";
+            territorio: {
+                columnas: string[];
+                /** @enum {string} */
+                condicion: "REPORTED";
+                localidad: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                partido: {
+                    codigo: string;
+                    nombre: string;
+                } | null;
+                provincia: {
+                    codigo: string;
+                    nombre: string;
+                };
+            } | null;
+            /** @enum {string} */
+            tipo: "EDUCATIONAL_ESTABLISHMENT_RECORD";
+            /** @enum {string} */
+            version: "registro-informado@4";
+        };
     };
     responses: never;
     parameters: never;
@@ -1521,6 +5558,132 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    GeneralPueyrredonDerivedDatabaseController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Oferta vigente completa o estado pendiente vacío, metadata nullable y cero obras. */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    /** @description SHA-256 de la representación HTTP actual. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeneralPueyrredonDerivedDatabase"];
+                };
+            };
+            /** @description DERIVED_DATABASE_*_REVIEW_REQUIRED: presupuesto, licencia congelada, origen o contrato no representable. No se trunca la respuesta. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description VALIDATION_FAILED: no se admiten parámetros, filtros ni revisiones históricas. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+        };
+    };
+    OlavarriaDerivedDatabaseController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Oferta actual o estado pendiente vacío, con unidades separadas, avisos, huella de contenido y presupuestos. */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    /** @description SHA-256 de la representación HTTP final. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OlavarriaDerivedDatabase"];
+                };
+            };
+            /** @description DERIVED_DATABASE_*_REVIEW_REQUIRED: presupuesto, autorización congelada, origen o estado no representable. No se ofrece un subconjunto silencioso. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description VALIDATION_FAILED: la descarga no admite parámetros. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+        };
+    };
     WorksController_list: {
         parameters: {
             query?: {
@@ -1529,7 +5692,9 @@ export interface operations {
                 /** @description Cursor de la página anterior con los mismos filtros. catalogoVersion es un string decimal exacto. */
                 cursor?: string;
                 estado?: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED";
-                fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
+                /** @description Clasificación adicional por equivalencias literales exactas de la revisión pública. Conserva estado histórico y literal íntegros; no infiere desde avance, contratación ni aprobación editorial. NOT_REPORTED indica que esta revisión no conserva estado utilizable. Sin filtro incluye todos los estados y obras sin geometría. Se combina con los demás filtros mediante AND. */
+                estadoInformado?: "COMPLETED" | "IN_PROGRESS" | "PLANNED" | "PROCUREMENT" | "PAUSED" | "SUSPENDED" | "CANCELLED" | "OTHER_REPORTED" | "NOT_REPORTED";
+                fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras" | "acumar-obras" | "neuquen-obras" | "mendoza-obras" | "mercedes-obras" | "lujan-documentos" | "general-pueyrredon-registros" | "tandil-documentos" | "general-rodriguez-documentos" | "coronel-suarez-documentos";
                 /** @description Partido de una institución municipal con rol VERIFIED PROMOTOR, CONTRATANTE, EJECUTOR o FINANCIADOR. No incluye CONTRATISTA ni deduce responsabilidades de la fuente. */
                 gestionMunicipalId?: string;
                 limit?: number;
@@ -1701,8 +5866,8 @@ export interface operations {
     WorksController_sourceCoverage: {
         parameters: {
             query?: {
-                /** @description Repetible; selecciona códigos de procedencia instalados. Sin valores devuelve las siete fuentes de obras; no admite el padrón pba-establecimientos. */
-                fuente?: ("pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras")[];
+                /** @description Repetible; selecciona códigos de procedencia instalados. Sin valores devuelve las diez fuentes de obras; no admite el padrón pba-establecimientos. */
+                fuente?: ("pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras" | "acumar-obras" | "neuquen-obras" | "mendoza-obras" | "mercedes-obras" | "lujan-documentos" | "general-pueyrredon-registros" | "tandil-documentos" | "general-rodriguez-documentos" | "coronel-suarez-documentos")[];
             };
             header?: never;
             path?: never;
@@ -1809,7 +5974,9 @@ export interface operations {
                 /** @description west,south,east,north WGS84; finitos y crecientes sin antimeridiano. Contextualiza sólo las obras con geometría, conservando los totales de filtros no espaciales. */
                 bbox?: string;
                 estado?: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED";
-                fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
+                /** @description Clasificación adicional por equivalencias literales exactas de la revisión pública. Conserva estado histórico y literal íntegros; no infiere desde avance, contratación ni aprobación editorial. NOT_REPORTED indica que esta revisión no conserva estado utilizable. Sin filtro incluye todos los estados y obras sin geometría. Se combina con los demás filtros mediante AND. */
+                estadoInformado?: "COMPLETED" | "IN_PROGRESS" | "PLANNED" | "PROCUREMENT" | "PAUSED" | "SUSPENDED" | "CANCELLED" | "OTHER_REPORTED" | "NOT_REPORTED";
+                fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras" | "acumar-obras" | "neuquen-obras" | "mendoza-obras" | "mercedes-obras" | "lujan-documentos" | "general-pueyrredon-registros" | "tandil-documentos" | "general-rodriguez-documentos" | "coronel-suarez-documentos";
                 /** @description Partido de una institución municipal con rol VERIFIED PROMOTOR, CONTRATANTE, EJECUTOR o FINANCIADOR. No incluye CONTRATISTA ni deduce responsabilidades de la fuente. */
                 gestionMunicipalId?: string;
                 /** @description Código exacto de una localidad GeoRef; admite hasta 100 valores repetidos del catálogo GET /api/v1/territorios/localidades. OR entre localidades y AND con los demás filtros. Sólo devuelve obras cuya revisión pública contiene indec.localidad REPORTED; no infiere localidad desde departamento, nombre, fuente o geometría. El cursor incorpora códigos y versión del catálogo de localidades. */
@@ -1903,7 +6070,9 @@ export interface operations {
                 /** @description Cursor de la página anterior con los mismos filtros. catalogoVersion es un string decimal exacto. */
                 cursor?: string;
                 estado?: "COMPLETED" | "IN_PROGRESS" | "OTHER_REPORTED";
-                fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras";
+                /** @description Clasificación adicional por equivalencias literales exactas de la revisión pública. Conserva estado histórico y literal íntegros; no infiere desde avance, contratación ni aprobación editorial. NOT_REPORTED indica que esta revisión no conserva estado utilizable. Sin filtro incluye todos los estados y obras sin geometría. Se combina con los demás filtros mediante AND. */
+                estadoInformado?: "COMPLETED" | "IN_PROGRESS" | "PLANNED" | "PROCUREMENT" | "PAUSED" | "SUSPENDED" | "CANCELLED" | "OTHER_REPORTED" | "NOT_REPORTED";
+                fuente?: "pba-edificios" | "caba-actualizado" | "nacion-obras" | "vl-obras" | "bahia-obras" | "olavarria-obras" | "pergamino-obras" | "acumar-obras" | "neuquen-obras" | "mendoza-obras" | "mercedes-obras" | "lujan-documentos" | "general-pueyrredon-registros" | "tandil-documentos" | "general-rodriguez-documentos" | "coronel-suarez-documentos";
                 /** @description Partido de una institución municipal con rol VERIFIED PROMOTOR, CONTRATANTE, EJECUTOR o FINANCIADOR. No incluye CONTRATISTA ni deduce responsabilidades de la fuente. */
                 gestionMunicipalId?: string;
                 limit?: number;
@@ -2059,6 +6228,203 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
+    };
+    ReportedRecordsPublicController_list: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                fuente?: string;
+                limit?: number;
+                /** @description Código BAHRA compatible con provincia y departamento del registro. */
+                localidadCodigo?: string;
+                /** @description Código INDEC de partido PBA informado con equivalencia auditada; no acredita inclusión espacial. */
+                partidoCodigo?: string;
+                /** @description Provincia explícita normalizada del principal; no es el ámbito del editor. */
+                provinciaCodigo?: string;
+                /** @description Registros sin territorio normalizado. No puede combinarse con provinciaCodigo, partidoCodigo ni localidadCodigo. */
+                territorio?: "UNKNOWN";
+                tipo?: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD" | "DOCUMENT_REPORT_SECTION" | "PROCUREMENT_ACT_RECORD" | "SOURCE_CAPTURE_UNIT" | "DOCUMENT_FRAGMENT_RECORD" | "DOCUMENT_SUPPORT_RECORD" | "SPATIAL_SUPPORT_RECORD" | "EDUCATIONAL_ESTABLISHMENT_RECORD";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Página de registros vigentes, sin obras agregadas. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportedRecordList"];
+                };
+            };
+            /** @description INVALID_CURSOR o CATALOG_CHANGED. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description VALIDATION_FAILED: filtros o límite inválidos. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+        };
+    };
+    ReportedRecordsPublicController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detalle público vigente o lápida segura. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportedRecordDetail"];
+                };
+            };
+            /** @description NOT_FOUND: origen nunca publicado. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description VALIDATION_FAILED: UUID inválido. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
+                };
+            };
+        };
+    };
+    ReportedRecordsPublicController_counts: {
+        parameters: {
+            query?: {
+                fuente?: string;
+                /** @description Mismo predicado de localidad informada que el listado. */
+                localidadCodigo?: string;
+                /** @description Mismo predicado de partido informado que el listado. */
+                partidoCodigo?: string;
+                /** @description Mismo predicado de provincia informada que el listado. */
+                provinciaCodigo?: string;
+                /** @description Mismo filtro de territorio no normalizado que el listado; incompatible con códigos territoriales. */
+                territorio?: "UNKNOWN";
+                tipo?: "WORK_RECORD" | "COMPLETED_SCHOOL_BUILDING_RECORD" | "DOCUMENT_REPORT_SECTION" | "PROCUREMENT_ACT_RECORD" | "SOURCE_CAPTURE_UNIT" | "DOCUMENT_FRAGMENT_RECORD" | "DOCUMENT_SUPPORT_RECORD" | "SPATIAL_SUPPORT_RECORD" | "EDUCATIONAL_ESTABLISHMENT_RECORD";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Conteos de registros por fuente y tipo; partidos/localidades distintos dentro de los mismos filtros, sin sumar esas unidades como obras. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportedRecordCounts"];
+                };
+            };
+            /** @description VALIDATION_FAILED: filtros inválidos. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description RATE_LIMITED: cuota compartida por IP para lecturas del mapa, catálogo y fichas públicas, o capacidad de contadores de esta instancia agotada. Por defecto 240 solicitudes en 60 segundos, configurable por entorno. Retry-After indica los segundos restantes antes de reintentar. Cada proceso mantiene sus propios contadores; varias instancias requieren coordinación en la infraestructura. X-Forwarded-For solo se considera cuando el proxy inmediato está configurado como confiable; la cadena se recorre desde ese proxy hasta el primer salto no confiable. */
+            429: {
+                headers: {
+                    /** @description El rechazo por cuota no se almacena en cachés compartidas. */
+                    "Cache-Control"?: "no-store";
+                    /** @description Plazo mínimo para reintentar, en segundos enteros; siempre al menos 1. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Demasiadas solicitudes. Reintentá después del plazo indicado en Retry-After.",
+                     *         "requestId": "10000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["RateLimitedError"];
                 };
             };
         };

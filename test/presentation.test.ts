@@ -13,6 +13,9 @@ describe("Presentación pública sin inferencias", () => {
     ["bahia-obras", "Municipalidad de Bahía Blanca"],
     ["olavarria-obras", "Municipalidad de Olavarría"],
     ["pergamino-obras", "Municipalidad de Pergamino"],
+    ["acumar-obras", "Obras de agua y cloaca de ACUMAR"],
+    ["neuquen-obras", "Obras de Neuquén"],
+    ["mendoza-obras", "Municipalidad de la Ciudad de Mendoza"],
   ] as const)("identifica %s como editor de datos sin asignar un rol de obra", (source, label) => {
     expect(sourceLabel(source)).toBe(label);
   });

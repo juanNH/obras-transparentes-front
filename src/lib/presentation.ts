@@ -1,8 +1,10 @@
 /** @file Etiquetas públicas y formatos que conservan desconocidos, precisión decimal y semántica de fechas. */
 import type { WorkDetail, WorkSummary } from "../api/client.js";
+import { REPORTED_STATES } from "./explorer-query.js";
 
 /** Explica el estado como reportado por la fuente y conserva el desconocido como no informado. */
-export function stateLabel(state: WorkSummary["estado"]): string {
+export function stateLabel(state: WorkSummary["estado"], reported?: WorkSummary["estadoInformado"]): string {
+  if (reported) return reported.codigo === "NOT_REPORTED" ? REPORTED_STATES.NOT_REPORTED : `${REPORTED_STATES[reported.codigo]} según la fuente`;
   return state === null ? "Estado no informado" : {
     COMPLETED: "Finalizada según la fuente",
     IN_PROGRESS: "En ejecución según la fuente",
@@ -20,6 +22,10 @@ export function sourceLabel(source: WorkSummary["fuentes"][number]["codigo"]): s
     "bahia-obras": "Municipalidad de Bahía Blanca",
     "olavarria-obras": "Municipalidad de Olavarría",
     "pergamino-obras": "Municipalidad de Pergamino",
+    "acumar-obras": "Obras de agua y cloaca de ACUMAR",
+    "neuquen-obras": "Obras de Neuquén",
+    "mendoza-obras": "Municipalidad de la Ciudad de Mendoza",
+    "mercedes-obras": "Municipalidad de Mercedes",
   }[source];
 }
 

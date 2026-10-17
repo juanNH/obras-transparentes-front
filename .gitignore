@@ -9,6 +9,7 @@ coverage/
 .next-piloto-municipal/
 .next-filtros-territoriales/
 .next-coverage-qa/
+.next-cierre-bahia-mercedes-qa/
 out/
 test-results/
 playwright-report/

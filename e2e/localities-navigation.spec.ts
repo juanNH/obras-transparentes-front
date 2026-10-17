@@ -2,6 +2,7 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { disableWebGL, hasMapColor, isolateMapNetwork, useSyntheticBasemap } from "./map-fixture";
+import { SOURCE_COVERAGE_CODES } from "../src/api/client";
 
 test.beforeEach(async ({ page, request }) => {
   expect((await request.get("http://127.0.0.1:4100/__municipal-fixtures?enabled=1&failed=0&changed=0")).ok()).toBe(true);
@@ -99,7 +100,7 @@ test("un cambio durante paginación retira lista, conteos y cifras de fuentes de
   await page.goto("/mapa?vista=lista");
   const counts = page.getByRole("region", { name: "Cuántas obras podés consultar", exact: true });
   const coverage = page.getByRole("region", { name: "Publicaciones por provincia y fuente", exact: true });
-  await expect(counts.locator("dd")).toHaveCount(3); await expect(coverage.locator("dd")).toHaveCount(28);
+  await expect(counts.locator("dd")).toHaveCount(3); await expect(coverage.locator("dd")).toHaveCount(SOURCE_COVERAGE_CODES.length * 4);
   await page.route("**/api/public/obras?*", async route => {
     const response = await route.fetch();
     const body = await response.json();

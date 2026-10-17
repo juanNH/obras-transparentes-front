@@ -10,7 +10,9 @@ import {
   searchParamsOf,
 } from "../../lib/explorer-query";
 import { buildSourceCoverage } from "../../lib/source-coverage";
+import { recordsFromWorksHref } from "../../lib/records-navigation";
 import { PublicApiError } from "../../api/client";
+import type { ReportedRecordCounts } from "../../api/reported-records";
 import type {
   InstitutionalOrganizationCatalog,
   LocalityCatalog,
@@ -59,6 +61,7 @@ export default async function MapPage({
   let localityCatalog: LocalityCatalog | null = null;
   let institutionalCatalog: InstitutionalOrganizationCatalog | null = null;
   let workCounts: WorkCounts | null = null;
+  let reportedRecordCounts: ReportedRecordCounts | null = null;
   let sourceCoverage: PublicSourceCoverage[] = [];
   let countsError: "UNAVAILABLE" | "CATALOG_CHANGED" | null = null;
   let initialError: string | null = null;
@@ -75,10 +78,11 @@ export default async function MapPage({
       api.organizations(),
       api.counts(countsQuery(state.query)),
       api.sourceCoverage(),
+      api.reportedRecordCounts(),
     ]),
     Promise.allSettled([localityRead]),
   ]);
-  const [works, parties, provinces, organizations, counts, sources] =
+  const [works, parties, provinces, organizations, counts, sources, records] =
     primaryReads;
   if (works.status === "fulfilled") initial = works.value;
   else {
@@ -94,6 +98,7 @@ export default async function MapPage({
     localityCatalog = localityReads[0].value;
   if (organizations.status === "fulfilled")
     institutionalCatalog = organizations.value;
+  if (records.status === "fulfilled") reportedRecordCounts = records.value;
   if (
     counts.status === "fulfilled" &&
     initial &&
@@ -118,6 +123,12 @@ export default async function MapPage({
           Elegí una obra para ubicarla. Acercar el mapa no cambia los
           resultados.
         </p>
+        <aside className="notice records-entry" aria-label="Consultar registros informados">
+          <strong>También podés consultar registros informados por las fuentes.</strong>
+          <p>Conservan sus advertencias e identidad pendiente y se cuentan por separado de las obras.</p>
+          <p>La consulta conserva la fuente y los filtros de un único territorio que sean compatibles. Los estados, el área del mapa y las selecciones múltiples se consultan en el catálogo de obras.</p>
+          <a className="button secondary" href={recordsFromWorksHref(state.query, partyCatalog)}>Consultar registros informados</a>
+        </aside>
       </div>
       <Explorer
         key={
@@ -136,6 +147,7 @@ export default async function MapPage({
         counts={workCounts}
         countsError={countsError}
         sourceCoverage={sourceCoverage}
+        reportedRecordCounts={reportedRecordCounts}
       />
     </section>
   );

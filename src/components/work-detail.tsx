@@ -37,7 +37,7 @@ export function WorkDetailContent({ work, compact = false, partyCatalog = null }
     <header className="detail-heading">
       <p className="eyebrow">Ficha pública · revisión {work.numeroRevision}</p>
       <Title>{work.nombre}</Title>
-      <p><span className="status-badge">{stateLabel(work.estado)}</span></p>
+      <p><span className="status-badge">{stateLabel(work.estado, work.estadoInformado)}</span></p>
       <p><MapAvailability hasGeometry={hasGeometry} publishedCurrently={work.publicadaActualmente} /></p>
       {!hasGeometry && <p className="map-availability-note">{work.publicadaActualmente ? "La obra está publicada y su información se puede consultar aquí. No aparece en el mapa porque esta revisión no tiene una ubicación aprobada para dibujar." : "Esta revisión conserva su información, pero no tiene una ubicación aprobada para dibujar en el mapa."}</p>}
       <p><SourceBadge sources={work.fuentes} /> <a className="source-colors-link" href="/proyecto#colores">Qué significa el color</a></p>
@@ -52,6 +52,7 @@ export function WorkDetailContent({ work, compact = false, partyCatalog = null }
       {work.nacional?.descripcion && <p>{work.nacional.descripcion}</p>}
       {work.nacional?.objetivo && <p><strong>Objetivo informado:</strong> {work.nacional.objetivo}</p>}
       <dl className="detail-grid">
+        {work.estadoInformado?.literal && <div><dt>Estado literal informado por la fuente</dt><dd>{work.estadoInformado.literal}</dd></div>}
         <div><dt>Avance físico informado</dt><dd>{formatExactDecimal(work.avanceFisico)}{work.avanceFisico !== null && " %"}</dd></div>
         <div><dt>Avance financiero informado</dt><dd>{formatExactDecimal(work.avanceFinanciero)}{work.avanceFinanciero != null && " %"}</dd></div>
         <div><dt>Clasificaciones informadas</dt><dd>{work.clasificaciones.length ? work.clasificaciones.map((item) => item.etiqueta).join(" · ") : "No informadas"}</dd></div>

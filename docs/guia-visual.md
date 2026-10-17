@@ -1,5 +1,7 @@
 # Guía visual de Obras Transparentes
 
+La ampliación de fuentes del 9 de octubre de 2026 agrega el alcance «Fuentes de varias provincias» al inventario plegable. Cada fuente aparece una sola vez, con las provincias declaradas en su detalle y búsqueda; sus cifras no se replican en grupos provinciales. En la leyenda cartográfica se distingue con hexágono y trazo `4,2`, reutilizando el azul gris existente `#334155`; la etiqueta «Provincias» comprende PBA y Neuquén. Estas referencias describen la procedencia de datos y no acreditan ubicación ni responsabilidad de una obra.
+
 Versión 2 · 2026-10-05 · frontend público.
 
 Esta es la referencia de diseño para las próximas interfaces y refactors. La dirección acordada es **base clara, blanco y celeste**, con azul profundo para acciones y un acento dorado inspirado en el sol de la bandera argentina. Los valores son una interpretación de identidad del proyecto, no una especificación oficial de la bandera ni una identificación institucional.
@@ -146,7 +148,7 @@ La mesa territorial distingue cuatro áreas: cabecera compacta de consulta con f
 | Selección cartográfica | Franja no modal antes del canvas con nombre, condición y etiqueta de calidad de ubicación. Elegir una geometría conserva su `obraId`, `revisionId` y `ubicacionId`; «Ver en mapa» puede encuadrar todas las ubicaciones aceptadas de una obra. «Ver resumen»/«Quitar selección» son acciones explícitas. |
 | Selector de ubicación | Select nativo con label «Ubicación para consultar» cuando hay varias ubicaciones aceptadas. Permite elegir una o todas; cambiarlo conserva el foco del control, actualiza geometría/contexto y no aplica otro filtro de consulta. |
 | Calidad de ubicación | Etiqueta breve visible antes del canvas y explicación completa debajo, en `details` «Cómo interpretar…». Si se consulta una única ubicación, abrirlo automáticamente; con varias, identificar cada explicación. Distinguir aprobación de geometría, precisión informada y supuesto de referencia geográfica. |
-| Tooltip cartográfico | Superficie blanca opaca, borde primary de 2 px, texto desde `0.875rem` y ancho adaptable. Aparece en el flujo debajo del canvas para no cubrir ni interceptar geometrías. Muestra nombre/calidad al pasar sobre una geometría; permite mover el puntero al contenido y se descarta con Escape desde cualquier foco de la página. Complementa la selección y su detalle textual. |
+| Tooltip cartográfico | Superficie blanca opaca, borde primary de 2 px, texto desde `0.875rem` y ancho adaptable. Aparece en el flujo debajo del canvas para no cubrir ni interceptar geometrías. En escritorio, el panel sticky acota su altura al viewport y permite scroll interno para alcanzar esa ayuda. Muestra nombre/calidad al pasar sobre una geometría y conserva la ayuda durante el scroll; permite mover el puntero al contenido y se descarta al moverlo fuera del bloque o con Escape desde cualquier foco de la página. Complementa la selección y su detalle textual. |
 | Etiqueta de estado | Texto literal del estado informado y estilo neutral por defecto. Cualquier color adicional necesita una correspondencia documentada; desconocido no significa error. |
 | Aviso | Fondo suave, borde/color semántico, mensaje y acción concreta. Un icono y texto acompañan el color; no usar alertas urgentes para toda información. |
 | Vacío | Mensaje contextual y acción pertinente. Nunca sustituir resultados vacíos por obras sintéticas ni dibujar marcadores para llenar el mapa. |
@@ -290,6 +292,10 @@ El ejemplo de foco sirve para fondos claros; completar halo y colores del sistem
 Antes de cambiar código Next.js, leer las guías relevantes instaladas en `node_modules/next/dist/docs/`, en particular CSS y fuentes. Los archivos de contratos y tipos generados siguen su procedimiento; esta guía no autoriza modificar API, publicaciones ni datos.
 
 ## 8. Regla para próximas entregas
+
+### Registros informados · 2026-10-14
+
+La lista y ficha de registros reutilizan tarjetas, formularios GET, fechas UTC, licencias y datos faltantes. Las advertencias se muestran desplegadas en ambas, con etiqueta y motivo, borde y colores semánticos warning existentes. «Informado por la fuente», «Identidad pendiente», «Posible duplicado» y «Datos contradictorios» no equivalen a una revisión individual ni a una obra nueva. Los contadores de registros y obras, y sus versiones de catálogo, se presentan separados. Un territorio nominal reportado se identifica como tal y no genera un punto. Los registros retirados conservan únicamente el aviso de retiro. La aceptación y las capturas se registran en etapa 2 con API sintética aislada.
 
 Antes de diseñar un componente, identificar la tarea, la información indispensable, el token y el patrón existente. Si falta un patrón, extender esta guía con su propósito, variantes y criterio de verificación. Una excepción debe tener motivo y alcance; no se propaga por copiar un hex local.
 

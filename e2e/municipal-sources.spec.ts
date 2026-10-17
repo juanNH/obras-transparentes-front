@@ -15,6 +15,7 @@ for (const [source, label, expectedCards] of [
   ["bahia-obras", "Municipalidad de Bahía Blanca", 0],
   ["olavarria-obras", "Municipalidad de Olavarría", 0],
   ["pergamino-obras", "Municipalidad de Pergamino", 0],
+  ["mercedes-obras", "Municipalidad de Mercedes · intervenciones documentadas", 0],
 ] as const)
   test(`abre un listado limpio para ${source} sin inventar cobertura`, async ({ page, request }) => {
     const response = await request.get(`/mapa?fuente=${source}&vista=lista`);

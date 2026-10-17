@@ -163,6 +163,11 @@
         "urlCatalogo": "https://example.org/datos-sinteticos"
       }
     ],
+    "estadoInformado": {
+      "codigo": "IN_PROGRESS",
+      "literal": null,
+      "criterio": "LEGACY_STATE"
+    },
     "obraId": "10000000-0000-4000-8000-000000000001",
     "revisionId": "20000000-0000-4000-8000-000000000001",
     "numeroRevision": 1,
@@ -217,6 +222,11 @@
         "urlCatalogo": "https://example.org/datos-sinteticos"
       }
     ],
+    "estadoInformado": {
+      "codigo": "NOT_REPORTED",
+      "literal": null,
+      "criterio": "NOT_AVAILABLE"
+    },
     "obraId": "10000000-0000-4000-8000-000000000002",
     "revisionId": "20000000-0000-4000-8000-000000000002",
     "numeroRevision": 1,
@@ -542,6 +552,284 @@
           {
             "rol": "principal",
             "unidadDocumental": "WORK_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000008",
+        "codigo": "acumar-obras",
+        "nombre": "ACUMAR · Obras de agua y cloaca",
+        "urlCatalogo": "https://example.test/catalogo/acumar-obras-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MULTIPROVINCIAL",
+          "provincia": null,
+          "municipio": null,
+          "provincias": [
+            {
+              "codigo": "02",
+              "nombre": "Ciudad Autónoma de Buenos Aires"
+            },
+            {
+              "codigo": "06",
+              "nombre": "Buenos Aires"
+            }
+          ]
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "WORK_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000009",
+        "codigo": "neuquen-obras",
+        "nombre": "Neuquén · Obra pública",
+        "urlCatalogo": "https://example.test/catalogo/neuquen-obras-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "PROVINCIAL",
+          "provincia": {
+            "codigo": "58",
+            "nombre": "Neuquén"
+          },
+          "municipio": null
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "WORK_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000010",
+        "codigo": "mendoza-obras",
+        "nombre": "Ciudad de Mendoza · Actos de apertura de obra pública",
+        "urlCatalogo": "https://example.test/catalogo/mendoza-obras-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MUNICIPAL",
+          "provincia": {
+            "codigo": "50",
+            "nombre": "Mendoza"
+          },
+          "municipio": {
+            "esquema": "indec.departamento",
+            "codigo": "50007",
+            "nombre": "Capital"
+          }
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "PROCUREMENT_ACT_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000011",
+        "codigo": "mercedes-obras",
+        "nombre": "Mercedes · Obras, servicios y evidencia documental",
+        "urlCatalogo": "https://example.test/catalogo/mercedes-obras-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MUNICIPAL",
+          "provincia": {
+            "codigo": "06",
+            "nombre": "Buenos Aires"
+          },
+          "municipio": {
+            "esquema": "indec.departamento",
+            "codigo": "06532",
+            "nombre": "Mercedes"
+          }
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "WORK_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000012",
+        "codigo": "lujan-documentos",
+        "nombre": "Luján · Secciones de informes documentales",
+        "urlCatalogo": "https://example.test/catalogo/lujan-documentos-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MUNICIPAL",
+          "provincia": {
+            "codigo": "06",
+            "nombre": "Buenos Aires"
+          },
+          "municipio": {
+            "esquema": "indec.departamento",
+            "codigo": "06497",
+            "nombre": "Luján"
+          }
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "DOCUMENT_REPORT_SECTION"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000013",
+        "codigo": "general-pueyrredon-registros",
+        "nombre": "General Pueyrredón · Registros informados de obras y vía pública 2025",
+        "urlCatalogo": "https://example.test/catalogo/general-pueyrredon-registros-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MUNICIPAL",
+          "provincia": {
+            "codigo": "06",
+            "nombre": "Buenos Aires"
+          },
+          "municipio": {
+            "esquema": "indec.departamento",
+            "codigo": "06357",
+            "nombre": "General Pueyrredón"
+          }
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "SOURCE_CAPTURE_UNIT"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000014",
+        "codigo": "tandil-documentos",
+        "nombre": "Tandil · Actos documentados de contratación",
+        "urlCatalogo": "https://example.test/catalogo/tandil-documentos-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MUNICIPAL",
+          "provincia": {
+            "codigo": "06",
+            "nombre": "Buenos Aires"
+          },
+          "municipio": {
+            "esquema": "indec.departamento",
+            "codigo": "06791",
+            "nombre": "Tandil"
+          }
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "PROCUREMENT_ACT_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000015",
+        "codigo": "general-rodriguez-documentos",
+        "nombre": "General Rodríguez · Anuncios de contratación de obra",
+        "urlCatalogo": "https://example.test/catalogo/general-rodriguez-documentos-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MUNICIPAL",
+          "provincia": {
+            "codigo": "06",
+            "nombre": "Buenos Aires"
+          },
+          "municipio": {
+            "esquema": "indec.departamento",
+            "codigo": "06364",
+            "nombre": "General Rodríguez"
+          }
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "PROCUREMENT_ACT_RECORD"
+          }
+        ],
+        "obrasPublicadas": 0,
+        "localidadesConObrasPublicadas": 0,
+        "obrasConUbicacionAprobada": 0,
+        "obrasSinUbicacionAprobada": 0,
+        "ubicacionesAprobadas": 0,
+        "obrasConEvidenciaLicenciaPublicada": 0,
+        "obrasSinEvidenciaLicenciaPublicada": 0
+      },
+      {
+        "fuenteId": "50000000-0000-4000-8000-000000000016",
+        "codigo": "coronel-suarez-documentos",
+        "nombre": "Coronel Suárez · Secciones de publicaciones municipales",
+        "urlCatalogo": "https://example.test/catalogo/coronel-suarez-documentos-sintetico",
+        "alcanceTerritorial": {
+          "nivel": "MUNICIPAL",
+          "provincia": {
+            "codigo": "06",
+            "nombre": "Buenos Aires"
+          },
+          "municipio": {
+            "esquema": "indec.departamento",
+            "codigo": "06203",
+            "nombre": "Coronel Suárez"
+          }
+        },
+        "recursos": [
+          {
+            "rol": "principal",
+            "unidadDocumental": "DOCUMENT_REPORT_SECTION"
           }
         ],
         "obrasPublicadas": 0,

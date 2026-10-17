@@ -1,10 +1,51 @@
 /** @file Verifica inventario público, alcance de fuentes, particiones y solapamientos sin duplicar obras ni consultar la API activa. */
 import { describe, expect, it, vi } from "vitest";
 import examples from "../contracts/examples.json" with { type: "json" };
-import { createPublicApi, type SourceCoverageCode } from "../src/api/client";
+import {
+  createPublicApi,
+  SOURCE_COVERAGE_CODES,
+  type SourceCoverageCode,
+} from "../src/api/client";
 import { ApiContractError } from "../src/api/contract";
 
 describe("inventario público de todas las fuentes", () => {
+  it("admite las nuevas fuentes y rechaza provincias repetidas, desconocidas o alcances de una sola provincia", async () => {
+    const acumar = examples.sourceCoverage.fuentes.find(
+      (source) => source.codigo === "acumar-obras",
+    )!;
+    const scope = acumar.alcanceTerritorial;
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(Response.json(examples.sourceCoverage));
+    await expect(
+      createPublicApi({ fetch: request }).sourceCoverage(),
+    ).resolves.toEqual(examples.sourceCoverage);
+    for (const provincias of [
+      [{ codigo: "02", nombre: "CABA" }],
+      [
+        { codigo: "02", nombre: "CABA" },
+        { codigo: "02", nombre: "CABA repetida" },
+      ],
+      [
+        { codigo: "02", nombre: "CABA" },
+        { codigo: "99", nombre: "Desconocida" },
+      ],
+    ]) {
+      request.mockResolvedValueOnce(
+        Response.json({
+          ...examples.sourceCoverage,
+          fuentes: examples.sourceCoverage.fuentes.map((source) =>
+            source.codigo === "acumar-obras"
+              ? { ...source, alcanceTerritorial: { ...scope, provincias } }
+              : source,
+          ),
+        }),
+      );
+      await expect(
+        createPublicApi({ fetch: request }).sourceCoverage(),
+      ).rejects.toBeInstanceOf(ApiContractError);
+    }
+  });
   it("conserva unidades, obras compartidas, localizaciones y evidencia de licencia del corte exacto", async () => {
     const request = vi
       .fn<typeof fetch>()
@@ -16,7 +57,7 @@ describe("inventario público de todas las fuentes", () => {
     );
     expect(result).toEqual(examples.sourceCoverage);
     expect(result.obrasPublicadasUnicas).toBe(2);
-    expect(result.fuentes).toHaveLength(7);
+    expect(result.fuentes).toHaveLength(SOURCE_COVERAGE_CODES.length);
     expect(
       result.fuentes.reduce((sum, source) => sum + source.obrasPublicadas, 0),
     ).toBe(3);
@@ -61,7 +102,10 @@ describe("inventario público de todas las fuentes", () => {
     for (const codes of [
       [],
       ["unknown-obras"],
-      Array.from({ length: 8 }, () => "nacion-obras"),
+      Array.from(
+        { length: SOURCE_COVERAGE_CODES.length + 1 },
+        () => "nacion-obras",
+      ),
     ])
       await expect(
         createPublicApi({ fetch: request }).sourceCoverage(

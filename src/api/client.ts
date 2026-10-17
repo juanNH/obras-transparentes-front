@@ -2,6 +2,16 @@
 import type { components, paths } from "./generated.js";
 import { ApiContractError, parsePublicResponse } from "./contract.js";
 import { isKnownProvinceCode } from "./territory-codes.js";
+import publicSchemas from "../../contracts/schemas.json" with { type: "json" };
+import {
+  assertReportedRecord,
+  reportedRecordParams,
+  type ReportedRecordCounts,
+  type ReportedRecordDetail,
+  type ReportedRecordFilters,
+  type ReportedRecordList,
+  type ReportedRecordQuery,
+} from "./reported-records.js";
 
 /** Página pública de obras y versión del catálogo, tomada del contrato generado. */
 export type WorkList = components["schemas"]["PublicWorkListResponse"];
@@ -23,11 +33,15 @@ export type PartyBoundaries =
 /** Organizaciones con roles verificados en publicaciones actuales; sus identidades son independientes de las organizaciones de seguridad. */
 export type InstitutionalOrganizationCatalog =
   paths["/api/v1/organizaciones-institucionales"]["get"]["responses"][200]["content"]["application/json"];
-/** Totales globales de las tres fuentes piloto en una versión del catálogo público; no son conteos de filtros ni gestión municipal. */
+/** Totales globales de las fuentes municipales declaradas en el contrato vigente; no son conteos de filtros ni gestión municipal. */
 export type MunicipalCoverage =
   components["schemas"]["PublicMunicipalCoverage"];
 /** Inventario público de todas las fuentes con alcance declarado, unidades documentales y evidencia del corte publicado. */
 export type SourceCoverage = components["schemas"]["PublicSourceCoverage"];
+/** Oferta actual de Olavarría, con obras y registros separados y decisión de distribución explícita. */
+export type OlavarriaDerivedDatabase = components["schemas"]["OlavarriaDerivedDatabase"];
+/** Oferta completa del corte municipal de General Pueyrredón; sus filas informadas no acreditan obras consolidadas. */
+export type GeneralPueyrredonDerivedDatabase = components["schemas"]["GeneralPueyrredonDerivedDatabase"];
 /** Fuentes habilitadas para el agregado de cobertura, conservadas desde el contrato generado. */
 export type SourceCoverageCode = SourceCoverage["fuentes"][number]["codigo"];
 /** Pares documentales publicados por cada perfil vigente; una localización nunca ocupa el rol de registro principal de obra. */
@@ -44,6 +58,15 @@ const sourceDocumentResources = {
   "bahia-obras": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }],
   "olavarria-obras": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }],
   "pergamino-obras": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }],
+  "acumar-obras": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }],
+  "neuquen-obras": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }],
+  "mendoza-obras": [{ rol: "principal", unidadDocumental: "PROCUREMENT_ACT_RECORD" }],
+  "mercedes-obras": [{ rol: "principal", unidadDocumental: "WORK_RECORD" }],
+  "lujan-documentos": [{ rol: "principal", unidadDocumental: "DOCUMENT_REPORT_SECTION" }],
+  "coronel-suarez-documentos": [{ rol: "principal", unidadDocumental: "DOCUMENT_REPORT_SECTION" }],
+  "general-rodriguez-documentos": [{ rol: "principal", unidadDocumental: "PROCUREMENT_ACT_RECORD" }],
+  "general-pueyrredon-registros": [{ rol: "principal", unidadDocumental: "SOURCE_CAPTURE_UNIT" }],
+  "tandil-documentos": [{ rol: "principal", unidadDocumental: "PROCUREMENT_ACT_RECORD" }],
 } as const satisfies Record<
   SourceCoverageCode,
   readonly SourceCoverage["fuentes"][number]["recursos"][number][]
@@ -52,6 +75,9 @@ const sourceDocumentResources = {
 export const SOURCE_COVERAGE_CODES = Object.keys(
   sourceDocumentResources,
 ) as readonly SourceCoverageCode[];
+/** Códigos municipales exportados por el backend; agregar una fuente no exige conservar un número fijo de pilotos. */
+const municipalCoverageCodes =
+  publicSchemas.PublicMunicipalCoverage.properties.fuentes.items.properties.codigo.enum;
 
 /** Comprueba las relaciones del alcance declarado sin inferir territorio a partir de nombres o publicaciones. */
 function validSourceScope(
@@ -59,6 +85,17 @@ function validSourceScope(
 ): boolean {
   if (scope.nivel === "NACIONAL")
     return scope.provincia === null && scope.municipio === null;
+  if (scope.nivel === "MULTIPROVINCIAL")
+    return (
+      scope.provincia === null &&
+      scope.municipio === null &&
+      scope.provincias.length >= 2 &&
+      scope.provincias.every((province) =>
+        isKnownProvinceCode(province.codigo),
+      ) &&
+      new Set(scope.provincias.map((province) => province.codigo)).size ===
+        scope.provincias.length
+    );
   if (!scope.provincia || !isKnownProvinceCode(scope.provincia.codigo))
     return false;
   return scope.nivel === "PROVINCIAL"
@@ -171,6 +208,7 @@ function queryParameters(
   for (const key of [
     "fuente",
     "estado",
+    "estadoInformado",
     "sector",
     "territorioEsquema",
     "municipioCodigo",
@@ -351,9 +389,55 @@ export function createPublicApi(
     return parsePublicResponse<T>(schema, body);
   }
   return {
+    /** Lee la oferta exacta de General Pueyrredón completa, sin filtros ni aceptación contractual, y exige consistencia de sus registros vigentes. */
+    async generalPueyrredonDerivedDatabase(requestOptions: RequestOptions = {}): Promise<GeneralPueyrredonDerivedDatabase> {
+      const result = await read<GeneralPueyrredonDerivedDatabase>("/bases-derivadas/general-pueyrredon-registros", "GeneralPueyrredonDerivedDatabase", requestOptions);
+      if (result.obras.cantidad !== 0 || result.obras.items.length !== 0 ||
+          result.registros.cantidad !== result.registros.items.length ||
+          new Set(result.registros.items.map(item => item.registroId)).size !== result.registros.items.length ||
+          result.registros.items.some(item => assertReportedRecord(item).estado !== "PUBLISHED" || item.registro?.fuente.codigo !== "general-pueyrredon-registros" || item.registro.fuente.recursoId !== result.original.recursoId || item.registro.fuente.sha256 !== result.original.sha256) ||
+          (result.estado === "PENDING_POLICY" && (result.registros.cantidad !== 0 || result.licenciaDistribucion.estado !== "PENDING")) ||
+          (result.estado === "ACTIVE" && (result.original.recursoId === null || result.licenciaDistribucion.estado !== "REGISTERED")))
+        throw new ApiContractError("La oferta de General Pueyrredón no es consistente.");
+      return result;
+    },
+    /** Lee la oferta completa sin filtros; comprueba cantidades, estado pendiente vacío e identidades únicas antes de presentarla. */
+    async olavarriaDerivedDatabase(requestOptions: RequestOptions = {}): Promise<OlavarriaDerivedDatabase> {
+      const result = await read<OlavarriaDerivedDatabase>("/bases-derivadas/olavarria-obras", "OlavarriaDerivedDatabase", requestOptions);
+      if (result.obras.cantidad !== result.obras.items.length ||
+          result.registros.cantidad !== result.registros.items.length ||
+          new Set(result.obras.items.map(item => item.obraId)).size !== result.obras.items.length ||
+          result.obras.items.some(item => !item.publicadaActualmente) ||
+          new Set(result.registros.items.map(item => item.registroId)).size !== result.registros.items.length ||
+          result.registros.items.some(item => assertReportedRecord(item).estado !== "PUBLISHED") ||
+          (result.estado === "PENDING_POLICY" && (result.obras.cantidad !== 0 || result.registros.cantidad !== 0 || result.licenciaDistribucion.estado !== "PENDING")) ||
+          (result.estado === "ACTIVE" && result.licenciaDistribucion.estado !== "REGISTERED"))
+        throw new ApiContractError("La oferta de base derivada no es consistente.");
+      return result;
+    },
+    /** Lee registros informados sin convertirlos en obras ni aceptar identidades pendientes. */
+    async reportedRecords(query: ReportedRecordQuery = {}, requestOptions: RequestOptions = {}): Promise<ReportedRecordList> {
+      const result = await read<ReportedRecordList>("/registros-informados?" + reportedRecordParams(query), "ReportedRecordList", requestOptions);
+      const ids = result.items.map(item => assertReportedRecord(item).registroId);
+      if (new Set(ids).size !== ids.length || result.items.some(item => item.estado !== "PUBLISHED") || result.limit !== (query.limit ?? 25) || result.items.length > result.limit || (result.nextCursor !== null && result.nextCursor === query.cursor)) throw new ApiContractError("La página de registros no es consistente.");
+      return result;
+    },
+    /** Consulta totales de registros por fuente y tipo, sin paginación ni suma con obras. */
+    async reportedRecordCounts(query: ReportedRecordFilters = {}, requestOptions: RequestOptions = {}): Promise<ReportedRecordCounts> {
+      const result = await read<ReportedRecordCounts>("/registros-informados/conteos?" + reportedRecordParams(query, false), "ReportedRecordCounts", requestOptions);
+      if (result.porFuente.reduce((sum, item) => sum + item.cantidad, 0) !== result.totalRegistros || result.porTipo.reduce((sum, item) => sum + item.cantidad, 0) !== result.totalRegistros || new Set(result.porFuente.map(item => item.codigo)).size !== result.porFuente.length || new Set(result.porTipo.map(item => item.tipo)).size !== result.porTipo.length) throw new ApiContractError("Los conteos de registros no son consistentes.");
+      if (result.instituciones && (result.instituciones.filasOfertaPublicadas !== (result.porTipo.find(item => item.tipo === "EDUCATIONAL_ESTABLISHMENT_RECORD")?.cantidad ?? 0) || result.instituciones.establecimientosDistintosInformados > result.instituciones.filasOfertaPublicadas || (result.instituciones.filasOfertaPublicadas === 0) !== (result.instituciones.establecimientosDistintosInformados === 0))) throw new ApiContractError("Los conteos institucionales no coinciden con las filas publicadas del mismo corte.");
+      return result;
+    },
+    /** Lee sólo el registro solicitado; los retirados conservan únicamente su aviso de retiro. */
+    async reportedRecord(id: string, requestOptions: RequestOptions = {}): Promise<ReportedRecordDetail> {
+      const result = assertReportedRecord(await read<ReportedRecordDetail>("/registros-informados/" + identifier(id), "ReportedRecordDetail", requestOptions));
+      if (result.registroId.toLowerCase() !== id.toLowerCase()) throw new ApiContractError("La identidad del registro recibido no coincide.");
+      return result;
+    },
     /**
      * Lee cobertura de todas las fuentes sin filtros de obras y comprueba las particiones que JSON Schema no expresa.
-     * @param fuentes - Hasta siete códigos del contrato; omitidos solicita todas las fuentes, sin sumar registros espaciales como obras.
+     * @param fuentes - Códigos del contrato vigente; omitidos solicita todas las fuentes, sin sumar registros espaciales como obras.
      * @param requestOptions - Señal de cancelación, sin credenciales de administración.
      * @returns Inventario del mismo corte, con obras únicas separadas de los totales por fuente que pueden solaparse.
      * @throws ApiContractError Si falta una fuente solicitada o los conteos de ubicaciones, licencias o solapamiento son inconsistentes.
@@ -370,7 +454,7 @@ export function createPublicApi(
         codes.some((code) => !SOURCE_COVERAGE_CODES.includes(code))
       )
         throw new TypeError(
-          "La cobertura admite hasta siete fuentes públicas declaradas.",
+          "La cobertura admite únicamente fuentes públicas declaradas en el contrato vigente.",
         );
       const expected = [...new Set(codes)].sort();
       const params = new URLSearchParams();
@@ -465,7 +549,10 @@ export function createPublicApi(
         requestOptions,
       );
       if (
-        new Set(coverage.fuentes.map((source) => source.codigo)).size !== 3 ||
+        new Set(coverage.fuentes.map((source) => source.codigo)).size !==
+          coverage.fuentes.length ||
+        coverage.fuentes.map((source) => source.codigo).sort().join(",") !==
+          [...municipalCoverageCodes].sort().join(",") ||
         coverage.fuentes.some(
           (source) =>
             source.obrasPublicadas !==
