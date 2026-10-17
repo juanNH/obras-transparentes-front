@@ -13,6 +13,7 @@ import {
 } from "../src/api/client";
 import { SourceCoveragePanel } from "../src/components/source-coverage";
 import { parsePublicResponse } from "../src/api/contract";
+import { reportedRecordsHref } from "../src/api/reported-records";
 import type { PublicSourceCoverage } from "../src/lib/source-coverage";
 
 const api = vi.hoisted(() => ({
@@ -273,7 +274,7 @@ describe("cobertura pública por fuente", () => {
         catalogoVersion: props.initial!.catalogoVersion,
       }),
     );
-    expect(html).toContain("globales del catálogo público");
+    expect(html).toContain("Conteos globales de obras");
     expect(html).toContain("comparten corte con el listado y las fichas");
     expect(html).toContain("Provincia de Buenos Aires · edificios escolares");
     expect(html).toContain("Nación · obras");
@@ -287,12 +288,26 @@ describe("cobertura pública por fuente", () => {
       "localizaciones vinculadas; no agrega obras al conteo",
     );
     expect(html).toContain("no se suman para obtener obras únicas");
-    for (const source of props.sourceCoverage)
-      expect(html).toContain(
-        source.codigo === "lujan-documentos"
-          ? 'href="/registros?fuente=lujan-documentos&amp;tipo=DOCUMENT_REPORT_SECTION&amp;limit=25"'
-          : `href="/mapa?fuente=${source.codigo}&amp;vista=lista"`,
-      );
+    for (const source of props.sourceCoverage) {
+      const href =
+        source.codigo === "lujan-documentos" ||
+        source.codigo === "coronel-suarez-documentos"
+          ? reportedRecordsHref({
+              fuente: source.codigo,
+              tipo: "DOCUMENT_REPORT_SECTION",
+            })
+          : source.codigo === "mendoza-obras" ||
+              source.codigo === "general-rodriguez-documentos" ||
+              source.codigo === "tandil-documentos"
+            ? reportedRecordsHref({
+                fuente: source.codigo,
+                tipo: "PROCUREMENT_ACT_RECORD",
+              })
+            : source.codigo === "general-pueyrredon-registros"
+              ? reportedRecordsHref({ fuente: source.codigo })
+              : `/mapa?fuente=${source.codigo}&vista=lista`;
+      expect(html).toContain(`href="${href.replaceAll("&", "&amp;")}"`);
+    }
     expect(html).not.toContain("bbox=");
   });
 

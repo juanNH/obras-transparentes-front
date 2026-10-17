@@ -10,6 +10,7 @@ import {
   groupSourceCoverage,
 } from "../src/lib/source-coverage";
 import type { PublicSourceCoverage } from "../src/lib/source-coverage";
+import { reportedRecordsHref } from "../src/api/reported-records";
 
 /** Construye el inventario sintético con tipos del contrato regenerado y la misma versión del listado. */
 function sources(): PublicSourceCoverage[] {
@@ -46,6 +47,10 @@ describe("cobertura por provincia y fuente", () => {
       "pergamino-obras",
       "mercedes-obras",
       "lujan-documentos",
+      "general-pueyrredon-registros",
+      "tandil-documentos",
+      "general-rodriguez-documentos",
+      "coronel-suarez-documentos",
     ]);
     expect(
       groups
@@ -79,7 +84,7 @@ describe("cobertura por provincia y fuente", () => {
       filterSourceCoverageGroups(groups, " buenos aires ").map(
         (group) => group.fuentes.length,
       ),
-    ).toEqual([1, 7, 1]);
+    ).toEqual([1, 11, 1]);
     expect(
       filterSourceCoverageGroups(groups, "vicente lopez")[0]!.fuentes.map(
         (source) => source.codigo,
@@ -156,14 +161,28 @@ describe("cobertura por provincia y fuente", () => {
     );
     expect(html).toContain('class="source-coverage-overview"');
     expect(html).toContain("Buscar provincia, municipio o fuente");
-    expect(html).toContain("7 fuentes");
+    expect(html).toContain(`${items.length} fuentes`);
     expect(html).toContain("no se suman para obtener obras únicas");
-    for (const source of items)
-      expect(html).toContain(
-        source.codigo === "lujan-documentos"
-          ? 'href="/registros?fuente=lujan-documentos&amp;tipo=DOCUMENT_REPORT_SECTION&amp;limit=25"'
-          : `href="/mapa?fuente=${source.codigo}&amp;vista=lista"`,
-      );
+    for (const source of items) {
+      const href =
+        source.codigo === "lujan-documentos" ||
+        source.codigo === "coronel-suarez-documentos"
+          ? reportedRecordsHref({
+              fuente: source.codigo,
+              tipo: "DOCUMENT_REPORT_SECTION",
+            })
+          : source.codigo === "mendoza-obras" ||
+              source.codigo === "general-rodriguez-documentos" ||
+              source.codigo === "tandil-documentos"
+            ? reportedRecordsHref({
+                fuente: source.codigo,
+                tipo: "PROCUREMENT_ACT_RECORD",
+              })
+            : source.codigo === "general-pueyrredon-registros"
+              ? reportedRecordsHref({ fuente: source.codigo })
+              : `/mapa?fuente=${source.codigo}&vista=lista`;
+      expect(html).toContain(`href="${href.replaceAll("&", "&amp;")}"`);
+    }
     const stale = renderToStaticMarkup(
       SourceCoveragePanel({
         coverage: items,
@@ -176,15 +195,26 @@ describe("cobertura por provincia y fuente", () => {
   });
 
   it("ofrece Luján en el inventario como fuente documental enlazada a registros con conteo de obras separado", () => {
-    const item = sources().find(source => source.codigo === "lujan-documentos");
+    const item = sources().find(
+      (source) => source.codigo === "lujan-documentos",
+    );
     expect(item).toBeDefined();
-    expect(item!.inventario!.recursos[0]!.unidadDocumental).toBe("DOCUMENT_REPORT_SECTION");
+    expect(item!.inventario!.recursos[0]!.unidadDocumental).toBe(
+      "DOCUMENT_REPORT_SECTION",
+    );
     expect(item!.obrasPublicadas).toBe(0);
-    const html = renderToStaticMarkup(SourceCoveragePanel({ coverage: [item!], catalogoVersion: examples.sourceCoverage.catalogoVersion }));
+    const html = renderToStaticMarkup(
+      SourceCoveragePanel({
+        coverage: [item!],
+        catalogoVersion: examples.sourceCoverage.catalogoVersion,
+      }),
+    );
     expect(html).toContain("Fuente de informes documentales");
     expect(html).toContain("Obras consolidadas publicadas");
     expect(html).toContain("no cuenta secciones documentales");
-    expect(html).toContain('href="/registros?fuente=lujan-documentos&amp;tipo=DOCUMENT_REPORT_SECTION&amp;limit=25"');
+    expect(html).toContain(
+      'href="/registros?fuente=lujan-documentos&amp;tipo=DOCUMENT_REPORT_SECTION&amp;limit=25"',
+    );
     expect(html).not.toContain("Fuente sin publicaciones");
     expect(html).not.toContain("/mapa?fuente=lujan-documentos");
   });
@@ -245,6 +275,8 @@ describe("cobertura por provincia y fuente", () => {
     expect(html).toContain(
       "actos de contratación; sus filas no acreditan obras únicas",
     );
-    expect(html).toContain('href="/mapa?fuente=mendoza-obras&amp;vista=lista"');
+    expect(html).toContain(
+      'href="/registros?fuente=mendoza-obras&amp;tipo=PROCUREMENT_ACT_RECORD&amp;limit=25"',
+    );
   });
 });
