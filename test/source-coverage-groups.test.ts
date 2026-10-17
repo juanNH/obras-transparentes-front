@@ -25,22 +25,33 @@ describe("cobertura por provincia y fuente", () => {
     const groups = groupSourceCoverage(sources());
     expect(groups.map((group) => group.id)).toEqual([
       "nacional",
+      "multiprovincial",
       "provincia-06",
       "provincia-02",
+      "provincia-50",
+      "provincia-58",
     ]);
     expect(groups[0]!.fuentes.map((source) => source.codigo)).toEqual([
       "nacion-obras",
     ]);
-    expect(groups[1]!.fuentes.map((source) => source.codigo)).toEqual([
+    expect(
+      groups
+        .find((group) => group.id === "provincia-06")!
+        .fuentes.map((source) => source.codigo),
+    ).toEqual([
       "pba-edificios",
       "vl-obras",
       "bahia-obras",
       "olavarria-obras",
       "pergamino-obras",
+      "mercedes-obras",
+      "lujan-documentos",
     ]);
-    expect(groups[2]!.fuentes.map((source) => source.codigo)).toEqual([
-      "caba-actualizado",
-    ]);
+    expect(
+      groups
+        .find((group) => group.id === "provincia-02")!
+        .fuentes.map((source) => source.codigo),
+    ).toEqual(["caba-actualizado"]);
   });
 
   it("usa alcance declarado aunque el nombre sugiera otra provincia y no asigna fuentes sin alcance", () => {
@@ -68,7 +79,7 @@ describe("cobertura por provincia y fuente", () => {
       filterSourceCoverageGroups(groups, " buenos aires ").map(
         (group) => group.fuentes.length,
       ),
-    ).toEqual([5, 1]);
+    ).toEqual([1, 7, 1]);
     expect(
       filterSourceCoverageGroups(groups, "vicente lopez")[0]!.fuentes.map(
         (source) => source.codigo,
@@ -99,8 +110,11 @@ describe("cobertura por provincia y fuente", () => {
     ).toBe(true);
     expect(groupSourceCoverage(items).map((group) => group.id)).toEqual([
       "nacional",
+      "multiprovincial",
       "provincia-06",
       "provincia-02",
+      "provincia-50",
+      "provincia-58",
     ]);
     const html = renderToStaticMarkup(
       SourceCoveragePanel({ coverage: items, catalogoVersion: "987654321" }),
@@ -142,11 +156,13 @@ describe("cobertura por provincia y fuente", () => {
     );
     expect(html).toContain('class="source-coverage-overview"');
     expect(html).toContain("Buscar provincia, municipio o fuente");
-    expect(html).toContain("5 fuentes");
+    expect(html).toContain("7 fuentes");
     expect(html).toContain("no se suman para obtener obras únicas");
     for (const source of items)
       expect(html).toContain(
-        `href="/mapa?fuente=${source.codigo}&amp;vista=lista"`,
+        source.codigo === "lujan-documentos"
+          ? 'href="/registros?fuente=lujan-documentos&amp;tipo=DOCUMENT_REPORT_SECTION&amp;limit=25"'
+          : `href="/mapa?fuente=${source.codigo}&amp;vista=lista"`,
       );
     const stale = renderToStaticMarkup(
       SourceCoveragePanel({
@@ -157,5 +173,78 @@ describe("cobertura por provincia y fuente", () => {
     );
     expect(stale).not.toContain("<dd>");
     expect(stale).toContain("El catálogo cambió durante la consulta");
+  });
+
+  it("ofrece Luján en el inventario como fuente documental enlazada a registros con conteo de obras separado", () => {
+    const item = sources().find(source => source.codigo === "lujan-documentos");
+    expect(item).toBeDefined();
+    expect(item!.inventario!.recursos[0]!.unidadDocumental).toBe("DOCUMENT_REPORT_SECTION");
+    expect(item!.obrasPublicadas).toBe(0);
+    const html = renderToStaticMarkup(SourceCoveragePanel({ coverage: [item!], catalogoVersion: examples.sourceCoverage.catalogoVersion }));
+    expect(html).toContain("Fuente de informes documentales");
+    expect(html).toContain("Obras consolidadas publicadas");
+    expect(html).toContain("no cuenta secciones documentales");
+    expect(html).toContain('href="/registros?fuente=lujan-documentos&amp;tipo=DOCUMENT_REPORT_SECTION&amp;limit=25"');
+    expect(html).not.toContain("Fuente sin publicaciones");
+    expect(html).not.toContain("/mapa?fuente=lujan-documentos");
+  });
+
+  it("muestra ACUMAR una sola vez con sus provincias y Neuquén bajo su provincia, sin multiplicar cifras", () => {
+    const items = sources();
+    const groups = groupSourceCoverage(items);
+    const acumar = groups.find((group) => group.id === "multiprovincial")!;
+    expect(acumar.nombre).toBe("Fuentes de varias provincias");
+    expect(acumar.fuentes.map((source) => source.codigo)).toEqual([
+      "acumar-obras",
+    ]);
+    expect(
+      groups
+        .find((group) => group.id === "provincia-58")!
+        .fuentes.map((source) => source.codigo),
+    ).toEqual(["neuquen-obras"]);
+    const grouped = groups.flatMap((group) => group.fuentes);
+    expect(grouped).toHaveLength(items.length);
+    expect(new Set(grouped.map((source) => source.codigo)).size).toBe(
+      items.length,
+    );
+    expect(
+      filterSourceCoverageGroups(groups, "buenos aires").some((group) =>
+        group.fuentes.some((source) => source.codigo === "acumar-obras"),
+      ),
+    ).toBe(true);
+    const html = renderToStaticMarkup(
+      SourceCoveragePanel({
+        coverage: items,
+        catalogoVersion: examples.sourceCoverage.catalogoVersion,
+      }),
+    );
+    expect(html).toContain("Fuente de varias provincias");
+    expect(html.match(/data-source="acumar-obras"/g)).toHaveLength(1);
+    expect(html).toContain('href="/mapa?fuente=neuquen-obras&amp;vista=lista"');
+  });
+
+  it("agrupa Ciudad de Mendoza bajo Mendoza con alcance municipal y distingue sus actos de contratación", () => {
+    const items = sources();
+    const group = groupSourceCoverage(items).find(
+      (entry) => entry.id === "provincia-50",
+    )!;
+    expect(group.nombre).toBe("Mendoza");
+    expect(group.fuentes.map((entry) => entry.codigo)).toEqual([
+      "mendoza-obras",
+    ]);
+    expect(group.fuentes[0]!.alcanceTerritorial?.nivel).toBe("MUNICIPAL");
+    expect(
+      filterSourceCoverageGroups([group], "ciudad de mendoza"),
+    ).toHaveLength(1);
+    const html = renderToStaticMarkup(
+      SourceCoveragePanel({
+        coverage: items,
+        catalogoVersion: examples.sourceCoverage.catalogoVersion,
+      }),
+    );
+    expect(html).toContain(
+      "actos de contratación; sus filas no acreditan obras únicas",
+    );
+    expect(html).toContain('href="/mapa?fuente=mendoza-obras&amp;vista=lista"');
   });
 });

@@ -1,7 +1,9 @@
 /** @file Permite buscar y desplegar fuentes agrupadas con HTML nativo, sin inferir ubicaciones ni sumar publicaciones por procedencia. */
 "use client";
 import { useState } from "react";
-import { sourceListHref } from "../lib/explorer-query";
+import { sourceListHref, SOURCES } from "../lib/explorer-query";
+import { reportedRecordsHref } from "../api/reported-records";
+import type { ReportedRecordCounts } from "../api/reported-records";
 import {
   filterSourceCoverageGroups,
   groupSourceCoverage,
@@ -16,10 +18,12 @@ export function SourceCoverageBrowser({
   coverage,
   stale,
   activeSource,
+  reportedRecordCounts = null,
 }: {
   coverage: readonly PublicSourceCoverage[];
   stale: boolean;
   activeSource?: PublicSourceCode | undefined;
+  reportedRecordCounts?: ReportedRecordCounts | null;
 }) {
   const [query, setQuery] = useState("");
   const groups = filterSourceCoverageGroups(
@@ -53,7 +57,7 @@ export function SourceCoverageBrowser({
         )}
         <noscript>
           <p>
-            Podés abrir cada provincia y sus fuentes sin JavaScript. La búsqueda
+            Podés abrir cada grupo y sus fuentes sin JavaScript. La búsqueda
             requiere JavaScript.
           </p>
         </noscript>
@@ -92,6 +96,7 @@ export function SourceCoverageBrowser({
                     source={source}
                     stale={stale}
                     active={source.codigo === activeSource}
+                    reportedRecordCounts={reportedRecordCounts}
                   />
                 ))}
               </ul>
@@ -113,10 +118,12 @@ function SourceCoverageRow({
   source,
   stale,
   active,
+  reportedRecordCounts,
 }: {
   source: PublicSourceCoverage;
   stale: boolean;
   active: boolean;
+  reportedRecordCounts: ReportedRecordCounts | null;
 }) {
   const status =
     stale && source.estado === "AVAILABLE" ? "UNKNOWN" : source.estado;
@@ -124,11 +131,28 @@ function SourceCoverageRow({
   const published = source.obrasPublicadas;
   const located = source.obrasConGeometria;
   const unlocated = source.obrasSinGeometria;
+  const documentReport = source.codigo === "lujan-documentos" || source.codigo === "coronel-suarez-documentos" || (source.inventario?.recursos.some(
+    (resource) => resource.unidadDocumental === "DOCUMENT_REPORT_SECTION",
+  ) ?? false);
+  const procurementAct = source.codigo === "mendoza-obras" || source.codigo === "general-rodriguez-documentos" || source.codigo === "tandil-documentos" || (source.inventario?.recursos.some(
+    (resource) => resource.unidadDocumental === "PROCUREMENT_ACT_RECORD",
+  ) ?? false);
+  const sourceRecords = source.codigo === "general-pueyrredon-registros";
+  const recordOnly = documentReport || procurementAct || sourceRecords;
+  const recordsPublished = reportedRecordCounts
+    ? reportedRecordCounts.porFuente.find((item) => item.codigo === source.codigo)?.cantidad ?? 0
+    : null;
   const stateLabel =
     status === "ERROR"
       ? "Error de lectura"
       : status === "UNKNOWN"
         ? "Desconocido"
+        : documentReport
+          ? "Fuente de informes documentales"
+        : procurementAct
+          ? "Fuente de actos de contratación"
+        : sourceRecords
+          ? "Fuente de registros municipales informados"
         : published === 0
           ? "Fuente sin publicaciones"
           : located === 0
@@ -139,11 +163,13 @@ function SourceCoverageRow({
   const scopeLabel =
     source.alcanceTerritorial?.nivel === "MUNICIPAL"
       ? `Fuente municipal · ${source.alcanceTerritorial.municipio?.nombre ?? "Municipio por confirmar"}`
-      : source.alcanceTerritorial?.nivel === "PROVINCIAL"
-        ? "Fuente provincial"
-        : source.alcanceTerritorial?.nivel === "NACIONAL"
-          ? "Fuente nacional"
-          : "Alcance por confirmar";
+      : source.alcanceTerritorial?.nivel === "MULTIPROVINCIAL"
+        ? `Fuente de varias provincias · ${source.alcanceTerritorial.provincias.map((province) => province.nombre).join(" · ")}`
+        : source.alcanceTerritorial?.nivel === "PROVINCIAL"
+          ? "Fuente provincial"
+          : source.alcanceTerritorial?.nivel === "NACIONAL"
+            ? "Fuente nacional"
+            : "Alcance por confirmar";
   return (
     <li data-source={source.codigo}>
       <details
@@ -153,7 +179,7 @@ function SourceCoverageRow({
         <summary>
           <h3>{source.nombre}</h3>
           <span className="source-coverage-published">
-            {available ? `${published} publicadas` : stateLabel}
+            {available && !recordOnly ? `${published} obras publicadas` : stateLabel}
           </span>
         </summary>
         <p className="source-coverage-scope">{scopeLabel}</p>
@@ -164,7 +190,7 @@ function SourceCoverageRow({
           <>
             <dl>
               <div>
-                <dt>Publicadas</dt>
+                <dt>Obras consolidadas publicadas</dt>
                 <dd>{published}</dd>
               </div>
               <div>
@@ -182,8 +208,16 @@ function SourceCoverageRow({
                 </div>
               )}
             </dl>
+            <p>Registros informados publicados: <strong>{recordsPublished ?? "No disponible"}</strong>
+              {reportedRecordCounts && <> · catálogo de registros {reportedRecordCounts.catalogoVersion}</>}.</p>
             <p>
-              {published === 0
+              {sourceRecords
+                ? "Este corte conserva registros de distinta naturaleza, incluidos trabajos en vía pública y trámites relacionados. Se consultan por su unidad en el catálogo de registros informados."
+                : documentReport
+                ? "Las secciones de informes se consultan en el catálogo de registros. Este conteo corresponde a obras consolidadas y no cuenta secciones documentales."
+                : procurementAct
+                ? "Los actos de contratación se consultan en el catálogo de registros. Su publicación no acredita una obra única ni su estado de ejecución."
+                : published === 0
                 ? "Esta fuente no tiene publicaciones en este corte del catálogo."
                 : located === 0
                   ? "Las publicaciones siguen disponibles en lista y ficha; no tienen ubicación aprobada para representarlas en el mapa."
@@ -193,12 +227,24 @@ function SourceCoverageRow({
             </p>
             {source.inventario && (
               <p>
-                {source.inventario.recursos.some(
+                {sourceRecords
+                  ? "El CSV conserva cuatro filas que informan Obra nueva y 214 trabajos o trámites. La publicación de sus registros no resuelve la identidad de una obra ni publica geometrías."
+                  : source.inventario.recursos.some(
                   (resource) =>
                     resource.unidadDocumental ===
                     "COMPLETED_SCHOOL_BUILDING_RECORD",
                 )
                   ? "El recurso principal describe edificios escolares finalizados."
+                  : source.inventario.recursos.some(
+                        (resource) =>
+                          resource.unidadDocumental === "DOCUMENT_REPORT_SECTION",
+                      )
+                    ? "El recurso principal describe secciones de un informe documental; no acredita obras únicas ni ubicaciones aprobadas."
+                  : source.inventario.recursos.some(
+                        (resource) =>
+                          resource.unidadDocumental === "PROCUREMENT_ACT_RECORD",
+                      )
+                    ? "El recurso principal describe actos de contratación; sus filas no acreditan obras únicas."
                   : source.inventario.recursos.some(
                         (resource) =>
                           resource.unidadDocumental === "WORK_RECORD",
@@ -222,12 +268,20 @@ function SourceCoverageRow({
         )}
       </details>
       <a
-        href={sourceListHref(source.codigo)}
+        href={sourceRecords
+          ? reportedRecordsHref({ fuente: source.codigo })
+          : procurementAct
+          ? reportedRecordsHref({ fuente: source.codigo, tipo: "PROCUREMENT_ACT_RECORD" })
+          : documentReport
+          ? reportedRecordsHref({ fuente: source.codigo, tipo: "DOCUMENT_REPORT_SECTION" })
+          : sourceListHref(source.codigo as keyof typeof SOURCES)}
         aria-current={active ? "page" : undefined}
       >
-        Ver listado de esta fuente
+        {sourceRecords ? "Ver registros informados de esta fuente" : procurementAct ? "Ver actos de contratación de esta fuente" : documentReport ? "Ver secciones documentales de esta fuente" : "Ver listado de esta fuente"}
         <span className="sr-only">: {source.nombre}</span>
       </a>
+      {source.codigo === "olavarria-obras" && <p><a href="/bases/olavarria-obras">Base derivada de Olavarría: estado, avisos y descarga</a></p>}
+      {sourceRecords && <p><a href="/bases/general-pueyrredon-registros">Base derivada de General Pueyrredón: estado, avisos y descarga</a></p>}
     </li>
   );
 }

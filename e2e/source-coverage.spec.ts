@@ -2,6 +2,7 @@
 import { expect, test } from "@playwright/test";
 import { isolateMapNetwork } from "./map-fixture";
 import { openSourceCoverage } from "./source-coverage-fixture";
+import { SOURCE_COVERAGE_CODES } from "../src/api/client";
 
 test.beforeEach(async ({ page }) => { await isolateMapNetwork(page); });
 
@@ -36,6 +37,6 @@ test("el BFF publica una fuente con conteos coherentes y rechaza filtros ajenos"
   expect(result.fuentes).toHaveLength(1);
   expect(result.obrasCompartidasEntreFuentes).toBe(0);
   expect(result.obrasPublicadasUnicas).toBe(result.fuentes[0].obrasPublicadas);
-  for (const query of ["fuente=unknown-obras", "fuente=", "limit=20", "cursor=synthetic-page", new URLSearchParams(Array.from({ length: 8 }, () => ["fuente", "nacion-obras"])).toString()])
+  for (const query of ["fuente=unknown-obras", "fuente=", "limit=20", "cursor=synthetic-page", new URLSearchParams(Array.from({ length: SOURCE_COVERAGE_CODES.length + 1 }, () => ["fuente", "nacion-obras"])).toString()])
     expect((await request.get("/api/public/obras/cobertura-fuentes?" + query)).status()).toBe(400);
 });

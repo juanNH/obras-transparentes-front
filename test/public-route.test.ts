@@ -19,6 +19,7 @@ vi.mock("../src/lib/config", () => ({ indexableSiteUrl: () => seo.origin }));
 
 import { GET } from "../src/app/api/public/[...path]/route";
 import { GET as sitemap } from "../src/app/sitemap.xml/route";
+import { SITEMAP_MAX_PARTITIONS } from "../src/lib/sitemap";
 
 const id = examples.detailPopulated.obraId;
 const revision = examples.detailPopulated.revisionId;
@@ -383,7 +384,7 @@ describe("sitemap acotado y consistente", () => {
     expect(api.list).not.toHaveBeenCalled();
   });
 
-  it("incluye fichas canónicas solo al terminar todas las páginas", async () => {
+  it("incluye particiones del catálogo solo al terminar todas las páginas", async () => {
     api.list
       .mockResolvedValueOnce({ ...examples.listPopulated, nextCursor: "next" })
       .mockResolvedValueOnce({
@@ -394,8 +395,8 @@ describe("sitemap acotado y consistente", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/xml");
     const xml = await response.text();
-    expect(xml).toContain(`<loc>https://obras.example.org/obras/${id}</loc>`);
-    expect(xml).toContain("<loc>https://obras.example.org/terminos</loc>");
+    expect(xml).toContain(`<loc>https://obras.example.org/sitemap-obras.xml?catalogoVersion=${examples.listPopulated.catalogoVersion}</loc>`);
+    expect(xml).toContain("<loc>https://obras.example.org/sitemap-paginas.xml</loc>");
     expect(xml).not.toContain("revisionId");
     const signal = api.list.mock.calls[0]![1].signal;
     expect(signal).toBeInstanceOf(AbortSignal);
@@ -427,14 +428,15 @@ describe("sitemap acotado y consistente", () => {
     expect(api.list).toHaveBeenCalledTimes(2);
   });
 
-  it("acota a diez páginas y no publica un catálogo truncado", async () => {
+  it("acota el índice y no publica un catálogo truncado", async () => {
     let page = 0;
     api.list.mockImplementation(async () => ({
       ...examples.listPopulated,
+      items: [{ ...examples.listPopulated.items[0]!, obraId: `work-${page}` }],
       nextCursor: `next-${++page}`,
     }));
     const response = await sitemap();
     expect(response.status).toBe(503);
-    expect(api.list).toHaveBeenCalledTimes(10);
+    expect(api.list).toHaveBeenCalledTimes(SITEMAP_MAX_PARTITIONS);
   });
 });

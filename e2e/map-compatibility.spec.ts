@@ -44,17 +44,18 @@ test("explica con texto, colores y formas el nivel de cada fuente de datos", asy
   }))).toBe(true);
   const legend = page.getByRole("group", { name: "Referencia de fuente de datos", exact: true });
   await expect(legend).toBeVisible();
-  await expect(legend.getByRole("listitem")).toHaveCount(6);
+  await expect(legend.getByRole("listitem")).toHaveCount(7);
   const origins = [
     { label: "Nación", color: "#0077A8", shape: "circle" },
     { label: "Ciudad de Buenos Aires", color: "#B42332", shape: "rect" },
-    { label: "Provincia de Buenos Aires", color: "#287A3A", shape: "polygon" },
+    { label: "Provincias", color: "#287A3A", shape: "polygon" },
     { label: "Municipios", color: "#946800", shape: "polygon" },
+    { label: "Fuentes de varias provincias", color: "#334155", shape: "polygon" },
     { label: "Fuentes de distintos niveles", color: "#334155", shape: "polygon" },
     { label: "Fuente no informada", color: "#596979", shape: "circle" },
   ];
   for (const origin of origins) {
-    const item = legend.getByRole("listitem").filter({ hasText: origin.label });
+    const item = legend.getByRole("listitem").filter({ has: page.getByText(origin.label, { exact: true }) });
     await expect(item).toHaveCount(1);
     const symbol = item.locator("svg > *").first();
     expect(await symbol.evaluate(element => element.tagName.toLowerCase())).toBe(origin.shape);

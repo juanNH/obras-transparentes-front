@@ -31,6 +31,7 @@ import {
   MAP_READ_BBOX,
   SOURCES,
   STATES,
+  REPORTED_STATES,
   explorerHref,
   parseExplorerQuery,
   queryParams,
@@ -38,6 +39,7 @@ import {
 } from "../lib/explorer-query";
 import type { ExplorerQuery } from "../lib/explorer-query";
 import type { PublicSourceCoverage } from "../lib/source-coverage";
+import type { ReportedRecordCounts } from "../api/reported-records";
 import { groupSourceCoverage } from "../lib/source-coverage";
 import {
   limitMapFeatures,
@@ -46,7 +48,7 @@ import {
 } from "../lib/map-budget";
 import { detailMapFeatures } from "../lib/map-data";
 import { readPartyBoundaries } from "../lib/party-boundaries";
-import { locationPresentation } from "../lib/presentation";
+import { locationPresentation, stateLabel } from "../lib/presentation";
 import { LocationQuality } from "./location-quality";
 import { SourceBadge, SourceLegend } from "./source-origin";
 import { MapAvailability } from "./map-availability";
@@ -91,6 +93,7 @@ export function Explorer({
   counts = null,
   countsError = null,
   sourceCoverage = [],
+  reportedRecordCounts = null,
 }: {
   initial: WorkList | null;
   initialError: string | null;
@@ -103,6 +106,7 @@ export function Explorer({
   counts?: WorkCounts | null;
   countsError?: "UNAVAILABLE" | "CATALOG_CHANGED" | null;
   sourceCoverage: readonly PublicSourceCoverage[];
+  reportedRecordCounts?: ReportedRecordCounts | null;
 }) {
   const router = useRouter();
   const { query } = state;
@@ -607,6 +611,7 @@ export function Explorer({
     query.bbox,
     query.fuente,
     query.estado,
+    query.estadoInformado,
     query.sector,
     query.tieneGeometria,
     query.territorioEsquema,
@@ -712,6 +717,7 @@ export function Explorer({
         activeSource={state.query.fuente}
         catalogoVersion={mismatch ? null : (version ?? null)}
         stale={mismatch}
+        reportedRecordCounts={reportedRecordCounts}
       />
       <form
         className="source-switch"
@@ -867,15 +873,21 @@ export function Explorer({
             </details>
             <label>
               Estado informado
-              <select name="estado" defaultValue={query.estado ?? ""}>
+              <select name="estadoInformado" defaultValue={query.estadoInformado ?? ""}>
                 <option value="">Todos los estados</option>
-                {Object.entries(STATES).map(([value, label]) => (
+                {Object.entries(REPORTED_STATES).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>
                 ))}
               </select>
             </label>
+            {query.estado && <label>Estado general
+              <select name="estado" defaultValue={query.estado}>
+                <option value="">Todos los estados</option>
+                {Object.entries(STATES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>}
             <label>
               Sector
               <select name="sector" defaultValue={query.sector ?? ""}>
@@ -947,7 +959,7 @@ export function Explorer({
           )}
           {query.fuente && (
             <li>
-              Fuente: {SOURCES[query.fuente]}{" "}
+              Fuente: {Object.hasOwn(SOURCES, query.fuente) ? SOURCES[query.fuente as keyof typeof SOURCES] : query.fuente}{" "}
               <a
                 href={withoutFilters("fuente")}
                 aria-label="Quitar filtro de fuente"
@@ -970,12 +982,13 @@ export function Explorer({
           {query.sector && (
             <li>
               Educación{" "}
-              <a
-                href={withoutFilters("sector")}
-                aria-label="Quitar filtro de sector"
-              >
-                Quitar
-              </a>
+              <a href={withoutFilters("sector")} aria-label="Quitar filtro de sector">Quitar</a>
+            </li>
+          )}
+          {query.estadoInformado && (
+            <li>
+              Estado informado: {REPORTED_STATES[query.estadoInformado]}{" "}
+              <a href={withoutFilters("estadoInformado")} aria-label="Quitar filtro de estado informado">Quitar</a>
             </li>
           )}
           {query.tieneGeometria !== undefined && (
@@ -1595,7 +1608,7 @@ export function Explorer({
               >
                 <div className="work-card-meta">
                   <span className="status-badge">
-                    {work.estado ? STATES[work.estado] : "Estado no informado"}
+                    {stateLabel(work.estado, work.estadoInformado)}
                   </span>
                   <MapAvailability hasGeometry={work.tieneGeometria} />
                 </div>

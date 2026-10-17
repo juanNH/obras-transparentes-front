@@ -18,6 +18,10 @@ export const SOURCES = {
   "bahia-obras": "Municipalidad de Bahía Blanca",
   "olavarria-obras": "Municipalidad de Olavarría",
   "pergamino-obras": "Municipalidad de Pergamino",
+  "acumar-obras": "ACUMAR · obras de agua y cloaca",
+  "neuquen-obras": "Provincia del Neuquén · obras",
+  "mendoza-obras": "Ciudad de Mendoza · datos de obras",
+  "mercedes-obras": "Municipalidad de Mercedes · intervenciones documentadas",
 } as const;
 /** Traducciones de estados informados; no se infieren del avance ni de la ausencia de datos. */
 export const STATES = {
@@ -25,6 +29,18 @@ export const STATES = {
   IN_PROGRESS: "En ejecución",
   OTHER_REPORTED: "Otro estado informado",
 } as const;
+/** Estado físico informado por la fuente; no se deduce del avance ni de decisiones editoriales. */
+export const REPORTED_STATES = {
+  COMPLETED: "Finalizada",
+  IN_PROGRESS: "En ejecución",
+  PLANNED: "Planificada",
+  PROCUREMENT: "En contratación",
+  PAUSED: "Paralizada",
+  SUSPENDED: "Suspendida",
+  CANCELLED: "Cancelada",
+  OTHER_REPORTED: "Otro estado informado",
+  NOT_REPORTED: "Estado no informado",
+} satisfies Record<NonNullable<ListQuery["estadoInformado"]>, string>;
 /** Roles institucionales publicados tras revisión; la fuente de datos no determina ninguno de estos roles. */
 export const INSTITUTIONAL_ROLES = {
   PROMOTOR: "Promotor",
@@ -94,6 +110,12 @@ export function parseExplorerQuery(params: URLSearchParams): ExplorerQuery {
     query.estado = estado as keyof typeof STATES;
   }
   const sector = params.get("sector");
+  const reportedState = params.get("estadoInformado");
+  if (reportedState) {
+    if (!Object.hasOwn(REPORTED_STATES, reportedState))
+      throw new TypeError("Estado informado desconocido.");
+    query.estadoInformado = reportedState as keyof typeof REPORTED_STATES;
+  }
   if (sector) {
     if (sector !== "educacion") throw new TypeError("Sector desconocido.");
     query.sector = sector;

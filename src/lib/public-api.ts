@@ -7,10 +7,14 @@ import { MAX_INSTITUTIONAL_CATALOG_BYTES } from "./institutional-organizations";
 
 // The existing contract validator stays on the server, outside the mobile bundle.
 const MAX_BYTES = 2 * 1024 * 1024;
+/** Permite un registro v2 completo de hasta veinte campos y título de 100.000 caracteres; el backend pagina dentro de 7 MiB. */
+export const MAX_REPORTED_RECORD_BYTES = 8 * 1024 * 1024;
+/** Respuesta completa de las ofertas de bases derivadas instaladas: presupuesto propio de 10 MiB, sin paginación ni truncamiento. */
+export const MAX_DERIVED_DATABASE_BYTES = 10 * 1024 * 1024;
 /** Presupuesto del catálogo nacional de localidades, separado de ubicaciones de obras. */
 const MAX_LOCALITY_CATALOG_BYTES = 1024 * 1024;
 /**
- * Crea el cliente de obras con 8 segundos/2 MiB, catálogos territoriales con 5 segundos/128 KiB, institucional con 5 segundos/512 KiB y conteos con 5 segundos/32 KiB por lectura.
+ * Crea el cliente de obras con 8 segundos/2 MiB, registros con 8 segundos/8 MiB, bases derivadas instaladas con 8 segundos/10 MiB, catálogos territoriales con 5 segundos/128 KiB, institucional con 5 segundos/512 KiB y conteos con 5 segundos/32 KiB por lectura.
  * @returns Cliente con validación de contrato, cancelación combinada y política no-store.
  * @throws PublicApiError Si una respuesta excede el presupuesto de bytes.
  */
@@ -35,9 +39,14 @@ export function publicApi() {
       const sourceCoverage = new URL(String(input)).pathname.endsWith(
         "/obras/cobertura-fuentes",
       );
-      const counts = String(input).includes("/obras/conteos?");
+      const counts = String(input).includes("/obras/conteos?") || String(input).includes("/registros-informados/conteos?");
+      const reportedRecords = new URL(String(input)).pathname.includes("/registros-informados");
+      const derivedPath = new URL(String(input)).pathname;
+      const derivedDatabase = derivedPath.endsWith("/bases-derivadas/olavarria-obras") || derivedPath.endsWith("/bases-derivadas/general-pueyrredon-registros");
       const maxBytes =
-        municipalCoverage || sourceCoverage || counts
+        derivedDatabase
+          ? MAX_DERIVED_DATABASE_BYTES
+          : municipalCoverage || sourceCoverage || counts
           ? 32 * 1024
           : localityCatalog
             ? MAX_LOCALITY_CATALOG_BYTES
@@ -47,6 +56,8 @@ export function publicApi() {
                 ? MAX_PARTY_BOUNDARY_BYTES
                 : institutionalCatalog
                   ? MAX_INSTITUTIONAL_CATALOG_BYTES
+                  : reportedRecords
+                    ? MAX_REPORTED_RECORD_BYTES
                   : MAX_BYTES;
       const timeout = AbortSignal.timeout(
         partyCatalog ||
@@ -81,7 +92,9 @@ export function publicApi() {
             throw new PublicApiError(413, {
               code: "RESPONSE_BUDGET",
               message:
-                municipalCoverage || sourceCoverage || counts
+                derivedDatabase
+                  ? "La base derivada supera el límite de descarga completa. No se entrega una porción truncada."
+                  : municipalCoverage || sourceCoverage || counts
                   ? "No se pudieron cargar los conteos dentro del límite de lectura."
                   : institutionalCatalog
                     ? "No se pudo cargar el catálogo institucional dentro del límite de lectura."
@@ -90,7 +103,9 @@ export function publicApi() {
                         localityCatalog ||
                         partyBoundaries
                       ? "No se pudo cargar la referencia territorial dentro del límite de lectura."
-                      : "El área contiene demasiados datos; acercá el mapa o ajustá los filtros.",
+                  : reportedRecords
+                    ? "La página de registros contiene demasiados datos; reducí el tamaño de página o ajustá los filtros."
+                    : "El área contiene demasiados datos; acercá el mapa o ajustá los filtros.",
               requestId: null,
             });
           }

@@ -6,7 +6,13 @@ Web mobile-first con landing, exploración como lista o mapa y fichas públicas 
 
 En la revisión local del 5 de octubre, el sitio activo en `localhost:3002` corre en desarrollo y consulta la API E7 de `127.0.0.1:3000`; el backoffice funciona en `127.0.0.1:5173`. Publicar obras en ese catálogo habilita su consulta anónima local. La puesta en producción requiere su destino y configuración de operación.
 
-La conciliación actual confirma catálogo **20**: **709 obras públicas**, **481 representadas mediante 483 geometrías** y **228 sin geometría**, todas consultables en lista y ficha. CABA tiene 489 publicaciones y 395 con ubicación; Vicente López tiene 12 publicaciones y ninguna geometría aceptada. Las fechas de actualización de fuente siguen sin informarse; la fecha de publicación no acredita frescura del dato ni la posición exacta de una obra.
+La conciliación histórica del 5 de octubre confirmó catálogo **20**: **709 obras públicas**, **481 representadas mediante 483 geometrías** y **228 sin geometría**, todas consultables en lista y ficha. CABA tenía 489 publicaciones y 395 con ubicación; Vicente López tenía 12 publicaciones y ninguna geometría aceptada. Las fechas de actualización de fuente seguían sin informarse; la fecha de publicación no acredita frescura del dato ni la posición exacta de una obra.
+
+La [continuación de fuentes del 9 de octubre](docs/ampliacion-fuentes.md) incorpora ACUMAR, Neuquén y la Municipalidad de la Ciudad de Mendoza en los contratos y filtros: diez fuentes organizadas en seis grupos territoriales. Mendoza conserva alcance municipal bajo la provincia `50`; sus 45 registros locales son actos de contratación (`PROCUREMENT_ACT_RECORD`) y no acreditan obras únicas ni generaron propuestas. Esa ingesta conservó el corte histórico `41` antes de las nuevas publicaciones.
+
+La comprobación local anterior de catálogo **49** confirmó **2.083 obras publicadas**, **537 con ubicación aprobada** y **1.546 sin ubicación**. Se incorporaron **739 publicaciones**: **680 de Neuquén** y **59 de ACUMAR**, todas sin ubicación; Mendoza conserva cero obras publicadas. Fuentes, listas y una ficha sin ubicación por fuente se comprobaron con datos reales en doce recorridos de escritorio y móvil. El backend verificó por HTTP las 739 fichas nuevas después de corregir la proyección de metadatos de procedencia. El [registro local del backend](../obras-transparentes/docs/implementation/continuacion-ampliacion-fuentes.md) documenta esa revisión editorial y aceptación.
+
+El [cierre en curso de Bahía Blanca y Mercedes](docs/cierre-bahia-mercedes.md) alcanzó catálogo **67**: **2.443 obras únicas**, **538 con ubicación aprobada** y **1.905 sin ubicación**; Bahía aporta 580 publicaciones y Mercedes 285. Dieciocho operaciones incorporaron 360 obras. Los recorridos públicos 58, 64 y 66 verificaron las 357 fichas nuevas de esos cortes, con API/HTML, licencias, filtros, paginación y sitemap; las tres fichas posteriores y la paginación del catálogo 67 pasaron otro recorrido de 109 solicitudes. Ambas localidades continúan abiertas y la revisión de los correctivos eléctricos de Mercedes avanza en tandas conciliadas. Este corte local no acredita despliegue de producción.
 
 La interfaz aplica la [guía visual](docs/guia-visual.md): blanco y celeste, acciones azules, detalles dorados y Noto Sans del mismo origen. La guía reúne tokens, patrones y criterios de accesibilidad para mantener esa identidad en próximos cambios; las decisiones funcionales y validaciones siguen en [etapa 2](docs/etapa-2.md).
 
@@ -38,14 +44,14 @@ npm start
 
 Variables sólo del servidor, documentadas en `.env.example`:
 
-| Variable | Uso |
-| --- | --- |
-| `PUBLIC_API_URL` | Base pública de NestJS, por defecto `http://127.0.0.1:3000/api/v1`. Sin credenciales. |
-| `SITE_URL` | Sin valor por defecto. Configurar sólo el origen HTTPS público real (sin ruta, parámetros ni credenciales) antes del build; orígenes locales, IP y nombres reservados no habilitan SEO público. |
-| `SITE_ENVIRONMENT` | `local` por defecto; `local` y `staging` conservan `noindex`. Sólo `production` permite habilitar indexación con las otras dos variables. |
-| `SITE_INDEXABLE` | `false` por defecto. `true` requiere además `SITE_ENVIRONMENT=production` y `SITE_URL` válida; desarrollo sigue cerrado. |
-| `MAP_STYLE_URL` | Estilo HTTPS MapLibre v8 interpretado por ol-mapbox-style; por defecto Liberty de OpenFreeMap. Al cambiar proveedor, revisar estilo, atribución, sprites y privacidad. |
-| `REPORT_EMAIL` | Contacto opcional para informar errores desde las fichas; sin valor predeterminado. Sólo se muestra con un correo válido configurado. Las páginas legales no publican correo. |
+| Variable           | Uso                                                                                                                                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUBLIC_API_URL`   | Base pública de NestJS, por defecto `http://127.0.0.1:3000/api/v1`. Sin credenciales.                                                                                                           |
+| `SITE_URL`         | Sin valor por defecto. Configurar sólo el origen HTTPS público real (sin ruta, parámetros ni credenciales) antes del build; orígenes locales, IP y nombres reservados no habilitan SEO público. |
+| `SITE_ENVIRONMENT` | `local` por defecto; `local` y `staging` conservan `noindex`. Sólo `production` permite habilitar indexación con las otras dos variables.                                                       |
+| `SITE_INDEXABLE`   | `false` por defecto. `true` requiere además `SITE_ENVIRONMENT=production` y `SITE_URL` válida; desarrollo sigue cerrado.                                                                        |
+| `MAP_STYLE_URL`    | Estilo HTTPS MapLibre v8 interpretado por ol-mapbox-style; por defecto Liberty de OpenFreeMap. Al cambiar proveedor, revisar estilo, atribución, sprites y privacidad.                          |
+| `REPORT_EMAIL`     | Contacto opcional para informar errores desde las fichas; sin valor predeterminado. Sólo se muestra con un correo válido configurado. Las páginas legales no publican correo.                   |
 
 La landing se prerenderiza. Lista y fichas se consultan en servidor sin caché de datos para no mezclar versiones. El navegador usa exclusivamente `/api/public/…`: rutas GET limitadas, sin cookies ni autorización hacia NestJS, con validación de contrato, timeout y presupuesto de respuesta. No es un proxy general ni expone el backoffice.
 
@@ -67,7 +73,7 @@ Los assets con hash aprovechan la caché del framework. El mapa base sigue las c
 - `/mapa?obra=UUID&revisionId=UUID`: restaura y ubica la revisión seleccionada. El resumen se abre con una acción explícita; cerrarlo mantiene la selección. Atrás/Adelante la restaura.
 - `/obras/UUID`: ficha HTML actual con título propio, territorio reportado cuando existe y fuentes. `?revisionId=UUID` conserva una publicación específica y lleva `noindex`.
 - `/privacidad`, `/terminos`: privacidad y condiciones del catálogo basadas en el funcionamiento actual, sin correo publicado. Mantienen visibles los datos del operador, el canal de consultas y la conservación propia aún no informados; la revisión jurídica y operativa se registra en la documentación.
-- `/robots.txt`, `/sitemap.xml`: en local/staging robots bloquea todo y no anuncia sitemap; sitemap devuelve 404 sin consultar el catálogo. Sólo al habilitar producción con URL real se publican canonical, Open Graph de texto y sitemap consistente hasta 2.000 fichas; si supera su límite, falla explícitamente y exige particionarlo. La imagen y verificación de preview social quedan pendientes de esa URL y de un asset aprobado.
+- `/robots.txt`, `/sitemap.xml`: en local/staging robots bloquea todo y no anuncia sitemap; los tres endpoints de sitemap devuelven 404 sin consultar el catálogo. Al habilitar producción con URL real, `/sitemap.xml` entrega un índice con páginas generales en `/sitemap-paginas.xml` y particiones de hasta 200 fichas en `/sitemap-obras.xml`, vinculadas al corte de catálogo y cursor. El índice admite hasta 500 particiones y falla explícitamente ante catálogo cambiante, cursores repetidos o presupuesto excedido; nunca entrega un catálogo truncado. La imagen y verificación de preview social quedan pendientes de esa URL y de un asset aprobado.
 
 La descripción general y las metadescripciones existentes por página se conservan. Landing, proyecto, legales y fichas entregan contenido HTML inicial; los filtros del explorador mantienen `noindex`. El favicon SVG reutiliza el símbolo de la cabecera sin añadir una imagen raster. La configuración SEO se decide antes del build: no usar una URL local o de ejemplo como origen público ni habilitar indexación en staging. Mantener `SITE_URL`, `SITE_ENVIRONMENT` y `SITE_INDEXABLE` iguales entre build y arranque del mismo entorno; generar un build nuevo si cambian, para que metadatos prerenderizados, robots y sitemap mantengan la misma política.
 
@@ -124,6 +130,7 @@ npm run contract:sync -- --backend C:\ruta\obras-transparentes
 La exportación compila el backend sin iniciarlo, cargar `.env` ni conectar su base. Genera `contracts/` y `src/api/generated.ts`; no editar esos archivos a mano. La comparación normaliza LF/CRLF. Ajv valida respuestas en el servidor; los esquemas y rutas de Swagger no se incluyen en el bundle del explorador.
 
 - [Etapa 2: decisiones, límites y validación](docs/etapa-2.md).
+- [ACUMAR, Neuquén, Ciudad de Mendoza y cobertura territorial](docs/ampliacion-fuentes.md).
 - [Etapa 1: contrato e integración](docs/etapa-1.md).
 - [Documentación del código: JSDoc y comprobación automática](docs/documentacion-codigo.md).
 - [Asociaciones espaciales y roles institucionales publicados](docs/asociaciones-obras.md).

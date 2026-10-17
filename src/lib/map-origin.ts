@@ -18,7 +18,7 @@ export const MAP_ORIGINS = {
     lineDash: [8, 4],
   },
   province: {
-    label: "Provincia de Buenos Aires",
+    label: "Provincias",
     color: "#287A3A",
     fill: "rgba(40,122,58,0.22)",
     marker: "triangle",
@@ -30,6 +30,13 @@ export const MAP_ORIGINS = {
     fill: "rgba(148,104,0,0.22)",
     marker: "diamond",
     lineDash: [10, 3, 2, 3],
+  },
+  multiprovincial: {
+    label: "Fuentes de varias provincias",
+    color: "#334155",
+    fill: "rgba(51,65,85,0.22)",
+    marker: "hexagon",
+    lineDash: [4, 2],
   },
   mixed: {
     label: "Fuentes de distintos niveles",
@@ -60,6 +67,10 @@ const SOURCE_CATEGORY: Record<PublicSource["codigo"], Exclude<MapOriginCategory,
   "bahia-obras": "municipality",
   "olavarria-obras": "municipality",
   "pergamino-obras": "municipality",
+  "acumar-obras": "multiprovincial",
+  "neuquen-obras": "province",
+  "mendoza-obras": "municipality",
+  "mercedes-obras": "municipality",
 };
 
 /** Maps the public source catalog to its jurisdiction level, never from the work's location. */

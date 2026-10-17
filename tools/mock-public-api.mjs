@@ -5,6 +5,7 @@ import { Ajv } from "ajv";
 import { fullFormats } from "ajv-formats/dist/formats.js";
 import examples from "../contracts/examples.json" with { type: "json" };
 import schemas from "../contracts/schemas.json" with { type: "json" };
+import { documentaryReportedRecordFixture, homogeneousReportedRecordFixture, reportedRecordFixtures } from "./reported-record-fixtures.mjs";
 import partyCatalog from "../test/fixtures/pba-parties.json" with { type: "json" };
 import partyBoundaries from "../test/fixtures/pba-party-boundaries.json" with { type: "json" };
 
@@ -211,6 +212,26 @@ const server = createServer((request, response) => {
     response.end(json);
   };
   if (request.method !== "GET") return send(405, { error: { code: "METHOD_NOT_ALLOWED", message: "Read-only fixture server", requestId: null } });
+  if (url.pathname.startsWith("/api/v1/registros-informados")) {
+    const recordPath = url.pathname.slice("/api/v1/registros-informados".length);
+    const published = reportedRecordFixtures.filter(detail => detail.estado === "PUBLISHED");
+    const filteredRecords = published.filter(detail => (!url.searchParams.get("fuente") || detail.registro.fuente.codigo === url.searchParams.get("fuente")) && (!url.searchParams.get("tipo") || detail.registro.tipo === url.searchParams.get("tipo")) && (!url.searchParams.get("territorio") || detail.registro.territorio === null) && (!url.searchParams.get("provinciaCodigo") || detail.registro.territorio?.provincia.codigo === url.searchParams.get("provinciaCodigo")) && (!url.searchParams.get("partidoCodigo") || detail.registro.territorio?.partido?.codigo === url.searchParams.get("partidoCodigo")) && (!url.searchParams.get("localidadCodigo") || detail.registro.territorio?.localidad?.codigo === url.searchParams.get("localidadCodigo")));
+    if (url.searchParams.get("fuente") === "fixture-unavailable") return send(503, { error: { code: "UNAVAILABLE", message: "Synthetic unavailable records", requestId: null } });
+    if (recordPath === "/conteos") {
+      const porFuente = [...new Set(filteredRecords.map(detail => detail.registro.fuente.codigo))].map(codigo => ({ codigo, cantidad: filteredRecords.filter(detail => detail.registro.fuente.codigo === codigo).length }));
+      const porTipo = [...new Set(filteredRecords.map(detail => detail.registro.tipo))].map(tipo => ({ tipo, cantidad: filteredRecords.filter(detail => detail.registro.tipo === tipo).length }));
+      const partidosConRegistros = new Set(filteredRecords.map(detail => detail.registro.territorio?.partido?.codigo).filter(Boolean)).size;
+      const localidadesConRegistros = new Set(filteredRecords.map(detail => detail.registro.territorio?.localidad?.codigo).filter(Boolean)).size;
+      return send(200, validate("ReportedRecordCounts", { catalogoVersion: "13", totalRegistros: filteredRecords.length, porFuente, porTipo, partidosConRegistros, localidadesConRegistros }));
+    }
+    if (recordPath === "") {
+      if (url.searchParams.get("cursor") === "changed") return send(409, { error: { code: "CATALOG_CHANGED", message: "Synthetic changed records catalogue", requestId: null } });
+      const { page, limit, nextCursor } = pageOf(filteredRecords, url.searchParams, 25);
+      return send(200, validate("ReportedRecordList", { items: page, limit, nextCursor, catalogoVersion: "13" }));
+    }
+    const detail = [...reportedRecordFixtures, homogeneousReportedRecordFixture, documentaryReportedRecordFixture].find(detail => "/" + detail.registroId === recordPath);
+    return detail ? send(200, validate("ReportedRecordDetail", detail)) : send(404, { error: { code: "NOT_FOUND", message: "Synthetic record not found", requestId: null } });
+  }
   if (url.pathname === "/__health") return send(200, { fixture: "synthetic-e2e-only" });
   if (url.pathname === "/__municipal-fixtures" && port === 4100) {
     if ([...url.searchParams.keys()].some(key => !["enabled", "failed", "changed"].includes(key)) || ["enabled", "failed", "changed"].some(key => url.searchParams.getAll(key).length !== 1 || !["0", "1"].includes(url.searchParams.get(key))))

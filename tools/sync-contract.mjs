@@ -127,10 +127,15 @@ try {
     "/api/v1/territorios/pba/partidos",
     "/api/v1/territorios/pba/partidos/limites",
     "/api/v1/organizaciones-institucionales",
+    "/api/v1/registros-informados",
+    "/api/v1/registros-informados/conteos",
+    "/api/v1/registros-informados/{id}",
+    "/api/v1/bases-derivadas/olavarria-obras",
+    "/api/v1/bases-derivadas/general-pueyrredon-registros",
   ]);
   if (Object.keys(document.paths).some((path) => !publicPaths.has(path))) {
     throw new Error(
-      "La exportación debe contener exclusivamente rutas públicas de obras, provincias, localidades, partidos y organizaciones institucionales admitidas.",
+      "La exportación debe contener exclusivamente las rutas públicas admitidas de obras, registros informados, bases derivadas instaladas y catálogos de referencia.",
     );
   }
   const examples = JSON.parse(await readFile(examplesPath, "utf8"));

@@ -36,7 +36,9 @@
     "e2e/**/*.ts",
     "*.config.ts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    ".next-cierre-bahia-mercedes-qa/types/**/*.ts",
+    ".next-cierre-bahia-mercedes-qa/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

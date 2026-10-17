@@ -1,30 +1,16 @@
-/** @file Sitemap dinámico de fichas actuales; exige paginación completa de una misma versión del catálogo. */
+/** @file Descubre particiones de fichas actuales bajo una misma versión del catálogo público. */
 import { indexableSiteUrl } from "../../lib/config";
 import { publicApi } from "../../lib/public-api";
-/** Impide servir un sitemap almacenado cuando cambia el catálogo. */
+import { sitemapDisabled, sitemapIndex, sitemapResponse, sitemapUnavailable } from "../../lib/sitemap";
+/** Impide servir un índice almacenado después de cambiar el catálogo. */
 export const dynamic = "force-dynamic";
-/** Escapa texto de URL para incluirlo en XML sin alterar su estructura. */
-const escape = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
-/**
- * Construye hasta 2.000 fichas actuales con una misma versión y cursores únicos.
- * @returns 404 sin consultar la API mientras no se habilite producción; XML completo o 503.
- */
+/** Responde un índice completo, 404 sin indexación habilitada o 503 ante un corte inconsistente. */
 export async function GET() {
   const origin = indexableSiteUrl();
-  if (!origin) return new Response("Sitemap no habilitado para este entorno.", { status: 404, headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
+  if (!origin) return sitemapDisabled();
   try {
-    const api = publicApi(); const urls = ["/", "/proyecto", "/privacidad", "/terminos"]; const seen = new Set<string>();
-    const signal = AbortSignal.timeout(15000);
-    let cursor: string | undefined; let version: string | undefined;
-    for (let page = 0; page < 10; page++) {
-      const data = await api.list({ limit: 200, ...(cursor ? { cursor } : {}) }, { signal });
-      if (version !== undefined && version !== data.catalogoVersion) throw new Error("CATALOG_CHANGED");
-      version = data.catalogoVersion;
-      urls.push(...data.items.map(work => "/obras/" + work.obraId));
-      if (!data.nextCursor) return new Response(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${[...new Set(urls)].map(path => `<url><loc>${escape(new URL(path, origin).href)}</loc></url>`).join("")}</urlset>`, { headers: { "Content-Type": "application/xml", "Cache-Control": "no-store" } });
-      if (seen.has(data.nextCursor)) throw new Error("REPEATED_CURSOR");
-      seen.add(data.nextCursor); cursor = data.nextCursor;
-    }
-    throw new Error("SITEMAP_REQUIRES_PARTITIONING");
-  } catch { return new Response("Sitemap temporalmente no disponible.", { status: 503, headers: { "Cache-Control": "no-store", "Retry-After": "300" } }); }
+    return sitemapResponse(await sitemapIndex(origin, publicApi(), AbortSignal.timeout(15000)));
+  } catch {
+    return sitemapUnavailable();
+  }
 }

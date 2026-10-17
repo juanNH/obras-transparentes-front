@@ -190,6 +190,18 @@ legend { font-weight: 700; padding: 0; }
 .section-title { margin: 0 0 1.5rem; }
 .notice { border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); background: var(--color-primary-soft); padding: 1rem 1.25rem; border-radius: var(--radius-control); font-size: 0.875rem; margin-block: 1.25rem; overflow-wrap: anywhere; }
 .notice p:last-child { margin-bottom: 0; }
+.record-warnings { border: 1px solid var(--color-warning); border-radius: var(--radius-control); padding: 1rem; margin-block: 1rem; background: var(--color-warning-bg); color: var(--color-warning); overflow-wrap: anywhere; }
+.record-warnings ul { padding-inline-start: 1.25rem; margin: 0; }
+.record-warnings li + li { margin-top: 0.75rem; }
+.reported-records .record-card { margin-top: 0; }
+.reported-records, .reported-record-detail { overflow-wrap: anywhere; }
+.record-interpretation { margin-block: 1rem; padding: 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-control); }
+.record-interpretation ul { padding-inline-start: 1.25rem; }
+.record-interpretation li + li { margin-top: .5rem; }
+.record-literal { white-space: pre-wrap; overflow-wrap: anywhere; }
+.record-territory-filters { display: grid; gap: 1rem; min-width: 0; padding: 1rem; border: 1px solid var(--color-border); }
+.record-territory-filters select, .record-citation textarea { width: 100%; min-width: 0; max-width: 100%; }
+.record-citation textarea { display: block; margin-block: .5rem; padding: .75rem; font: inherit; }
 .notice.error, .notice-error { border-color: var(--color-danger); background: var(--color-danger-bg); color: var(--color-danger); }
 .notice.error a, .notice-error a { color: var(--color-danger); }
 .notice.error .button { color: var(--color-on-primary); }

@@ -274,12 +274,21 @@ export default function WorkMap(props: WorkMapProps) {
     if (!hoveredLocation) return;
     /** Descarta ayuda contextual con Escape desde cualquier foco de la página. */
     const dismiss = (event: KeyboardEvent) => { if (event.key === "Escape") setHoveredLocation(null); };
+    /** Descarta al mover el puntero fuera del mapa/ayuda; un scroll sin movimiento conserva la lectura. */
+    const dismissOnPointerMove = (event: PointerEvent) => {
+      if (event.target instanceof Node && !container.current?.parentElement?.contains(event.target)) setHoveredLocation(null);
+    };
     window.addEventListener("keydown", dismiss);
-    return () => window.removeEventListener("keydown", dismiss);
+    document.addEventListener("pointermove", dismissOnPointerMove);
+    return () => {
+      window.removeEventListener("keydown", dismiss);
+      document.removeEventListener("pointermove", dismissOnPointerMove);
+    };
   }, [hoveredLocation]);
   current.current = props;
 
   useEffect(() => {
+    setHoveredLocation(null);
     if (!container.current || !attribution.current) return;
     const target = container.current;
     let active = true;
@@ -468,9 +477,9 @@ export default function WorkMap(props: WorkMapProps) {
   }, [props.styleUrl, attempt]);
 
   useEffect(() => {
+    setHoveredLocation(null);
     const works = worksRef.current; const map = mapRef.current;
     if (!works || !map) return;
-    setHoveredLocation(null);
     updateWorks(works, props.features);
     if (autoFitPending.current && fitSources(map, [works.points, works.shapes])) autoFitPending.current = false;
   }, [props.features]);
@@ -478,6 +487,7 @@ export default function WorkMap(props: WorkMapProps) {
     if (partiesRef.current) updatePartyLayer(partiesRef.current, props.partyFeatures, props.selectedPartidoIds);
   }, [props.partyFeatures, props.selectedPartidoIds]);
   useEffect(() => {
+    setHoveredLocation(null);
     const works = worksRef.current; const map = mapRef.current;
     if (!works || !map) return;
     if (props.selectedId) autoFitPending.current = false;
@@ -514,7 +524,7 @@ export default function WorkMap(props: WorkMapProps) {
     {status === "unavailable" && <p role="status">No pudimos mostrar el mapa en este dispositivo. Podés explorar las mismas obras desde la lista.</p>}
     {warning && <p role="status">{warning}</p>}
     {(warning || status === "unavailable") && <button type="button" className="button button-secondary" onClick={() => setAttempt(value => value + 1)}>Reintentar mapa</button>}
-    <div className="map-canvas-wrap" onPointerLeave={() => setHoveredLocation(null)}>
+    <div className="map-canvas-wrap">
       <div ref={container} className="map-canvas" role="region" aria-label="Área del mapa" aria-describedby={hoveredLocation ? `${instructionId} ${tooltipId}` : instructionId} tabIndex={0} onKeyDown={event => { if (event.key === "Escape") setHoveredLocation(null); }} />
       {hoveredLocation && <div className="map-location-tooltip" id={tooltipId} role="tooltip">
         <p className="tooltip-work-name">{hoveredLocation.nombre}</p>

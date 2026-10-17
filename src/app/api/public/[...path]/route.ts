@@ -6,6 +6,7 @@ import {
 } from "../../../../api/client";
 import { parseExplorerQuery, isUUID } from "../../../../lib/explorer-query";
 import { publicApi } from "../../../../lib/public-api";
+import { parseReportedRecordQuery } from "../../../../api/reported-records";
 
 /** Evita caché de rutas BFF para consultar la versión vigente del catálogo. */
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ const allowed = new Set([
   "cursor",
 ]);
 /**
- * Acepta lista, GeoJSON, ficha, conteos, coberturas y catálogos públicos; el inventario admite hasta siete fuentes declaradas y usa presupuesto independiente.
+ * Acepta lista, GeoJSON, ficha, conteos, coberturas y catálogos públicos; sólo la ruta exacta de la base Olavarría permite su descarga completa, sin parámetros y con presupuesto independiente de 10 MiB.
  * @param request - GET de mismo origen; su señal cancela la lectura upstream.
  * @param params - Segmentos de la ruta pública resueltos por App Router.
  * @returns JSON validado sin caché o un error público que no revela URLs internas.
@@ -46,7 +47,29 @@ export async function GET(
   try {
     const api = publicApi();
     let result: unknown;
-    if (path.length === 2 && path.join("/") === "obras/conteos") {
+    if (path.length === 2 && path.join("/") === "bases-derivadas/olavarria-obras") {
+      if (url.searchParams.size) throw new TypeError("La base derivada actual no admite parámetros.");
+      validated = true;
+      result = await api.olavarriaDerivedDatabase({ signal: request.signal });
+      return Response.json(result, { headers: { ...headers, "Content-Disposition": 'attachment; filename="olavarria-base-derivada.json"' } });
+    } else if (path.length === 2 && path.join("/") === "bases-derivadas/general-pueyrredon-registros") {
+      if (url.searchParams.size) throw new TypeError("La base derivada actual no admite parámetros.");
+      validated = true;
+      result = await api.generalPueyrredonDerivedDatabase({ signal: request.signal });
+      return Response.json(result, { headers: { ...headers, "Content-Disposition": 'attachment; filename="general-pueyrredon-base-derivada.json"' } });
+    } else if (path.length === 1 && path[0] === "registros-informados") {
+      const query = parseReportedRecordQuery(url.searchParams);
+      validated = true;
+      result = await api.reportedRecords(query, { signal: request.signal });
+    } else if (path.length === 2 && path[0] === "registros-informados" && path[1] === "conteos") {
+      const query = parseReportedRecordQuery(url.searchParams, false);
+      validated = true;
+      result = await api.reportedRecordCounts(query, { signal: request.signal });
+    } else if (path.length === 2 && path[0] === "registros-informados" && path[1] && isUUID(path[1])) {
+      if (url.searchParams.size) throw new TypeError("La ficha de registro no recibe parámetros.");
+      validated = true;
+      result = await api.reportedRecord(path[1], { signal: request.signal });
+    } else if (path.length === 2 && path.join("/") === "obras/conteos") {
       if (
         [...url.searchParams.keys()].some(
           (key) => !allowed.has(key) || key === "cursor",
@@ -215,10 +238,12 @@ export async function GET(
           : "UNAVAILABLE";
     // Do not expose internal addresses or upstream diagnostic payloads.
     const message =
-      code === "CATALOG_CHANGED"
+      code === "CATALOG_CHANGED" || code === "INVALID_CURSOR"
         ? "El catálogo cambió. Reiniciá la consulta."
         : code === "RESPONSE_BUDGET"
-          ? path.join("/") === "obras/conteos"
+          ? path.join("/") === "bases-derivadas/olavarria-obras" || path.join("/") === "bases-derivadas/general-pueyrredon-registros"
+            ? "La base derivada supera el límite de descarga completa. No se entrega una porción truncada."
+            : path.join("/") === "obras/conteos"
             ? "No se pudieron cargar los conteos dentro del límite de lectura."
             : path.join("/") === "obras/cobertura-fuentes"
               ? "No se pudo cargar el inventario de fuentes dentro del límite de lectura."
@@ -228,7 +253,9 @@ export async function GET(
                   ? "No se pudo cargar el catálogo institucional dentro del límite de lectura."
                   : path[0] === "territorios"
                     ? "No se pudo cargar la referencia territorial dentro del límite de lectura."
-                    : "Esta zona contiene demasiados datos. Acercá el mapa o ajustá los filtros."
+                    : path[0] === "registros-informados"
+                      ? "La página de registros contiene demasiados datos. Reducí el tamaño de página o ajustá los filtros."
+                      : "Esta zona contiene demasiados datos. Acercá el mapa o ajustá los filtros."
           : status === 400
             ? "Revisá los filtros del enlace."
             : status === 404

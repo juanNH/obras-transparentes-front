@@ -1,4 +1,4 @@
-/** @file Comprueba conteos de las siete fuentes, versiones compartidas y lecturas municipales sintéticas sin consultar el catálogo activo. */
+/** @file Comprueba conteos de fuentes, versiones compartidas y lecturas municipales sintéticas sin consultar el catálogo activo. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -61,6 +61,14 @@ const coverage: MunicipalCoverage = {
       obrasConGeometria: 0,
       obrasSinGeometria: 2,
     },
+    {
+      fuenteId: "70000000-0000-4000-8000-000000000004",
+      codigo: "mercedes-obras",
+      nombre: "EJEMPLO SINTÉTICO — Mercedes",
+      obrasPublicadas: 0,
+      obrasConGeometria: 0,
+      obrasSinGeometria: 0,
+    },
   ],
 };
 const workCounts: WorkCounts = {
@@ -113,6 +121,36 @@ const perSource: Record<string, WorkCounts> = {
     totalConGeometria: 0,
     totalSinGeometria: 2,
   },
+  "acumar-obras": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "neuquen-obras": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "mendoza-obras": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "mercedes-obras": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
+  "lujan-documentos": {
+    ...workCounts,
+    totalPublicadas: 0,
+    totalConGeometria: 0,
+    totalSinGeometria: 0,
+  },
 };
 const sourceInventory = parsePublicResponse<SourceCoverage>(
   "PublicSourceCoverage",
@@ -128,7 +166,7 @@ const sourceInventory = parsePublicResponse<SourceCoverage>(
       obrasConUbicacionAprobada: perSource[source.codigo]!.totalConGeometria,
       obrasSinUbicacionAprobada: perSource[source.codigo]!.totalSinGeometria,
       localidadesConObrasPublicadas: source.codigo === "nacion-obras" ? 18 : 0,
-      ubicacionesAprobadas: perSource[source.codigo]!.totalConGeometria + 1,
+      ubicacionesAprobadas: source.codigo === "lujan-documentos" ? 0 : perSource[source.codigo]!.totalConGeometria + 1,
       obrasConEvidenciaLicenciaPublicada:
         perSource[source.codigo]!.totalPublicadas,
       obrasSinEvidenciaLicenciaPublicada: 0,
@@ -199,7 +237,7 @@ describe("cobertura pública por fuente", () => {
     }
   });
 
-  it("presenta las siete fuentes en el mismo corte con una lectura agregada independiente de filtros", async () => {
+  it("presenta todas las fuentes en el mismo corte con una lectura agregada independiente de filtros", async () => {
     const page = await MapPage({
       searchParams: Promise.resolve({
         fuente: "pergamino-obras",
@@ -209,7 +247,9 @@ describe("cobertura pública por fuente", () => {
       }),
     });
     const props = explorer(page).props;
-    expect(props.sourceCoverage).toHaveLength(7);
+    expect(props.sourceCoverage).toHaveLength(
+      examples.sourceCoverage.fuentes.length,
+    );
     expect(
       props.sourceCoverage.every((source) => source.estado === "AVAILABLE"),
     ).toBe(true);
@@ -241,7 +281,9 @@ describe("cobertura pública por fuente", () => {
     expect(html).toContain("no se suman para obtener obras únicas");
     for (const source of props.sourceCoverage)
       expect(html).toContain(
-        `href="/mapa?fuente=${source.codigo}&amp;vista=lista"`,
+        source.codigo === "lujan-documentos"
+          ? 'href="/registros?fuente=lujan-documentos&amp;tipo=DOCUMENT_REPORT_SECTION&amp;limit=25"'
+          : `href="/mapa?fuente=${source.codigo}&amp;vista=lista"`,
       );
     expect(html).not.toContain("bbox=");
   });
@@ -320,7 +362,7 @@ describe("cobertura pública por fuente", () => {
     ).not.toContain("<dd>");
   });
 
-  it("el BFF admite hasta siete fuentes y rechaza filtros de obras, paginación y códigos ajenos", async () => {
+  it("el BFF admite las fuentes del contrato y rechaza filtros de obras, paginación y códigos ajenos", async () => {
     const input = new Request(
       "https://example.test/api/public/obras/cobertura-fuentes?fuente=nacion-obras&fuente=pba-edificios",
       {
@@ -349,7 +391,10 @@ describe("cobertura pública por fuente", () => {
       "bbox=-60,-35,-59,-34",
       "cursor=synthetic-page",
       new URLSearchParams(
-        Array.from({ length: 8 }, () => ["fuente", "nacion-obras"]),
+        Array.from(
+          { length: examples.sourceCoverage.fuentes.length + 1 },
+          () => ["fuente", "nacion-obras"],
+        ),
       ).toString(),
     ]) {
       expect(

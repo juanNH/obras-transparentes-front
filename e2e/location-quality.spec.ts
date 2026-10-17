@@ -189,8 +189,21 @@ test("tocar un punto identifica su ubicación y muestra ayuda persistente sin ab
     await expect(page.getByRole("tooltip")).toContainText(explanation);
     await page.getByRole("tooltip").hover();
     await expect(page.getByRole("tooltip")).toContainText(explanation);
+    await expect(page.getByRole("tooltip")).toBeInViewport();
+    await page.screenshot({ path: test.info().outputPath("tooltip-alcanzable.png") });
+    await page.mouse.move(0, 0);
+    await expect(page.getByRole("tooltip")).toHaveCount(0);
+    const restoredBox = (await canvas.boundingBox())!;
+    await canvas.hover({ position: { x: restoredBox.width / 2, y: restoredBox.height / 2 } });
+    await expect(page.getByRole("tooltip")).toContainText(explanation);
     await page.getByRole("button", { name: "Acercar mapa", exact: true }).focus();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("tooltip")).toHaveCount(0);
+    const selectionBox = (await canvas.boundingBox())!;
+    await canvas.hover({ position: { x: selectionBox.width / 2, y: selectionBox.height / 2 } });
+    await expect(page.getByRole("tooltip")).toContainText(explanation);
+    await page.getByRole("combobox", { name: "Ubicación para consultar" }).selectOption(reportedId);
+    await expect(page.getByRole("tooltip")).toHaveCount(0);
+    expect(new URL(page.url()).searchParams.get("ubicacionId")).toBe(reportedId);
   }
 });

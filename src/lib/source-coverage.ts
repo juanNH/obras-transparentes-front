@@ -1,9 +1,9 @@
 /** @file Une la cobertura pública de todas las fuentes en un corte y agrupa su alcance declarado, sin inferir ubicación de obras. */
-import type { SourceCoverage } from "../api/client";
+import type { SourceCoverage, SourceCoverageCode } from "../api/client";
 import { SOURCES } from "./explorer-query";
 
-/** Código de fuente admitido por el contrato público del listado. */
-export type PublicSourceCode = keyof typeof SOURCES;
+/** Fuente del inventario público; también admite fuentes documentales que no filtran obras. */
+export type PublicSourceCode = SourceCoverageCode;
 
 /** Estado textual de una lectura de cobertura antes de presentar cifras. */
 export type SourceCoverageStatus = "AVAILABLE" | "UNKNOWN" | "ERROR";
@@ -25,11 +25,11 @@ export type PublicSourceCoverage = {
   inventario?: SourceCoverage["fuentes"][number];
 };
 
-/** Grupo de procedencias con la misma provincia declarada o alcance nacional/desconocido. */
+/** Grupo de procedencias con la misma provincia o alcance nacional, de varias provincias o desconocido; cada fuente aparece una sola vez. */
 export type SourceCoverageGroup = {
   id: string;
   nombre: string;
-  nivel: "NACIONAL" | "PROVINCIAL" | "UNKNOWN";
+  nivel: "NACIONAL" | "MULTIPROVINCIAL" | "PROVINCIAL" | "UNKNOWN";
   fuentes: PublicSourceCoverage[];
 };
 
@@ -46,7 +46,13 @@ export function buildSourceCoverage(
   catalogoVersion: string | null,
   sourceResult: PromiseSettledResult<SourceCoverage>,
 ): PublicSourceCoverage[] {
-  return SOURCE_ORDER.map((codigo) => {
+  const sourceCodes = [...SOURCE_ORDER];
+  if (sourceResult.status === "fulfilled") {
+    for (const source of sourceResult.value.fuentes) {
+      if (!sourceCodes.includes(source.codigo)) sourceCodes.push(source.codigo);
+    }
+  }
+  return sourceCodes.map((codigo) => {
     const source =
       sourceResult.status === "fulfilled"
         ? sourceResult.value.fuentes.find((item) => item.codigo === codigo)
@@ -60,7 +66,9 @@ export function buildSourceCoverage(
           : "AVAILABLE";
     return {
       codigo,
-      nombre: SOURCES[codigo],
+      nombre: Object.hasOwn(SOURCES, codigo)
+        ? SOURCES[codigo as keyof typeof SOURCES]
+        : source!.nombre,
       estado,
       alcanceTerritorial: source?.alcanceTerritorial ?? null,
       obrasPublicadas: estado === "AVAILABLE" ? source!.obrasPublicadas : null,
@@ -85,25 +93,31 @@ export function groupSourceCoverage(
     const id =
       scope?.nivel === "NACIONAL"
         ? "nacional"
-        : scope?.provincia
-          ? `provincia-${scope.provincia.codigo}`
-          : "unknown";
+        : scope?.nivel === "MULTIPROVINCIAL"
+          ? "multiprovincial"
+          : scope?.provincia
+            ? `provincia-${scope.provincia.codigo}`
+            : "unknown";
     const nombre =
       scope?.nivel === "NACIONAL"
         ? "Fuentes nacionales"
-        : (scope?.provincia?.nombre ?? "Alcance por confirmar");
+        : scope?.nivel === "MULTIPROVINCIAL"
+          ? "Fuentes de varias provincias"
+          : (scope?.provincia?.nombre ?? "Alcance por confirmar");
     const nivel =
       scope?.nivel === "NACIONAL"
         ? "NACIONAL"
-        : scope?.provincia
-          ? "PROVINCIAL"
-          : "UNKNOWN";
+        : scope?.nivel === "MULTIPROVINCIAL"
+          ? "MULTIPROVINCIAL"
+          : scope?.provincia
+            ? "PROVINCIAL"
+            : "UNKNOWN";
     const group = groups.get(id) ?? { id, nombre, nivel, fuentes: [] };
     group.fuentes.push(source);
     groups.set(id, group);
   }
   return [...groups.values()].sort((left, right) => {
-    const rank = { NACIONAL: 0, PROVINCIAL: 1, UNKNOWN: 2 };
+    const rank = { NACIONAL: 0, MULTIPROVINCIAL: 1, PROVINCIAL: 2, UNKNOWN: 3 };
     return (
       rank[left.nivel] - rank[right.nivel] ||
       left.nombre.localeCompare(right.nombre, "es-AR")
@@ -122,12 +136,20 @@ export function filterSourceCoverageGroups(
     const fuentes = normalizedSearch(group.nombre).includes(needle)
       ? group.fuentes
       : group.fuentes.filter((source) =>
-          normalizedSearch(
-            `${source.nombre} ${source.alcanceTerritorial?.municipio?.nombre ?? ""}`,
-          ).includes(needle),
+          normalizedSearch(sourceSearchText(source)).includes(needle),
         );
     return fuentes.length ? [{ ...group, fuentes }] : [];
   });
+}
+
+/** Incluye todas las provincias declaradas en la búsqueda de una fuente que se presenta una sola vez. */
+function sourceSearchText(source: PublicSourceCoverage): string {
+  const scope = source.alcanceTerritorial;
+  const provinces =
+    scope?.nivel === "MULTIPROVINCIAL"
+      ? scope.provincias.map((province) => province.nombre).join(" ")
+      : (scope?.provincia?.nombre ?? "");
+  return [source.nombre, scope?.municipio?.nombre ?? "", provinces].join(" ");
 }
 
 /** Normaliza únicamente la búsqueda de presentación, sin cambiar identidades territoriales. */

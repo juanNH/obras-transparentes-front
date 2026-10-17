@@ -37,19 +37,20 @@ test("empieza compacto y contiene fuentes municipales bajo su provincia declarad
   expect((await panel.boundingBox())!.height).toBeLessThan(175);
   await expect(page.locator(".work-card")).toHaveCount(20);
   await overview.locator(":scope > summary").click();
-  await expect(panel.locator(".source-coverage-group")).toHaveCount(3);
+  await expect(panel.locator(".source-coverage-group")).toHaveCount(6);
   const buenosAires = panel.locator('[data-scope="provincia-06"]');
   await expect(buenosAires.locator(":scope > summary")).toContainText(
     "Buenos Aires",
   );
   await expect(buenosAires.locator(":scope > summary")).toContainText(
-    "5 fuentes",
+    "7 fuentes",
   );
   await buenosAires.locator(":scope > summary").click();
   await expect(buenosAires.locator('[data-source="vl-obras"]')).toBeVisible();
   await expect(
     buenosAires.locator('[data-source="bahia-obras"]'),
   ).toBeVisible();
+  await expect(buenosAires.locator('[data-source="mercedes-obras"]')).toBeVisible();
   await expect(buenosAires.locator('[data-source="nacion-obras"]')).toHaveCount(
     0,
   );
@@ -106,7 +107,7 @@ test("buscar un municipio abre su provincia sin cambiar obras ni pedir nuevas le
       .requests.length,
   ).toBe(baseline);
   await search.fill("");
-  await expect(panel.locator(".source-coverage-group")).toHaveCount(3);
+  await expect(panel.locator(".source-coverage-group")).toHaveCount(6);
   await expect(
     panel.locator('[data-scope="provincia-06"]'),
   ).not.toHaveAttribute("open");
@@ -114,7 +115,7 @@ test("buscar un municipio abre su provincia sin cambiar obras ni pedir nuevas le
   await expect(panel).toContainText("No hay fuentes que coincidan");
   await expect(panel.getByRole("status")).toHaveText("0 fuentes encontradas.");
   await search.fill("");
-  await expect(panel.locator(".source-coverage-group")).toHaveCount(3);
+  await expect(panel.locator(".source-coverage-group")).toHaveCount(6);
   await expect(
     panel.locator('[data-scope="provincia-06"]'),
   ).not.toHaveAttribute("open");
@@ -128,6 +129,56 @@ test("buscar un municipio abre su provincia sin cambiar obras ni pedir nuevas le
   await expect(
     panel.locator('[data-source="vl-obras"] > details'),
   ).toHaveAttribute("open");
+});
+
+test("ACUMAR se consulta una sola vez bajo varias provincias y Neuquén tiene grupo y filtro propios", async ({
+  page,
+}) => {
+  await page.goto("/mapa?vista=lista");
+  const panel = await openSourceCoverage(page);
+  await expect(panel.locator('[data-scope="multiprovincial"]')).toContainText(
+    "Fuentes de varias provincias",
+  );
+  await expect(panel.locator('[data-source="acumar-obras"]')).toHaveCount(1);
+  await expect(panel.locator('[data-source="acumar-obras"]')).toContainText(
+    "Ciudad Autónoma de Buenos Aires",
+  );
+  await expect(
+    panel.locator('[data-scope="provincia-06"] [data-source="acumar-obras"]'),
+  ).toHaveCount(0);
+  await expect(
+    panel.locator('[data-scope="provincia-58"] [data-source="neuquen-obras"]'),
+  ).toHaveCount(1);
+  await panel
+    .getByRole("searchbox", {
+      name: "Buscar provincia, municipio o fuente",
+      exact: true,
+    })
+    .fill("neuquen");
+  await expect(panel.getByRole("status")).toHaveText("1 fuente encontrada.");
+  await expect(panel.locator('[data-source="neuquen-obras"]')).toBeVisible();
+  await expect(
+    panel.getByRole("link", { name: /^Ver listado/ }),
+  ).toHaveAttribute("href", "/mapa?fuente=neuquen-obras&vista=lista");
+});
+
+test("Ciudad de Mendoza conserva alcance municipal, cero publicaciones y actos separados de obras", async ({
+  page,
+}) => {
+  await page.goto("/mapa?fuente=mendoza-obras&vista=lista");
+  const panel = await openSourceCoverage(page);
+  const province = panel.locator('[data-scope="provincia-50"]');
+  await expect(province).toContainText("Mendoza");
+  const source = province.locator('[data-source="mendoza-obras"]');
+  await expect(source).toContainText("Ciudad de Mendoza");
+  await expect(source).toContainText("Fuente municipal");
+  await expect(source).toContainText(
+    "actos de contratación; sus filas no acreditan obras únicas",
+  );
+  await expect(source).toContainText("Fuente sin publicaciones");
+  await expect(source.locator("dd")).toHaveText(["0", "0", "0", "0"]);
+  await expect(page.locator(".work-card")).toHaveCount(0);
+  await expect(page.locator('[data-source="mendoza-obras"]')).toHaveCount(1);
 });
 
 test("fuente vacía conserva cero y error conserva alcance por confirmar y acceso a lista", async ({

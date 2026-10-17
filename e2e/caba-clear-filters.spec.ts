@@ -92,6 +92,10 @@ test("muchos partidos quedan resumidos y el desplegable permite quitarlos con te
   const removed = parties[7]!;
   await page.getByRole("button", { name: `Quitar ${removed.nombre} del filtro de partidos`, exact: true }).click();
   await page.getByRole("button", { name: "Aplicar filtros", exact: true }).click();
+  await page.waitForURL(
+    (url) => url.searchParams.getAll("partidos").length === parties.length - 1,
+    { waitUntil: "domcontentloaded" },
+  );
   expect(new URL(page.url()).searchParams.getAll("partidos")).toEqual(parties.slice(0, 7).map(party => party.partidoId).sort());
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

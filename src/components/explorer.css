@@ -799,6 +799,10 @@
   .explorer .with-map .map-region {
     position: sticky;
     top: var(--space-4);
+    /* Keep in-flow point help reachable when the sticky panel grows. */
+    max-height: calc(100vh - var(--space-4) - var(--space-4));
+    max-height: calc(100dvh - var(--space-4) - var(--space-4));
+    overflow: auto;
   }
 }
 

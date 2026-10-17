@@ -11,7 +11,7 @@ import {
 
 const parse = (query: string) => parseExplorerQuery(new URLSearchParams(query));
 describe("consultas públicas compartibles", () => {
-  it.each(["bahia-obras", "olavarria-obras", "pergamino-obras"] as const)(
+  it.each(["bahia-obras", "olavarria-obras", "pergamino-obras", "acumar-obras", "neuquen-obras"] as const)(
     "conserva fuente %s y acceso a publicaciones sin ubicación",
     (fuente) => {
       const initial = parse(`fuente=${fuente}&vista=lista`);
