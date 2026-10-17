@@ -12,6 +12,7 @@ const api = vi.hoisted(() => ({
   municipalCoverage: vi.fn(),
   sourceCoverage: vi.fn(),
   counts: vi.fn(),
+  reportedRecordCounts: vi.fn(),
 }));
 vi.mock("../src/lib/public-api", () => ({ publicApi: () => api }));
 vi.mock("../src/lib/config", () => ({
@@ -38,6 +39,9 @@ beforeEach(() => {
   );
   api.counts.mockRejectedValue(
     new Error("Synthetic independent counts unavailable"),
+  );
+  api.reportedRecordCounts.mockRejectedValue(
+    new Error("Synthetic reported-record counts unavailable"),
   );
 });
 describe("lecturas independientes de padrón y obras", () => {

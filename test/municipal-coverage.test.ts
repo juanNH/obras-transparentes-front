@@ -6,6 +6,7 @@ import examples from "../contracts/examples.json" with { type: "json" };
 import {
   createPublicApi,
   PublicApiError,
+  SOURCE_COVERAGE_CODES,
   type MunicipalCoverage,
   type SourceCoverage,
   type WorkCounts,
@@ -23,6 +24,7 @@ const api = vi.hoisted(() => ({
   municipalCoverage: vi.fn(),
   sourceCoverage: vi.fn(),
   counts: vi.fn(),
+  reportedRecordCounts: vi.fn(),
 }));
 vi.mock("../src/lib/public-api", () => ({ publicApi: () => api }));
 vi.mock("../src/lib/config", () => ({
@@ -166,7 +168,10 @@ const sourceInventory = parsePublicResponse<SourceCoverage>(
       obrasConUbicacionAprobada: perSource[source.codigo]!.totalConGeometria,
       obrasSinUbicacionAprobada: perSource[source.codigo]!.totalSinGeometria,
       localidadesConObrasPublicadas: source.codigo === "nacion-obras" ? 18 : 0,
-      ubicacionesAprobadas: source.codigo === "lujan-documentos" ? 0 : perSource[source.codigo]!.totalConGeometria + 1,
+      ubicacionesAprobadas:
+        source.codigo === "lujan-documentos"
+          ? 0
+          : perSource[source.codigo]!.totalConGeometria + 1,
       obrasConEvidenciaLicenciaPublicada:
         perSource[source.codigo]!.totalPublicadas,
       obrasSinEvidenciaLicenciaPublicada: 0,
@@ -182,6 +187,9 @@ beforeEach(() => {
     Object.keys(query).length === 1 && query.fuente
       ? perSource[query.fuente]
       : workCounts,
+  );
+  api.reportedRecordCounts.mockRejectedValue(
+    new Error("Synthetic reported-record counts unavailable"),
   );
 });
 
@@ -391,10 +399,10 @@ describe("cobertura pública por fuente", () => {
       "bbox=-60,-35,-59,-34",
       "cursor=synthetic-page",
       new URLSearchParams(
-        Array.from(
-          { length: examples.sourceCoverage.fuentes.length + 1 },
-          () => ["fuente", "nacion-obras"],
-        ),
+        Array.from({ length: SOURCE_COVERAGE_CODES.length + 1 }, () => [
+          "fuente",
+          "nacion-obras",
+        ]),
       ).toString(),
     ]) {
       expect(
