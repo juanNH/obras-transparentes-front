@@ -404,6 +404,7 @@ input[type="checkbox"], input[type="radio"] { min-width: 22px; min-height: 22px;
 .source-coverage-scope { color: var(--color-text-muted); }
 .source-coverage-list dl { margin: 0; font-size: 0.875rem; }
 .source-coverage-list dl div { display: flex; justify-content: space-between; gap: 1rem; }
+.source-coverage-list dl dt { min-width: 0; overflow-wrap: anywhere; }
 .source-coverage-list dd { margin: 0; font-weight: 700; }
 .source-coverage-source > p:not(.source-coverage-status) { margin: 0.75rem 0; font-size: 0.875rem; }
 .source-coverage-list a { display: inline-flex; align-items: center; min-height: 44px; }

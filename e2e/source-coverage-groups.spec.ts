@@ -43,7 +43,7 @@ test("empieza compacto y contiene fuentes municipales bajo su provincia declarad
     "Buenos Aires",
   );
   await expect(buenosAires.locator(":scope > summary")).toContainText(
-    "7 fuentes",
+    "11 fuentes",
   );
   await buenosAires.locator(":scope > summary").click();
   await expect(buenosAires.locator('[data-source="vl-obras"]')).toBeVisible();
@@ -175,7 +175,8 @@ test("Ciudad de Mendoza conserva alcance municipal, cero publicaciones y actos s
   await expect(source).toContainText(
     "actos de contratación; sus filas no acreditan obras únicas",
   );
-  await expect(source).toContainText("Fuente sin publicaciones");
+  await expect(source).toContainText("Fuente de actos de contratación");
+  await expect(source).toContainText("Registros informados publicados: 0");
   await expect(source.locator("dd")).toHaveText(["0", "0", "0", "0"]);
   await expect(page.locator(".work-card")).toHaveCount(0);
   await expect(page.locator('[data-source="mendoza-obras"]')).toHaveCount(1);
